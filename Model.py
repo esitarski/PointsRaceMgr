@@ -37,6 +37,8 @@ class Rider(object):
 					  'DQ':5,		DQ:5,
 					  'NP':6,		NP:6,
 	}
+	
+	existingPoints = 0
 
 	def __init__( self, num ):
 		self.num = num
@@ -45,6 +47,7 @@ class Rider(object):
 		self.lapsTotal = 0
 		self.updown = 0
 		self.numWins = 0
+		self.existingPoints = 0
 		self.status = Rider.Finisher
 		self.finishOrder = 1000
 		
@@ -65,6 +68,10 @@ class Rider(object):
 		self.pointsTotal += race.pointsForLapping * updown
 		self.lapsTotal += race.pointsForLapping * updown
 
+	def addExistingPoints( self, existingPoints ):
+		self.existingPoints = existingPoints
+		self.pointsTotal += existingPoints
+		
 	def getKey( self ):
 		if   race.rankBy == race.RankByPoints:
 			return (Rider.statusSortSeq[self.status], -self.pointsTotal, self.finishOrder, self.num)
@@ -102,6 +109,7 @@ class Race(object):
 	updowns = {}			# Laps up/down
 	finishOrder = {}		# Results from final sprint.
 	riderStatus = {}		# Status (Finisher, DNF, etc.)
+	existingPoints = {}			# Existing cumalative points.
 
 	def __init__( self ):
 		self.reset()
@@ -124,6 +132,7 @@ class Race(object):
 		self.updowns = {}
 		self.finishOrder = {}
 		self.riderStatus = {}
+		self.existingPoints = {}
 
 		self.isChangedFlag = True
 	
@@ -178,6 +187,11 @@ class Race(object):
 			self.sprintResults = sprintResults
 			self.setChanged()
 	
+	def setExistingPoints( self, existingPoints ):
+		if self.existingPoints != existingPoints:
+			self.existingPoints = existingPoints
+			self.setChanged()
+	
 	def setUpDowns( self, updowns ):
 		if self.updowns != updowns:
 			self.updowns = updowns
@@ -230,15 +244,14 @@ class Race(object):
 		return ud
 	
 	def getFinishOrder( self ):
-		finishOrder = list( self.finishOrder.iteritems() )
-		finishOrder.sort( key = lambda x: x[1] )
-		return finishOrder
+		return sorted( self.finishOrder.iteritems(), key = lambda x: x[1] )
 	
 	def getStatus( self ):
-		status = list( self.riderStatus.iteritems() )
-		status.sort( key = lambda x: (Rider.statusSortSeq[x[1]], x[0]) )
-		return status
+		return sorted( self.riderStatus.iteritems(), key = lambda x: (Rider.statusSortSeq[x[1]], x[0]) )
 			
+	def getExistingPoints( self ):
+		return sorted( self.existingPoints.iteritems(), key = lambda x: x[1], reverse = True )
+	
 	def getMaxSprints( self ):
 		try:
 			return max( sprint for sprint, place in self.sprintResults.iterkeys() )
@@ -273,6 +286,10 @@ class Race(object):
 		# Add the up/down laps.
 		for num, updown in self.updowns.iteritems():
 			getRider(num).addUpDown( updown )
+		
+		# Add the existing points.
+		for num, existingPoints in self.existingPoints.iteritems():
+			getRider(num).addExistingPoints( existingPoints )
 		
 		# Add the rider status.
 		for num, status in self.riderStatus.iteritems():

@@ -8,16 +8,19 @@ import wx.grid		as gridlib
 notNumberRE = re.compile( u'[^0-9]' )
 
 # Columns for the table.
-BibUpDown = 0
-ValUpDown = 1
+BibExistingPoints = 0
+ValExistingPoints = 1
 
-BibStatus = 3
-ValStatus = 4
+BibUpDown = 3
+ValUpDown = 4
 
-ValFinish = 6
-BibFinish = 7
+BibStatus = 6
+ValStatus = 7
 
-EmptyCols = [2, 5]
+ValFinish = 9
+BibFinish = 10
+
+EmptyCols = [2, 5, 8]
 
 class UpDown( wx.Panel ):
 	def __init__( self, parent, id = wx.ID_ANY ):
@@ -29,15 +32,15 @@ class UpDown( wx.Panel ):
 		self.hbs = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.gridUpDown = gridlib.Grid( self )
-		labels = [u'Bib', u'Laps\n+/-', u' ', u'Bib', u'Status', u' ', u'Finish\nOrder', u'Bib']
-		self.gridUpDown.CreateGrid( 40, len(labels) )
+		labels = [u'Bib', u'Existing\nPoints', u' ', u'Bib', u'Laps\n+/-', u' ', u'Bib', u'Status', u' ', u'Finish\nOrder', u'Bib', ]
+		self.gridUpDown.CreateGrid( 200, len(labels) )
 		
 		for col, colName in enumerate(labels):
 			self.gridUpDown.SetColLabelValue( col, colName )
 			
 			attr = gridlib.GridCellAttr()
 						
-			if col in (BibUpDown, BibFinish, BibStatus):
+			if col in (BibUpDown, BibFinish, BibStatus, BibExistingPoints, ValExistingPoints):
 				attr.SetEditor( gridlib.GridCellNumberEditor() )
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 			
@@ -51,6 +54,9 @@ class UpDown( wx.Panel ):
 			else:
 				attr.SetReadOnly()
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
+				
+			if col in EmptyCols:
+				attr.SetBackgroundColour( self.gridUpDown.GetLabelBackgroundColour() )
 				
 			self.gridUpDown.SetColAttr( col, attr )
 
@@ -147,27 +153,37 @@ class UpDown( wx.Panel ):
 			prefix = '+' if updown > 0 else u''
 			self.gridUpDown.SetCellValue( r, ValUpDown, prefix + unicode(updown) )
 		
+		for r, (num, s) in enumerate(race.getStatus()):
+			self.gridUpDown.SetCellValue( r, BibStatus, unicode(num) )
+			self.gridUpDown.SetCellValue( r, ValStatus, Model.Rider.statusNames[s] )
+			
 		for r in xrange( self.gridUpDown.GetNumberRows() ):
 			self.gridUpDown.SetCellValue( r, ValFinish, unicode(r+1) )
 			
 		orderNum = {order: num for num, order in race.getFinishOrder()}
 		for num, order in race.getFinishOrder():
 			self.gridUpDown.SetCellValue( order-1, BibFinish, unicode(num) )
-			
-		for r, (num, s) in enumerate(race.getStatus()):
+		
+		for r, (num, p) in enumerate(race.getExistingPoints()):
 			self.gridUpDown.SetCellValue( r, BibStatus, unicode(num) )
-			self.gridUpDown.SetCellValue( r, ValStatus, Model.Rider.statusNames[s] )
+			self.gridUpDown.SetCellValue( r, ValStatus, unicode(p) )
 			
 	def commit( self ):
 		race = Model.race
 		if not race:
 			return
 		lastFinishVal = 0
+		existingPoints = {}
 		updowns = {}
 		finishOrder = {}
 		status = {}
 		statusIndex = dict( (n, i) for i, n in enumerate(Model.Rider.statusNames) )
 		for r in xrange(self.gridUpDown.GetNumberRows()):
+			try:
+				existingPoints[int(self.gridUpDown.GetCellValue(r, BibExistingPoints), 10)] = int(self.gridUpDown.GetCellValue(r, ValExistingPoints), 10)
+			except ValueError:
+				pass
+		
 			try:
 				updowns[int(self.gridUpDown.GetCellValue(r, BibUpDown), 10)] = int(self.gridUpDown.GetCellValue(r, ValUpDown), 10)
 			except ValueError:
@@ -193,6 +209,7 @@ class UpDown( wx.Panel ):
 			except (ValueError, KeyError):
 				pass
 
+		race.setExistingPoints( existingPoints )
 		race.setUpDowns( updowns )
 		race.setFinishOrder( finishOrder )
 		race.setStatus( status )

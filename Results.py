@@ -12,7 +12,7 @@ class Results( wx.Panel ):
 		self.hbs = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.gridResults = gridlib.Grid( self )
-		labels = ['Sprint Points\nSubtotal', 'Lap Points\nSubtotal', 'Laps\n+/-', 'Num\nWins']
+		labels = ['Sprint Points\nSubtotal', 'Lap Points\nSubtotal', 'Laps\n+/-', 'Num\nWins', 'Existing\nPoints']
 		self.gridResults.CreateGrid( 0, len(labels) )
 		for i, lab in enumerate(labels):
 			self.gridResults.SetColLabelValue( i, lab )
@@ -43,12 +43,20 @@ class Results( wx.Panel ):
 		self.gridResults.InsertRows( 0, len(riders), True )
 		position = 1
 		fields = ['sprintsTotal', 'lapsTotal', 'updown']
+		
+		self.gridResults.SetColLabelValue( self.gridResults.GetNumberCols()-2, '' )
+		self.gridResults.SetColLabelValue( self.gridResults.GetNumberCols()-1, '' )
+		
 		# Only update the Num Wins column if required for the ranking.
 		if race.rankBy == race.RankByDistancePointsNumWins:
 			fields += ['numWins']
 			self.gridResults.SetColLabelValue( len(fields)-1, 'Num\nWins' )
-		else:
-			self.gridResults.SetColLabelValue( len(fields), '' )
+			
+		# Only update the existing points if required for the ranking.
+		if race.existingPoints:
+			fields += ['existingPoints']
+			self.gridResults.SetColLabelValue( len(fields)-1, 'Existing\nPoints' )
+			
 		for r, rider in enumerate(riders):
 			for c, field in enumerate(fields):
 				v = getattr(rider,field)
@@ -56,6 +64,8 @@ class Results( wx.Panel ):
 				if s and field == 'updown' and s[0] != '-':
 					s = '+' + s
 				self.gridResults.SetCellValue( r, c, s )
+			
+		self.gridResults.AutoSize()
 	
 	def commit( self ):
 		pass
