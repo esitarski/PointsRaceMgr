@@ -89,6 +89,7 @@ class Sprints( wx.Panel ):
 			self.gridSprint.SetColFormatNumber( i )
 		
 		self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.onCellChange)
+		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED, self.onGridEditorCreated)
 		self.gridSprint.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 
 		self.hbs.Add( self.gridSprint, 1, wx.GROW|wx.ALL, border=4 )
@@ -96,6 +97,17 @@ class Sprints( wx.Panel ):
 		self.SetSizer(self.hbs)
 		self.hbs.SetSizeHints(self)
 
+	def onGridEditorCreated( self, event ):
+		editor = event.GetControl()
+		editor.Bind( wx.EVT_KILL_FOCUS, self.onKillFocus )
+		event.Skip()
+		
+	def onKillFocus( self, event ):
+		grid = event.GetEventObject().GetGrandParent()
+		grid.SaveEditControlValue()
+		grid.HideCellEditControl()
+		event.Skip()
+		
 	def NextColCheck( self, r, c ):
 		if c == self.gridSprint.GetNumberCols() - 1:
 			return False

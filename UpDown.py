@@ -74,6 +74,7 @@ class UpDown( wx.Panel ):
 		self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.onCellChange)
 		self.Bind(gridlib.EVT_GRID_SELECT_CELL, self.onCellEnableEdit)
 		self.Bind(gridlib.EVT_GRID_LABEL_LEFT_CLICK, self.onLabelClick)
+		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED, self.onGridEditorCreated)
 		self.hbs.Add( self.gridUpDown, 1, wx.GROW|wx.ALL, border = 4 )
 		
 		self.SetSizer(self.hbs)
@@ -81,6 +82,17 @@ class UpDown( wx.Panel ):
 
 	def onLeaveWindow( self, evt ):
 		pass
+		
+	def onGridEditorCreated( self, event ):
+		editor = event.GetControl()
+		editor.Bind( wx.EVT_KILL_FOCUS, self.onKillFocus )
+		event.Skip()
+		
+	def onKillFocus( self, event ):
+		grid = event.GetEventObject().GetGrandParent()
+		grid.SaveEditControlValue()
+		grid.HideCellEditControl()
+		event.Skip()
 		
 	def onLabelClick( self, evt ):
 		self.gridUpDown.DisableCellEditControl()
