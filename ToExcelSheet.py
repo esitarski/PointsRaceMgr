@@ -184,6 +184,7 @@ def ToExcelSheet( ws ):
 		ws.write( rowCur + r, 1, rider.num, styleBib )
 		ws.write( rowCur + r, 2, '', styleRegular )					# Name
 		ws.write( rowCur + r, 3, rider.pointsTotal, styleTotal )
+		
 		colCur = maxSprints + 4
 		ws.write( rowCur + r, colCur, rider.updown if rider.updown != 0 else '', styleRegular )
 		colCur += 1
