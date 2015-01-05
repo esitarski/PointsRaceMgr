@@ -209,6 +209,34 @@ def ToExcelSheet( ws ):
 		for r, rider in enumerate(riders):
 			ws.write( rowCur + r, sprint + 3, sprintNumPoints.get((sprint, rider.num), ''), styleRegular )
 			
+
+class PrintSheet( object ):
+	def __init__( self ):
+		self.rows = []
+		
+	def write( row, col, value, style = None):
+		try:
+			r = self.rows[row]
+		except IndexError:
+			self.rows += [[] for i in xrange(row - len(self.rows) + 1)]
+			r = self.rows[row]
+			
+		try:
+			v = r[col]
+		except IndexError:
+			r += [None] * (col - len(r) + 1)
+			v = r[col]
+		assert v is None
+		r[col] = value
+		
+	def write_merge( rowStart, rowEnd, colStart, colEnd, value, style = None ):
+		for row in xrange(rowStart, rowEnd+1):
+			for col in xrange(colStart, colEnd+1):
+				if row == rowStart and col == colStart:
+					self.write( row, col, unicode(value) )
+				else:
+					self.write( row, col, u'\t' )
+			
 if __name__ == '__main__':
 	Model.setRace( Model.Race() )
 	Model.getRace()._populate()

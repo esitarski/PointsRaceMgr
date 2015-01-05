@@ -19,6 +19,7 @@ from Sprints import Sprints
 from UpDown import UpDown
 from Worksheet import Worksheet
 from Results import Results
+from Printing import PointsMgrPrintout
 from ToExcelSheet import ToExcelSheet
 
 from Version import AppVerName
@@ -43,6 +44,12 @@ class MainWin( wx.Frame ):
 		
 		self.fileName = None
 		self.inRefresh = False	# Flag to indicate we are doing a refresh.
+		
+		# Default print options.
+		self.printData = wx.PrintData()
+		self.printData.SetPaperId(wx.PAPER_LETTER)
+		self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
+		self.printData.SetOrientation(wx.LANDSCAPE)
 
 		Utils.setMainWin( self )
 		
@@ -64,6 +71,16 @@ class MainWin( wx.Frame ):
 		self.fileMenu.Append( wx.ID_SAVEAS , "Save &As...", "Save the race under a different name" )
 		self.Bind(wx.EVT_MENU, self.menuSaveAs, id=wx.ID_SAVEAS )
 
+		self.fileMenu.AppendSeparator()
+		self.fileMenu.Append( wx.ID_PAGE_SETUP , "Page &Setup...", "Setup the print page" )
+		self.Bind(wx.EVT_MENU, self.menuPageSetup, id=wx.ID_PAGE_SETUP )
+
+		self.fileMenu.Append( wx.ID_PREVIEW , "Print P&review...\tCtrl+R", "Preview the current page on screen" )
+		self.Bind(wx.EVT_MENU, self.menuPrintPreview, id=wx.ID_PREVIEW )
+
+		self.fileMenu.Append( wx.ID_PRINT , "&Print...\tCtrl+P", "Print the current page to a printer" )
+		self.Bind(wx.EVT_MENU, self.menuPrint, id=wx.ID_PRINT )
+		
 		self.fileMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
@@ -289,6 +306,56 @@ class MainWin( wx.Frame ):
 		self.menuConfigurePointsRace()
 		Model.race.setChanged( False )
 		
+	def menuPageSetup( self, event ):
+		psdd = wx.PageSetupDialogData(self.printData)
+		psdd.CalculatePaperSizeFromId()
+		dlg = wx.PageSetupDialog(self, psdd)
+		dlg.ShowModal()
+
+		# this makes a copy of the wx.PrintData instead of just saving
+		# a reference to the one inside the PrintDialogData that will
+		# be destroyed when the dialog is destroyed
+		self.printData = wx.PrintData( dlg.GetPageSetupData().GetPrintData() )
+		dlg.Destroy()
+
+	def menuPrintPreview( self, event ):
+		self.commit()
+		printout = PointsMgrPrintout()
+		printout2 = PointsMgrPrintout()
+		
+		data = wx.PrintDialogData(self.printData)
+		self.preview = wx.PrintPreview(printout, printout2, data)
+
+		self.preview.SetZoom( 110 )
+		if not self.preview.Ok():
+			return
+
+		pfrm = wx.PreviewFrame(self.preview, self, "Print preview")
+
+		pfrm.Initialize()
+		pfrm.SetPosition(self.GetPosition())
+		pfrm.SetSize(self.GetSize())
+		pfrm.Show(True)
+
+	def menuPrint( self, event ):
+		self.commit()
+		printout = PointsRaceMgrPrintout()
+		
+		pdd = wx.PrintDialogData(self.printData)
+		pdd.SetAllPages( 1 )
+		pdd.EnablePageNumbers( 0 )
+		pdd.EnableHelp( 0 )
+		
+		printer = wx.Printer(pdd)
+
+		if not printer.Print(self, printout, True):
+			if printer.GetLastError() == wx.PRINTER_ERROR:
+				Utils.MessageOK(self, "There was a printer problem.\nCheck your printer setup.", "Printer Error",iconMask=wx.ICON_ERROR)
+		else:
+			self.printData = wx.PrintData( printer.GetPrintDialogData().GetPrintData() )
+
+		printout.Destroy()
+
 	def getDirName( self ):
 		return Utils.getDirName()
 
