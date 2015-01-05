@@ -178,6 +178,8 @@ def ToPrintout( dc ):
 	for col in xrange( 0, gt.getNumberCols()+1 ):
 		gt.vLine( col, rowWorksheet, rowCur )
 	
+	gt.vLine( 3, 0, gt.getNumberRows(), True )
+	
 	#---------------------------------------------------------------------------------------
 	# Format on the page.
 	(widthPix, heightPix) = dc.GetSizeTuple()
