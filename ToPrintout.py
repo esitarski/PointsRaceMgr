@@ -112,9 +112,37 @@ def ToPrintout( dc ):
 	race = Model.race
 	mainWin = Utils.getMainWin()
 	
+	#---------------------------------------------------------------------------------------
+	# Format on the page.
+	(widthPix, heightPix) = dc.GetSizeTuple()
+	
+	# Get a reasonable border.
+	borderPix = max(widthPix, heightPix) / 20
+	
+	widthFieldPix = widthPix - borderPix * 2
+	heightFieldPix = heightPix - borderPix * 2
+	
+	xPix = borderPix
+	yPix = borderPix
+
+	# Race Name
+	# Category
+	# Date, Distance, Number of Laps
+	xLeft = xPix
+	yTop = yPix
+	
 	gt = GrowTable()
+	gt.set( 0, 0, '{}: {}'.format(race.name, race.date.strftime('%Y-%m-%d')), True )
+	gt.set( 1, 0, race.category, True )
+	gt.set( 2, 0, u'{} Laps    {} Sprints    {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), True )
+	
+	# Draw the title
+	titleHeight = heightFieldPix * 0.15
+	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, titleHeight )
+	yTop += titleHeight * 1.1
 	
 	# Collect all the sprint and worksheet results information.
+	gt = GrowTable()
 	
 	maxSprints = race.laps / race.sprintEvery
 	
@@ -191,24 +219,5 @@ def ToPrintout( dc ):
 	gt.vLine( 3, 0, gt.getNumberRows(), True )
 	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
 	
-	#---------------------------------------------------------------------------------------
-	# Format on the page.
-	(widthPix, heightPix) = dc.GetSizeTuple()
-	
-	# Get a reasonable border.
-	borderPix = max(widthPix, heightPix) / 20
-	
-	widthFieldPix = widthPix - borderPix * 2
-	heightFieldPix = heightPix - borderPix * 2
-	
-	xPix = borderPix
-	yPix = borderPix
+	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - titleHeight )
 
-	# Race Name
-	# Category
-	# Date, Distance, Number of Laps
-	xLeft = xPix
-	yTop = xPix
-	
-	# Draw the main data.
-	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - yTop )
