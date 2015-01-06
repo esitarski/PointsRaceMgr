@@ -16,7 +16,7 @@ class Worksheet( wx.Panel ):
 		self.gridBib.CreateGrid( 1, 4 )
 		self.gridBib.SetColLabelValue( 0, u"Rank" )
 		self.gridBib.SetColLabelValue( 1, u"Bib" )
-		self.gridBib.SetColLabelValue( 2, u"Points\nTotal" )
+		self.gridBib.SetColLabelValue( 2, u"Total\nPoints" )
 		self.gridBib.SetColLabelValue( 3, u'')
 		self.gridBib.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 		self.gridBib.SetRowLabelSize( 0 )

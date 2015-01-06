@@ -3,6 +3,10 @@ import Utils
 import Model
 
 class GrowTable( object ):
+	alignLeft = 1<<0
+	alignCentre = alignCenter = 1<<1
+	alignRight = 1<<2
+
 	def __init__( self ):
 		self.table = []
 		self.colWidths = []
@@ -10,10 +14,10 @@ class GrowTable( object ):
 		self.vLines = []
 		self.hLines = []
 		
-	def set( self, row, col, value, highlight=False ):
+	def set( self, row, col, value, highlight=False, align=alignRight ):
 		self.table += [[] for i in xrange(max(0, row+1 - len(self.table)))]
 		self.table[row] += [None for i in xrange(max(0, col+1 - len(self.table[row])))]
-		self.table[row][col] = (value, highlight)
+		self.table[row][col] = (value, highlight, align)
 		
 	def vLine( self, col, rowStart, rowEnd, thick = False ):
 		self.vLines.append( (col, rowStart, rowEnd, thick) )
@@ -42,7 +46,7 @@ class GrowTable( object ):
 		self.rowHeights = [0] * self.getNumberRows()
 		height = 0
 		for row, r in enumerate(self.table):
-			for col, (value, highlight) in enumerate(r):
+			for col, (value, highlight, align) in enumerate(r):
 				vWidth, vHeight, lineHeight = dc.GetMultiLineTextExtent(value, fontBold if highlight else font)
 				vWidth += cellBorder * 2
 				vHeight += cellBorder * 2
@@ -50,7 +54,7 @@ class GrowTable( object ):
 				self.rowHeights[row] = max(self.rowHeights[row], vHeight)
 		return sum( self.colWidths ), sum( self.rowHeights )
 	
-	def drawTextToFit( self, dc, text, x, y, width, height, font=None ):
+	def drawTextToFit( self, dc, text, x, y, width, height, align, font=None ):
 		if font:
 			dc.SetFont( font )
 		fontheight = dc.GetFont().GetPixelSize()[1]
@@ -58,10 +62,17 @@ class GrowTable( object ):
 		tWidth, tHeight, lineHeight = dc.GetMultiLineTextExtent(text, dc.GetFont())
 		lines = text.split( '\n' )
 		xBorder, yBorder = (width - tWidth) / 2, height - cellBorder - lineHeight*len(lines)
+		xLeft = x + cellBorder
 		xRight = x + width - cellBorder
 		yTop = y + yBorder
 		for line in lines:
-			dc.DrawText( line, xRight - dc.GetTextExtent(line)[0], yTop )
+			if align == self.alignRight:
+				dc.DrawText( line, xRight - dc.GetTextExtent(line)[0], yTop )
+			elif align == self.alignLeft:
+				dc.DrawText( line, xLeft, yTop )
+			else:
+				dc.DrawText( line, x + (width - dc.GetTextExtent(line)[0]) / 2, yTop )
+				
 			yTop += lineHeight
 	
 	def drawToFitDC( self, dc, x, y, width, height ):
@@ -88,8 +99,8 @@ class GrowTable( object ):
 		yTop = y
 		for row, r in enumerate(self.table):
 			xLeft = x
-			for col, (value, highlight) in enumerate(r):
-				self.drawTextToFit( dc, value, xLeft, yTop, self.colWidths[col], self.rowHeights[row], fontBold if highlight else font )
+			for col, (value, highlight, align) in enumerate(r):
+				self.drawTextToFit( dc, value, xLeft, yTop, self.colWidths[col], self.rowHeights[row], align, fontBold if highlight else font )
 				xLeft += self.colWidths[col]
 			yTop += self.rowHeights[row]
 			
@@ -132,9 +143,10 @@ def ToPrintout( dc ):
 	yTop = yPix
 	
 	gt = GrowTable()
-	gt.set( 0, 0, '{}: {}'.format(race.name, race.date.strftime('%Y-%m-%d')), True )
-	gt.set( 1, 0, race.category, True )
-	gt.set( 2, 0, u'{} Laps    {} Sprints    {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), True )
+	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignCenter )
+	gt.set( 1, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignCenter )
+	gt.set( 2, 0, race.category, True, align=GrowTable.alignCenter )
+	gt.set( 3, 0, u'{} Laps    {} Sprints    {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignCenter )
 	
 	# Draw the title
 	titleHeight = heightFieldPix * 0.15
@@ -195,7 +207,7 @@ def ToPrintout( dc ):
 	colCur = 0
 	for grid in [gridBib, gridWorksheet, gridResults]:
 		for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
-			gt.set( rowCur, colCur, grid.GetColLabelValue(col), True )
+			gt.set( rowCur, colCur, grid.GetColLabelValue(col), highlight=True, align=GrowTable.alignCenter )
 			colCur += 1
 	rowCur += 1
 	
