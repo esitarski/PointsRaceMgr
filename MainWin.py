@@ -49,7 +49,7 @@ class MainWin( wx.Frame ):
 		self.printData = wx.PrintData()
 		self.printData.SetPaperId(wx.PAPER_LETTER)
 		self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
-		self.printData.SetOrientation(wx.LANDSCAPE)
+		# self.printData.SetOrientation(wx.LANDSCAPE)
 
 		Utils.setMainWin( self )
 		

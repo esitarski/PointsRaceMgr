@@ -65,8 +65,6 @@ class GrowTable( object ):
 			yTop += lineHeight
 	
 	def drawToFitDC( self, dc, x, y, width, height ):
-		self.x = x
-		self.y = y
 		fontSizeLeft, fontSizeRight = 2, 512
 		for i in xrange(20):
 			fontSize = (fontSizeLeft + fontSizeRight) // 2
@@ -80,6 +78,11 @@ class GrowTable( object ):
 		
 		fontSize = fontSizeLeft
 		tWidth, tHeight = self.getSize( dc, fontSize )
+		
+		x += (width - tWidth) // 2
+		y += (height - tHeight) // 2
+		self.x = x
+		self.y = y
 
 		font, fontBold = self.getFonts( fontSize )
 		yTop = y
