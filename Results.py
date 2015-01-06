@@ -12,7 +12,7 @@ class Results( wx.Panel ):
 		self.hbs = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.gridResults = gridlib.Grid( self )
-		labels = ['Sprint Points\nSubtotal', 'Lap Points\nSubtotal', 'Laps\n+/-', 'Num\nWins', 'Existing\nPoints']
+		labels = ['Sprint\nPoints', 'Lap\nPoints', 'Laps\n+/-', 'Num\nWins', 'Existing\nPoints']
 		self.gridResults.CreateGrid( 0, len(labels) )
 		for i, lab in enumerate(labels):
 			self.gridResults.SetColLabelValue( i, lab )

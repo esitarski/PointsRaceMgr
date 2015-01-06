@@ -104,7 +104,7 @@ class GrowTable( object ):
 		fontheight = dc.GetFont().GetPixelSize()[1]
 		cellBorder = self.getCellBorder( fontheight )
 		dc.SetPen( wx.Pen(wx.BLACK, cellBorder / 2 if thick else 1 ) )
-	
+
 def ToPrintout( dc ):
 	race = Model.race
 	mainWin = Utils.getMainWin()
@@ -118,11 +118,14 @@ def ToPrintout( dc ):
 	gridPoints = mainWin.sprints.gridPoints
 	gridSprint = mainWin.sprints.gridSprint
 	
+	colAdjust = {}
+	colAdjust[gridPoints] = 1
+	
 	# First get the sprint results.
 	rowCur = 0
 	colCur = 0
 	for grid in [gridPoints, gridSprint]:
-		for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols()):
+		for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols() - colAdjust.get(grid,0)):
 			gt.set( rowCur, colCur, grid.GetColLabelValue(col), True )
 			colCur += 1
 	rowCur += 1
@@ -138,7 +141,7 @@ def ToPrintout( dc ):
 	for row in xrange(rowMax):
 		colCur = 0
 		for grid in [gridPoints, gridSprint]:
-			for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols()):
+			for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols() - colAdjust.get(grid,0)):
 				gt.set( rowCur, colCur, grid.GetCellValue(row,col) )
 				colCur += 1
 		rowCur += 1
@@ -146,17 +149,21 @@ def ToPrintout( dc ):
 		
 	for col in xrange( 1, colCur+1 ):
 		gt.vLine( col, 0, rowCur )
+	upperColMax = colCur
 	
 	# Collect the worksheet and results information
 	gridBib = mainWin.worksheet.gridBib
 	gridWorksheet = mainWin.worksheet.gridWorksheet
 	gridResults = mainWin.results.gridResults
 	
+	colAdjust[gridBib] = 1
+	colAdjust[gridResults] = 2
+	
 	rowWorksheet = rowCur
 	
 	colCur = 0
 	for grid in [gridBib, gridWorksheet, gridResults]:
-		for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols()):
+		for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
 			gt.set( rowCur, colCur, grid.GetColLabelValue(col), True )
 			colCur += 1
 	rowCur += 1
@@ -169,7 +176,7 @@ def ToPrintout( dc ):
 		colCur = 0
 		for grid in [gridBib, gridWorksheet, gridResults]:
 			if rowMax <= grid.GetNumberRows():
-				for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols()):
+				for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
 					gt.set( rowCur, colCur, grid.GetCellValue(row,col) )
 					colCur += 1
 		rowCur += 1
@@ -179,6 +186,7 @@ def ToPrintout( dc ):
 		gt.vLine( col, rowWorksheet, rowCur )
 	
 	gt.vLine( 3, 0, gt.getNumberRows(), True )
+	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
 	
 	#---------------------------------------------------------------------------------------
 	# Format on the page.
