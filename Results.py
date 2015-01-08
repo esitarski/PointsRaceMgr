@@ -23,7 +23,10 @@ class Results( wx.Panel ):
 		self.gridResults.SetRowLabelSize( 0 )
 		self.gridResults.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 		Utils.MakeGridReadOnly( self.gridResults )
+		
+		self.gridResults.EnableDragColSize( False )
 		self.gridResults.EnableDragRowSize( False )
+
 		self.gridResults.AutoSize()
 		self.gridResults.Bind( gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onClick )
 
@@ -35,7 +38,7 @@ class Results( wx.Panel ):
 	def clear( self ):
 		Utils.DeleteAllGridRows( self.gridResults )
 		
-	def onClick( self ):
+	def onClick( self, event ):
 		wx.CallAfter( Utils.commitPanes )
 		
 	def refresh( self ):
@@ -43,19 +46,33 @@ class Results( wx.Panel ):
 		race = Model.race
 		if not race:
 			return
+			
+		headers = []
+		fields = []
 		
-		headers = [u'Sprint\nPoints', u'Lap\nPoints', u'Laps\n+/-', u'Finish\nOrder']
-		fields = ['sprintsTotal', 'lapsTotal', 'updown', 'finishOrder']
+		# Add existing points if required.
+		if race.existingPoints:
+			fields.append( 'existingPoints' )
+			headers.append( u'Existing\nPoints' )
+			
+		headers.append( u'Sprint\nPoints' )
+		fields.append( 'sprintsTotal' )
+		
+		if race.pointsForLapping == 0:
+			headers.append( u'Laps\n+/-' )
+			fields.append( 'updown' )
+		else:
+			headers.append( u'Lap\nPoints' )
+			fields.append( 'lapsTotal' )
 		
 		# Only update the Num Wins column if required for the ranking.
 		if race.rankBy == race.RankByDistancePointsNumWins:
 			fields.append('numWins')
-			headers.apped(u'Num\nWins')
+			headers.append(u'Num\nWins')
 			
-		# Only update the existing points if required for the ranking.
-		if race.existingPoints:
-			fields = ['existingPoints'] + fields
-			headers = [u'Existing\nPoints'] + headers
+		# Always add the finish order as the last criteria.
+		headers.append( u'Finish\nOrder' )
+		fields.append( 'finishOrder' )
 		
 		riders = race.getRiders()
 		

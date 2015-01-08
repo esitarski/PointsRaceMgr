@@ -440,6 +440,7 @@ class MainWin( wx.Frame ):
 	def menuConfigureCriteriumRace( self, event ):
 		self.menuConfigurePointsRace()
 		self.rankByCtrl.SetSelection( Model.Race.RankByDistancePointsNumWins )
+		self.pointsForLappingCtrl.SetValue( 0 )
 		self.commit()
 		self.refresh()
 
