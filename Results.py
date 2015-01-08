@@ -54,8 +54,8 @@ class Results( wx.Panel ):
 			
 		# Only update the existing points if required for the ranking.
 		if race.existingPoints:
-			fields.append('existingPoints')
-			headers.append(u'Existing\nPoints')
+			fields = ['existingPoints'] + fields
+			headers = [u'Existing\nPoints'] + headers
 		
 		riders = race.getRiders()
 		
