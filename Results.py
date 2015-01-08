@@ -28,6 +28,7 @@ class Results( wx.Panel ):
 		self.gridResults.EnableDragRowSize( False )
 
 		self.gridResults.AutoSize()
+		
 		self.gridResults.Bind( gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onClick )
 
 		self.hbs.Add( self.gridResults, 1, wx.GROW|wx.ALL, border = 4 )
@@ -50,25 +51,25 @@ class Results( wx.Panel ):
 		headers = []
 		fields = []
 		
-		# Add existing points if required.
-		if race.existingPoints:
-			fields.append( 'existingPoints' )
-			headers.append( u'Existing\nPoints' )
-			
-		headers.append( u'Sprint\nPoints' )
-		fields.append( 'sprintsTotal' )
-		
 		if race.pointsForLapping == 0:
 			headers.append( u'Laps\n+/-' )
 			fields.append( 'updown' )
-		else:
+		
+		headers.append( u'Sprint\nPoints' )
+		fields.append( 'sprintsTotal' )
+		
+		if race.pointsForLapping != 0:
 			headers.append( u'Lap\nPoints' )
 			fields.append( 'lapsTotal' )
 		
 		# Only update the Num Wins column if required for the ranking.
 		if race.rankBy == race.RankByDistancePointsNumWins:
-			fields.append('numWins')
 			headers.append(u'Num\nWins')
+			fields.append('numWins')
+		
+		if race.existingPoints:
+			headers.append( u'Existing\nPoints' )
+			fields.append( 'existingPoints' )
 			
 		# Always add the finish order as the last criteria.
 		headers.append( u'Finish\nOrder' )
@@ -92,6 +93,11 @@ class Results( wx.Panel ):
 				self.gridResults.SetCellValue( r, c, s )
 			
 		self.gridResults.AutoSize()
+		dc = wx.WindowDC( self )
+		font = self.gridResults.GetDefaultCellFont()
+		dc.SetFont( font )
+		cellHeight = dc.GetTextExtent( '01234' )[1] * 1.1
+		self.gridResults.SetRowLabelSize( cellHeight )
 	
 	def commit( self ):
 		pass

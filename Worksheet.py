@@ -117,7 +117,16 @@ class Worksheet( wx.Panel ):
 		for r in xrange( self.gridWorksheet.GetNumberRows() ):
 			for c in xrange( numSprints, self.gridWorksheet.GetNumberCols() ):
 				self.gridWorksheet.SetCellBackgroundColour( r, c, Utils.LightGrey )
-				
+		
+		
+		dc = wx.WindowDC( self )
+		font = self.gridBib.GetDefaultCellFont()
+		dc.SetFont( font )
+		cellHeight = dc.GetTextExtent( '01234' )[1] * 1.1
+		
+		self.gridBib.SetRowLabelSize( cellHeight )
+		self.gridWorksheet.SetRowLabelSize( cellHeight )
+
 		self.syncSize()
 		
 		self.hbs.Layout()
