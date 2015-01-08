@@ -111,9 +111,9 @@ def SetLabel( st, label ):
 		st.SetLabel( label )
 
 def MakeGridReadOnly( grid ):
-	attr = gridlib.GridCellAttr()
-	attr.SetReadOnly()
 	for c in xrange(grid.GetNumberCols()):
+		attr = gridlib.GridCellAttr()
+		attr.SetReadOnly()
 		grid.SetColAttr( c, attr )
 
 def SetRowBackgroundColour( grid, row, colour ):
@@ -149,6 +149,16 @@ def AdjustGridSize( grid, rowsRequired = None, colsRequired = None ):
 			grid.DeleteCols( colsRequired, d )
 		elif d < 0:
 			grid.AppendCols( -d )
+
+class GridSuspendUpdate( object ):
+	def __init__( self, grid ):
+		self.grid = grid
+
+	def __enter__( self ):
+		self.grid.BeginBatch()
+		
+	def __exit__( self, *args, **kwargs ):
+		self.grid.EndBatch()
 
 def formatTime( secs ):
 	if secs is None:

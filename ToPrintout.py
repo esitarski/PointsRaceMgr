@@ -200,7 +200,6 @@ def ToPrintout( dc ):
 	gridResults = mainWin.results.gridResults
 	
 	colAdjust[gridBib] = 1
-	colAdjust[gridResults] = 2
 	
 	rowWorksheet = rowCur
 	

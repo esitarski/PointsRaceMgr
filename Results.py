@@ -4,6 +4,10 @@ import Sprints
 import wx
 import wx.grid		as gridlib
 
+import wx
+import wx.grid as gridlib
+import Utils
+
 class Results( wx.Panel ):
 	def __init__( self, parent, id = wx.ID_ANY ):
 		super(Results, self).__init__(parent, id, style=wx.BORDER_SUNKEN)
@@ -12,7 +16,7 @@ class Results( wx.Panel ):
 		self.hbs = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.gridResults = gridlib.Grid( self )
-		labels = ['Sprint\nPoints', 'Lap\nPoints', 'Laps\n+/-', 'Num\nWins', 'Existing\nPoints']
+		labels = [u'Sprint\nPoints', u'Lap\nPoints', u'Laps\n+/-', u'Finish\nOrder', u'Num\nWins', u'Existing\nPoints']
 		self.gridResults.CreateGrid( 0, len(labels) )
 		for i, lab in enumerate(labels):
 			self.gridResults.SetColLabelValue( i, lab )
@@ -39,30 +43,35 @@ class Results( wx.Panel ):
 		race = Model.race
 		if not race:
 			return
-		riders = race.getRiders()
-		self.gridResults.InsertRows( 0, len(riders), True )
-		position = 1
-		fields = ['sprintsTotal', 'lapsTotal', 'updown']
 		
-		self.gridResults.SetColLabelValue( self.gridResults.GetNumberCols()-2, '' )
-		self.gridResults.SetColLabelValue( self.gridResults.GetNumberCols()-1, '' )
+		headers = [u'Sprint\nPoints', u'Lap\nPoints', u'Laps\n+/-', u'Finish\nOrder']
+		fields = ['sprintsTotal', 'lapsTotal', 'updown', 'finishOrder']
 		
 		# Only update the Num Wins column if required for the ranking.
 		if race.rankBy == race.RankByDistancePointsNumWins:
-			fields += ['numWins']
-			self.gridResults.SetColLabelValue( len(fields)-1, 'Num\nWins' )
+			fields.append('numWins')
+			headers.apped(u'Num\nWins')
 			
 		# Only update the existing points if required for the ranking.
 		if race.existingPoints:
-			fields += ['existingPoints']
-			self.gridResults.SetColLabelValue( len(fields)-1, 'Existing\nPoints' )
-			
+			fields.append('existingPoints')
+			headers.append(u'Existing\nPoints')
+		
+		riders = race.getRiders()
+		
+		Utils.AdjustGridSize( self.gridResults, len(riders), len(headers) )
+		for i, h in enumerate(headers):
+			self.gridResults.SetColLabelValue( i, h )
+		Utils.MakeGridReadOnly( self.gridResults )
+		
 		for r, rider in enumerate(riders):
 			for c, field in enumerate(fields):
 				v = getattr(rider,field)
 				s = unicode(v) if v != 0 else u''
-				if s and field == 'updown' and s[0] != '-':
+				if s and field == 'updown' and s[:1] != u'-':
 					s = '+' + s
+				if field == 'finishOrder' and s == u'1000':
+					s = u''
 				self.gridResults.SetCellValue( r, c, s )
 			
 		self.gridResults.AutoSize()

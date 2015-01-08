@@ -4,6 +4,7 @@ import Sprints
 import wx
 import re
 import wx.grid		as gridlib
+import wx.lib.mixins.grid as gae
 
 notNumberRE = re.compile( u'[^0-9]' )
 
@@ -22,6 +23,57 @@ BibFinish = 10
 
 EmptyCols = [2, 5, 8]
 
+class UpDownEditor(gridlib.PyGridCellEditor):
+	Empty = u''
+	
+	def __init__(self):
+		self._tc = None
+		self.startValue = self.Empty
+		gridlib.PyGridCellEditor.__init__(self)
+		
+	def Create( self, parent, id = wx.ID_ANY, evtHandler = None ):
+		self._tc = wx.SpinCtrl(parent, id, style = wx.TE_PROCESS_ENTER, min=-160, max=160)
+		self.SetControl( self._tc )
+		if evtHandler:
+			self._tc.PushEventHandler( evtHandler )
+	
+	def SetSize( self, rect ):
+		self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2, wx.SIZE_ALLOW_MINUS_ONE )
+	
+	def BeginEdit( self, row, col, grid ):
+		self.startValue = grid.GetTable().GetValue(row, col).strip()
+		v = self.startValue
+		self._tc.SetValue( int(v or u'0') )
+		self._tc.SetFocus()
+		
+	def EndEdit( self, row, col, grid, value = None ):
+		changed = False
+		v = self._tc.GetValue()
+		if v == 0:
+			v = u''
+		elif v > 0:
+			v = u'+' + unicode(v)
+		else:
+			v = unicode(v)
+		
+		if v != self.startValue:
+			changed = True
+			grid.GetTable().SetValue( row, col, v )
+		
+		self.startValue = self.Empty
+		self._tc.SetValue( 0 )
+		
+	def Reset( self ):
+		self._tc.SetValue( self.startValue )
+		
+	def Clone( self ):
+		return UpDownEditor()
+
+class UpDownGrid( gridlib.Grid, gae.GridAutoEditMixin ):
+	def __init__( self, parent, id=wx.ID_ANY, style=0 ):
+		gridlib.Grid.__init__( self, parent, id=id, style=style )
+		gae.GridAutoEditMixin.__init__(self)
+		
 class UpDown( wx.Panel ):
 	def __init__( self, parent, id = wx.ID_ANY ):
 		super(UpDown, self).__init__( parent, id, style=wx.BORDER_SUNKEN)
@@ -31,7 +83,7 @@ class UpDown( wx.Panel ):
 
 		self.hbs = wx.BoxSizer(wx.HORIZONTAL)
 
-		self.gridUpDown = gridlib.Grid( self )
+		self.gridUpDown = UpDownGrid( self )
 		labels = [u'Bib', u'Existing\nPoints', u' ', u'Bib', u'Laps\n+/-', u' ', u'Bib', u'Status', u' ', u'Finish\nOrder', u'Bib', ]
 		self.gridUpDown.CreateGrid( 200, len(labels) )
 		
@@ -54,6 +106,9 @@ class UpDown( wx.Panel ):
 			else:
 				attr.SetReadOnly()
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
+				
+			if col == ValUpDown:
+				attr.SetEditor( UpDownEditor() )
 				
 			if col in EmptyCols:
 				attr.SetBackgroundColour( self.gridUpDown.GetLabelBackgroundColour() )
