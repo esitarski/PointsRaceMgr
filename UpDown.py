@@ -138,6 +138,8 @@ class UpDown( wx.Panel ):
 		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED, self.onGridEditorCreated)
 		self.hbs.Add( self.gridUpDown, 1, wx.GROW|wx.ALL, border = 4 )
 		
+		self.gridUpDown.AutoSizeColumn( 9 )
+		
 		self.SetSizer(self.hbs)
 		self.hbs.SetSizeHints(self)
 
