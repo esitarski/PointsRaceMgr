@@ -22,6 +22,9 @@ class Results( wx.Panel ):
 			self.gridResults.SetColLabelValue( i, lab )
 		self.gridResults.SetRowLabelSize( 0 )
 		self.gridResults.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
+		
+		self.gridResults.AutoSize()
+		
 		Utils.MakeGridReadOnly( self.gridResults )
 		
 		self.gridResults.EnableDragColSize( False )
@@ -91,13 +94,6 @@ class Results( wx.Panel ):
 				if field == 'finishOrder' and s == u'1000':
 					s = u''
 				self.gridResults.SetCellValue( r, c, s )
-			
-		self.gridResults.AutoSize()
-		dc = wx.WindowDC( self )
-		font = self.gridResults.GetDefaultCellFont()
-		dc.SetFont( font )
-		cellHeight = dc.GetTextExtent( '01234' )[1] * 1.1
-		self.gridResults.SetRowLabelSize( cellHeight )
 	
 	def commit( self ):
 		pass
