@@ -95,6 +95,8 @@ class Results( wx.Panel ):
 					s = u''
 				self.gridResults.SetCellValue( r, c, s )
 	
+		self.gridResults.AutoSizeColumns()
+	
 	def commit( self ):
 		pass
 	
