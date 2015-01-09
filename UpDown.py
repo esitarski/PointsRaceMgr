@@ -184,8 +184,8 @@ class UpDown( wx.Panel ):
 					pass
 
 		self.gridUpDown.SetCellValue(r, c, value)
-		self.commit()
-		Utils.refreshResults()
+		wx.CallAfter( self.commit )
+		wx.CallAfter( Utils.refreshResults )
 	
 	def onCellEnableEdit( self, evt ):
 		if evt.GetCol() == ValStatus:
@@ -229,6 +229,7 @@ class UpDown( wx.Panel ):
 		race = Model.race
 		if not race:
 			return
+		
 		lastFinishVal = 0
 		existingPoints = {}
 		updowns = {}
