@@ -24,6 +24,7 @@ class Worksheet( wx.Panel ):
 		self.gridBib.EnableDragRowSize( False )
 		self.gridBib.AutoSize()
 		Utils.MakeGridReadOnly( self.gridBib )
+		self.gridBib.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 		
 		self.hbs.Add( self.gridBib, 0, wx.ALL, border = 4 )
 		
@@ -48,17 +49,25 @@ class Worksheet( wx.Panel ):
 	def onScroll(self, evt): 
 		grid = evt.GetEventObject() 
 		orientation = evt.GetOrientation()
-		if orientation == wx.SB_HORIZONTAL:
-			wx.CallAfter(self.alignScroll) 
+		wx.CallAfter( self.alignScrollHorizontal if orientation == wx.SB_HORIZONTAL else self.alignScrollVertical, grid )
 		evt.Skip() 
 
-	def alignScroll(self): 
+	def alignScrollHorizontal( self, grid ): 
 		try:
 			mainWin = Utils.getMainWin()
 			Utils.AlignHorizontalScroll( self.gridWorksheet, mainWin.sprints.gridSprint )
 		except:
 			pass
 
+	def alignScrollVertical( self, grid ):
+		try:
+			mainWin = Utils.getMainWin()
+			Utils.AlignVerticalScroll( grid, self.gridBib )
+			Utils.AlignVerticalScroll( grid, self.gridWorksheet )
+			Utils.AlignVerticalScroll( grid, mainWin.results.gridResults )
+		except Exception as e:
+			pass
+			
 	def clear( self ):
 		Utils.DeleteAllGridRows( self.gridBib )
 		Utils.DeleteAllGridRows( self.gridWorksheet )

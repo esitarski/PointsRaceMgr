@@ -33,6 +33,7 @@ class Results( wx.Panel ):
 		self.gridResults.AutoSize()
 		
 		self.gridResults.Bind( gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onClick )
+		self.gridResults.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 
 		self.hbs.Add( self.gridResults, 1, wx.GROW|wx.ALL, border = 4 )
 		
@@ -42,6 +43,21 @@ class Results( wx.Panel ):
 	def clear( self ):
 		Utils.DeleteAllGridRows( self.gridResults )
 		
+	def onScroll(self, evt): 
+		grid = evt.GetEventObject() 
+		orientation = evt.GetOrientation()
+		if orientation == wx.SB_VERTICAL:
+			wx.CallAfter(self.alignScroll) 
+		evt.Skip() 
+
+	def alignScroll(self): 
+		try:
+			mainWin = Utils.getMainWin()
+			Utils.AlignVerticalScroll( self.gridResults, mainWin.worksheet.gridBib )
+			Utils.AlignVerticalScroll( self.gridResults, mainWin.worksheet.gridWorksheet )
+		except Exception as e:
+			pass
+
 	def onClick( self, event ):
 		wx.CallAfter( Utils.commitPanes )
 		

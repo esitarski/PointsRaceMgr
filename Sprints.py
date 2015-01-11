@@ -87,9 +87,12 @@ class Sprints( wx.Panel ):
 		for i in xrange( self.gridSprint.GetNumberCols() ):
 			self.gridSprint.SetColSize( i, widestCol )
 			self.gridSprint.SetColFormatNumber( i )
+		self.gridSprint.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 		
 		self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.onCellChange)
 		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED, self.onGridEditorCreated)
+		
+		self.gridPoints.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 		self.gridSprint.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 
 		self.hbs.Add( self.gridSprint, 1, wx.GROW|wx.ALL, border=4 )
@@ -132,19 +135,30 @@ class Sprints( wx.Panel ):
 		
 	def onScroll(self, evt): 
 		grid = evt.GetEventObject()
+		orientation = evt.GetOrientation()
 		if grid == self.gridSprint:
-			orientation = evt.GetOrientation()
 			if orientation == wx.SB_HORIZONTAL:
-				wx.CallAfter(self.alignScroll) 
-			evt.Skip() 
+				wx.CallAfter(self.alignScrollHorizontal, grid)
+		if orientation == wx.SB_VERTICAL:
+			wx.CallAfter( self.alignScrollVertical, grid )
+		evt.Skip() 
 
-	def alignScroll(self): 
+	def alignScrollHorizontal(self, grid): 
 		try:
 			mainWin = Utils.getMainWin()
 			Utils.AlignHorizontalScroll( self.gridSprint, mainWin.worksheet.gridWorksheet )
 		except:
 			pass
 
+	def alignScrollVertical( self, grid ):
+		try:
+			mainWin = Utils.getMainWin()
+			Utils.AlignVerticalScroll( grid, self.gridPoints )
+			Utils.AlignVerticalScroll( grid, self.gridSprint )
+		except Exception as e:
+			print e
+			pass
+			
 	def clear( self ):
 		for r in xrange( self.gridSprint.GetNumberRows() ):
 			for c in xrange( self.gridSprint.GetNumberCols() ):

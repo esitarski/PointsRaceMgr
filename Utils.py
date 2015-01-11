@@ -224,10 +224,15 @@ def getDirName():		return dirName
 def getImageFolder():	return imageFolder
 def getHtmlFolder():	return htmlFolder
 
-def AlignHorizontalScroll( gFrom, gTo ): 
+def AlignHorizontalScroll( gFrom, gTo ):
 	xFrom, yFrom = gFrom.GetViewStart()
 	xTo,   yTo   = gTo.GetViewStart()
 	gTo.Scroll( xFrom, yTo )
+
+def AlignVerticalScroll( gFrom, gTo ):
+	xFrom, yFrom = gFrom.GetViewStart()
+	xTo,   yTo   = gTo.GetViewStart()
+	gTo.Scroll( xTo, yFrom )
 
 #------------------------------------------------------------------------
 PlatformName = platform.system()
