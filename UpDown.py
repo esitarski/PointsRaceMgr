@@ -222,8 +222,8 @@ class UpDown( wx.Panel ):
 			self.gridUpDown.SetCellValue( order-1, BibFinish, unicode(num) )
 		
 		for r, (num, p) in enumerate(race.getExistingPoints()):
-			self.gridUpDown.SetCellValue( r, BibStatus, unicode(num) )
-			self.gridUpDown.SetCellValue( r, ValStatus, unicode(p) )
+			self.gridUpDown.SetCellValue( r, BibExistingPoints, unicode(num) )
+			self.gridUpDown.SetCellValue( r, ValExistingPoints, unicode(p) )
 			
 	def commit( self ):
 		race = Model.race
