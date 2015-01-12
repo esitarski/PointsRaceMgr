@@ -33,6 +33,9 @@ def ToExcelSheet( ws ):
 	ws.write_merge( rowCur, rowCur, colCur + 1, colCur + 3, race.category, xlwt.easyxf(
 															"font: name Arial, bold on;"
 															) );
+	if race.communique:
+		ws.write( rowCur, 9    , u'Communiqu\u00E9:', labelStyle )
+		ws.write( rowCur, 9 + 1, race.communique, unitsStyle )
 		
 	rowCur = 3
 	writeLabelField( ws, rowCur, 2, 'Distance:', race.getDistance(), 'km' )
@@ -166,6 +169,9 @@ def ToExcelSheet( ws ):
 	if race.existingPoints:
 		ws.write( rowCur, colCur, 'Existing Pnts', style )
 		colCur += 1
+	if race.finishOrder:
+		ws.write( rowCur, colCur, 'Finish Order', style )
+		colCur += 1
 	
 	rowCur += 1
 	riderToRow = {}
@@ -196,6 +202,9 @@ def ToExcelSheet( ws ):
 			colCur += 1
 		if race.existingPoints:
 			ws.write( rowCur + r, colCur, rider.existingPoints if rider.existingPoints > 0 else '', styleRegular )
+			colCur += 1
+		if race.finishOrder:
+			ws.write( rowCur + r, colCur, rider.finishOrder if rider.finishOrder < 1000 else '', styleRegular )
 			colCur += 1
 			
 		riderToRow[rider.num] = r

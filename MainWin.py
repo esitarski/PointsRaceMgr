@@ -531,7 +531,7 @@ class MainWin( wx.Frame ):
 			#Utils.MessageOK(self, 'Excel file written to:\n\n   %s' % xlFName, 'Excel Write', iconMask=wx.ICON_INFORMATION)
 		except Exception as e:
 			Utils.MessageOK(self,
-						u'Cannot write "{}" (Error: P{)\n\nCheck if this spreadsheet is open.\nIf so, close it, and try again.'.format(xlFName,e),
+						u'Cannot write "{}"\n\n{}\n\nCheck if this spreadsheet is open.\nIf so, close it, and try again.'.format(xlFName,e),
 						'Excel File Error', iconMask=wx.ICON_ERROR )
 
 	#--------------------------------------------------------------------------------------------
