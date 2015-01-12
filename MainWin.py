@@ -126,6 +126,14 @@ class MainWin( wx.Frame ):
 		self.dateLabel = label
 		self.dateCtrl = ctrl
 		
+		label = wx.StaticText( self, label=u'Communiqu\u00E9:' )
+		self.gbs.Add( label, pos=(0, 9), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
+		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
+		ctrl.Bind(wx.EVT_TEXT_ENTER, self.onChange)
+		self.gbs.Add( ctrl, pos=(0, 10), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
+		self.communiqueLabel = label
+		self.communiqueCtrl = ctrl
+		
 		#--------------------------------------------------------------------------------------------------------------
 		label = wx.StaticText( self, label=u'Category:' )
 		self.gbs.Add( label, pos=(1, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
@@ -751,7 +759,7 @@ class MainWin( wx.Frame ):
 		if not race:
 			return
 
-		for field in [	'name', 'category', 'laps', 'sprintEvery', 'courseLength',
+		for field in [	'name', 'category', 'communique', 'laps', 'sprintEvery', 'courseLength',
 						'doublePointsForLastSprint', 'pointsForLapping', 'snowball']:
 			v = getattr(self, field + 'Ctrl').GetValue()
 			race.setattr( field, v )
@@ -781,7 +789,7 @@ class MainWin( wx.Frame ):
 		self.inRefresh = True
 		race = Model.race
 		
-		for field in [	'name', 'category', 'laps', 'sprintEvery', 'courseLength',
+		for field in [	'name', 'category', 'communique', 'laps', 'sprintEvery', 'courseLength',
 						'doublePointsForLastSprint', 'pointsForLapping', 'snowball']:
 			getattr(self, field + 'Ctrl').SetValue( getattr(race, field) )
 		

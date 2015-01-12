@@ -50,13 +50,13 @@ class Sprints( wx.Panel ):
 		self.gridPoints = gridlib.Grid( self )
 		self.gridPoints.CreateGrid( NumRows, 4 )
 		self.gridPoints.SetColLabelValue( 0, '' )
-		self.gridPoints.SetColLabelValue( 1, "Place" )
+		self.gridPoints.SetColLabelValue( 1, u"Place" )
 		self.gridPoints.SetColLabelAlignment( 1, wx.ALIGN_CENTRE )
-		self.gridPoints.SetColLabelValue( 2, "Points" )
+		self.gridPoints.SetColLabelValue( 2, u"Points" )
 		self.gridPoints.SetColLabelAlignment( 2, wx.ALIGN_CENTRE )
 		self.gridPoints.SetColLabelValue( 3, '' )
 		self.gridPoints.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
-		for i, (place, points) in enumerate((('1st',5),('2nd',3),('3rd',2),('4th',1),('5th',0))):
+		for i, (place, points) in enumerate(((u'1st',5),(u'2nd',3),(u'3rd',2),(u'4th',1),(u'5th',0))):
 			self.gridPoints.SetCellValue( i, 1, place )
 			self.gridPoints.SetCellValue( i, 2, unicode(points) )
 			

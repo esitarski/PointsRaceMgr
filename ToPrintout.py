@@ -143,10 +143,11 @@ def ToPrintout( dc ):
 	yTop = yPix
 	
 	gt = GrowTable()
-	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignCenter )
+	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignRight )
+	gt.set( 0, 1, u'Communiqu\u00E9:{}'.format(race.communique), align=GrowTablel.alignLeft )
 	gt.set( 1, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignCenter )
 	gt.set( 2, 0, race.category, True, align=GrowTable.alignCenter )
-	gt.set( 3, 0, u'{} Laps    {} Sprints    {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignCenter )
+	gt.set( 3, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignCenter )
 	
 	# Draw the title
 	titleHeight = heightFieldPix * 0.15

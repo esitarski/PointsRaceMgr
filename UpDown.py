@@ -159,7 +159,8 @@ class UpDown( wx.Panel ):
 		
 	def onLabelClick( self, evt ):
 		self.gridUpDown.DisableCellEditControl()
-		self.refresh()
+		wx.CallAfter( self.refresh )
+		event.Skip()
 		
 	def onCellChange( self, evt ):
 		r = evt.GetRow()

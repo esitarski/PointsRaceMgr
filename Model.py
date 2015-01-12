@@ -105,17 +105,19 @@ class Race(object):
 		5 : 0
 	}
 		
-	sprintResults = {}		# Results from each sprint.
-	updowns = {}			# Laps up/down
-	finishOrder = {}		# Results from final sprint.
-	riderStatus = {}		# Status (Finisher, DNF, etc.)
+	sprintResults = {}			# Results from each sprint.
+	updowns = {}				# Laps up/down
+	finishOrder = {}			# Results from final sprint.
+	riderStatus = {}			# Status (Finisher, DNF, etc.)
 	existingPoints = {}			# Existing cumalative points.
+	communique = ''				# Communique initialization
 
 	def __init__( self ):
 		self.reset()
 
 	def reset( self ):
 		self.name = '<RaceName>'
+		self.communique = ''
 		self.category = '<Category>'
 		self.sprintEvery = 10
 		self.courseLength = 250.0
