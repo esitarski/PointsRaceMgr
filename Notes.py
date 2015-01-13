@@ -14,12 +14,39 @@ class Notes( wx.Panel ):
 		race = Model.race
 		if not race:
 			return
+		self.notes.SetValue( race.notes )
 			
-	def commis( self ):
+	def commit( self ):
 		race = Model.race
 		if not race:
 			return
-		race.notes = self.notes.GetValue()
+		notes = self.notes.GetValue()
+		if notes != race.notes:
+			race.notes = notes
+			race.setChanged()
+		
+class NotesDialog( wx.Dialog ):
+	def __init__( self, parent, id = wx.ID_ANY ):
+		super(NotesDialog, self).__init__(parent, id, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		vs = wx.BoxSizer( wx.VERTICAL )
+		self.notesPanel = Notes( self )
+		vs.Add( self.notesPanel, 1, flag=wx.EXPAND )
+		hs = wx.BoxSizer( wx.HORIZONTAL )
+		hs.AddStretchSpacer()
+		self.okButton = wx.Button( self, id=wx.ID_OK )
+		hs.Add( self.okButton, flag=wx.ALL, border=4 )
+		vs.Add( hs, flag=wx.EXPAND )
+		self.SetSizer( vs )
+	
+	def onOK( self, event ):
+		self.commit()
+		wx.CallAfter( self.Show, False )
+	
+	def refresh( self ):
+		self.notesPanel.refresh()
+		
+	def commit( self ):
+		self.notesPanel.commit()
 
 if __name__ == '__main__':
 	app = wx.App( False )

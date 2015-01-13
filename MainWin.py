@@ -21,6 +21,7 @@ from Worksheet import Worksheet
 from Results import Results
 from Printing import PointsMgrPrintout
 from ToExcelSheet import ToExcelSheet
+from Notes import NotesDialog
 
 from Version import AppVerName
 
@@ -50,6 +51,8 @@ class MainWin( wx.Frame ):
 		self.printData.SetPaperId(wx.PAPER_LETTER)
 		self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 		# self.printData.SetOrientation(wx.LANDSCAPE)
+		
+		self.notesDialog = NotesDialog( self )
 
 		Utils.setMainWin( self )
 		
@@ -88,6 +91,12 @@ class MainWin( wx.Frame ):
 		self.fileMenu.Append( idCur , "&Export to Excel...\tCtrl+E", "Export as an Excel Spreadsheet" )
 		self.Bind(wx.EVT_MENU, self.menuExportToExcel, id=idCur )
 
+		self.fileMenu.AppendSeparator()
+		idCur = wx.NewId()
+		idNotes = idCur
+		self.fileMenu.Append( idCur, '&Notes...\tCtrl+N', "Notes")
+		self.Bind(wx.EVT_MENU, self.menuNotes, id=idCur )
+		
 		self.fileMenu.AppendSeparator()
 		
 		recent = wx.Menu()
@@ -498,6 +507,10 @@ class MainWin( wx.Frame ):
 		self.updateDependentFields()
 		self.refreshResults()
 	
+	def menuNotes( self, event ):
+		self.notesDialog.refresh()
+		self.notesDialog.Show( True )
+	
 	def menuExportToExcel( self, event ):
 		self.commit()
 		self.refresh()
@@ -775,7 +788,8 @@ class MainWin( wx.Frame ):
 			dt = getattr(self, field + 'Ctrl').GetValue()
 			v = datetime.date( dt.GetYear(), dt.GetMonth() + 1, dt.GetDay() )	# Adjust for 0-based month.
 			race.setattr( field, v )
-
+			
+		self.notesDialog.commit()
 		self.updateDependentFields()
 	
 	def commitPanes( self ):
@@ -787,6 +801,7 @@ class MainWin( wx.Frame ):
 	def refreshResults( self ):
 		self.worksheet.refresh()
 		self.results.refresh()
+		self.notesDialog.refresh()
 	
 	def refresh( self, pane = None ):
 		self.inRefresh = True
