@@ -129,7 +129,7 @@ def ToPrintout( dc ):
 	(widthPix, heightPix) = dc.GetSizeTuple()
 	
 	# Get a reasonable border.
-	borderPix = max(widthPix, heightPix) / 20
+	borderPix = max(widthPix, heightPix) / 25
 	
 	widthFieldPix = widthPix - borderPix * 2
 	heightFieldPix = heightPix - borderPix * 2
@@ -235,24 +235,30 @@ def ToPrintout( dc ):
 	
 	notesHeight = 0
 	lines = race.notes.split(u'\n')
+	while lines and not lines[-1].strip():
+		del lines[-1]
+	
 	if lines:
 		gtNotes = GrowTable()
-		minLinesPerCol = 10
+		minLinesPerCol = 8
 		if len(lines) > minLinesPerCol*3:
-			rowHeight = int(math.ceil(len(lines)/3.0))
+			numRows = int(math.ceil(len(lines)/3.0))
 		elif len(lines) > minLinesPerCol:
-			rowHeight = int(math.ceil(len(lines)/2.0))
+			numRows = int(math.ceil(len(lines)/2.0))
 		else:
-			rowHeight = len(lines)
+			numRows = len(lines)
 		rowCur, colCur = 0, 0
-		for line in lines:
-			gtNotes.set( rowCur, colCur, line, align=GrowTable.alignLeft )
+		for i, line in enumerate(lines):
+			gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), align=GrowTable.alignRight )
+			gtNotes.set( rowCur, colCur*2+1, u'{}    '.format(line.strip()), align=GrowTable.alignLeft )
 			rowCur += 1
-			if rowCur == rowHeight:
+			if rowCur == numRows:
 				rowCur = 0
 				colCur += 1
-		notesHeight = (heightPix // 65) * rowHeight
+		lineHeight = heightPix // 65
+		notesHeight = lineHeight * numRows
 		gtNotes.drawToFitDC( dc, xLeft, heightPix - borderPix - notesHeight, widthFieldPix, notesHeight )
+		notesHeight += lineHeight
 	
-	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - titleHeight - notesHeight )
+	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - yTop - notesHeight )
 
