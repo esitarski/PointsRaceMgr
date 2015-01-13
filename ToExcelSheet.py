@@ -155,11 +155,12 @@ def ToExcelSheet( ws ):
 		"borders: top thin, bottom thin, left thin, right thin;"
     )
 	for s in xrange(0, maxSprints):
-		ws.write( rowCur, s + 4, 'Sp%d' % (s + 1), style )
+		ws.write( rowCur, s + 4, 'Sp{}'.format(s + 1), style )
 	
 	colCur = maxSprints + 4
-	ws.write( rowCur, colCur, 'Laps Up', style )
-	colCur += 1
+	if not race.pointsForLapping:
+		ws.write( rowCur, colCur, 'Laps +/-', style )
+		colCur += 1
 	if race.pointsForLapping:
 		ws.write( rowCur, colCur, 'Lap Pnts', style )
 		colCur += 1
@@ -192,8 +193,9 @@ def ToExcelSheet( ws ):
 		ws.write( rowCur + r, 3, rider.pointsTotal, styleTotal )
 		
 		colCur = maxSprints + 4
-		ws.write( rowCur + r, colCur, rider.updown if rider.updown != 0 else '', styleRegular )
-		colCur += 1
+		if not race.pointsForLapping:
+			ws.write( rowCur + r, colCur, rider.updown if rider.updown != 0 else '', styleRegular )
+			colCur += 1
 		if race.pointsForLapping:
 			ws.write( rowCur + r, colCur, rider.updown * race.pointsForLapping if rider.updown != 0 else '', styleRegular )
 			colCur += 1

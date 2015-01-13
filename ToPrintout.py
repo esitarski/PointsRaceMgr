@@ -143,7 +143,7 @@ def ToPrintout( dc ):
 	yTop = yPix
 	
 	gt = GrowTable()
-	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignRight )
+	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignCenter )
 	gt.set( 1, 0, race.category, True, align=GrowTable.alignCenter )
 	gt.set( 2, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignCenter )
 	if race.communique:

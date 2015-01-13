@@ -118,21 +118,24 @@ class MainWin( wx.Frame ):
 		self.nameLabel = label
 		self.nameCtrl = ctrl
 		
+		hs = wx.BoxSizer( wx.HORIZONTAL )
 		label = wx.StaticText( self, label=u'Date:' )
-		self.gbs.Add( label, pos=(0, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
+		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
 		ctrl = wx.DatePickerCtrl( self, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(132,-1) )
 		ctrl.Bind( wx.EVT_DATE_CHANGED, self.onChange )
-		self.gbs.Add( ctrl, pos=(0, 7), span=(1, 2), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
+		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 		self.dateLabel = label
 		self.dateCtrl = ctrl
 		
 		label = wx.StaticText( self, label=u'Communiqu\u00E9:' )
-		self.gbs.Add( label, pos=(0, 9), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
+		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
 		ctrl.Bind(wx.EVT_TEXT_ENTER, self.onChange)
-		self.gbs.Add( ctrl, pos=(0, 10), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
+		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 		self.communiqueLabel = label
 		self.communiqueCtrl = ctrl
+		
+		self.gbs.Add( hs, pos=(0, 6), span=(1, 3) )
 		
 		#--------------------------------------------------------------------------------------------------------------
 		label = wx.StaticText( self, label=u'Category:' )
@@ -233,6 +236,7 @@ class MainWin( wx.Frame ):
 		self.doublePointsForLastSprintCtrl = ctrl
 		
 		branding = wx.HyperlinkCtrl( self, id=wx.ID_ANY, label=u"Powered by CrossMgr", url=u"http://www.sites.google.com/site/crossmgrsoftware/" )
+		branding.SetBackgroundColour( wx.WHITE )
 		self.gbs.Add( branding, pos=(3, 9), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 
 		#-----------------------------------------------------------------------------------------------------------
@@ -240,7 +244,6 @@ class MainWin( wx.Frame ):
 		
 		# Manage the display with a 4-way splitter.
 		sty = wx.SP_LIVE_UPDATE | wx.SP_3DBORDER
-		#sty = 0
 		self.splitter = FWS.FourWaySplitter( self, agwStyle=sty )
 		self.splitter.SetHSplit( 5800 )
 		self.splitter.SetVSplit( 4000 )
