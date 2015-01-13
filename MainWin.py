@@ -363,7 +363,8 @@ class MainWin( wx.Frame ):
 
 		pfrm.Initialize()
 		pfrm.SetPosition(self.GetPosition())
-		pfrm.SetSize(self.GetSize())
+		screenWidth, screenHeight = wx.GetDisplaySize()
+		pfrm.SetSize((screenWidth/2, screenHeight * 0.9))
 		pfrm.Show(True)
 
 	def menuPrint( self, event ):
