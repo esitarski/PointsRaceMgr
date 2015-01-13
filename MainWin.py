@@ -326,6 +326,15 @@ class MainWin( wx.Frame ):
 		self.menuConfigurePointsRace()
 		Model.race.setChanged( False )
 		
+		wx.CallAfter( self.showNotes )
+	
+	def showNotes( self ):
+		self.notesDialog.refresh()
+		width, height = self.notesDialog.GetSizeTuple()
+		screenWidth, screenHeight = wx.GetDisplaySize()
+		self.notesDialog.MoveXY( screenWidth-width, screenHeight-height-40 )
+		self.notesDialog.Show( True )
+	
 	def menuPageSetup( self, event ):
 		psdd = wx.PageSetupDialogData(self.printData)
 		psdd.CalculatePaperSizeFromId()
@@ -508,8 +517,7 @@ class MainWin( wx.Frame ):
 		self.refreshResults()
 	
 	def menuNotes( self, event ):
-		self.notesDialog.refresh()
-		self.notesDialog.Show( True )
+		self.showNotes()
 	
 	def menuExportToExcel( self, event ):
 		self.commit()

@@ -1,4 +1,5 @@
 import wx
+import math
 import Utils
 import Model
 
@@ -6,7 +7,7 @@ class GrowTable( object ):
 	alignLeft = 1<<0
 	alignCentre = alignCenter = 1<<1
 	alignRight = 1<<2
-
+	
 	def __init__( self ):
 		self.table = []
 		self.colWidths = []
@@ -232,5 +233,26 @@ def ToPrintout( dc ):
 	gt.vLine( 3, 0, gt.getNumberRows(), True )
 	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
 	
-	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - titleHeight )
+	notesHeight = 0
+	lines = race.notes.split(u'\n')
+	if lines:
+		gtNotes = GrowTable()
+		minLinesPerCol = 10
+		if len(lines) > minLinesPerCol*3:
+			rowHeight = int(math.ceil(len(lines)/3.0))
+		elif len(lines) > minLinesPerCol:
+			rowHeight = int(math.ceil(len(lines)/2.0))
+		else:
+			rowHeight = len(lines)
+		rowCur, colCur = 0, 0
+		for line in lines:
+			gtNotes.set( rowCur, colCur, line, align=GrowTable.alignLeft )
+			rowCur += 1
+			if rowCur == rowHeight:
+				rowCur = 0
+				colCur += 1
+		notesHeight = (heightPix // 65) * rowHeight
+		gtNotes.drawToFitDC( dc, xLeft, heightPix - borderPix - notesHeight, widthFieldPix, notesHeight )
+	
+	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - titleHeight - notesHeight )
 

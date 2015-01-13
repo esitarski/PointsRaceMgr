@@ -220,6 +220,10 @@ def ToExcelSheet( ws ):
 		for r, rider in enumerate(riders):
 			ws.write( rowCur + r, sprint + 3, sprintNumPoints.get((sprint, rider.num), ''), styleRegular )
 			
+	rowCur += len(riders) + 2
+	for line in race.notes.split(u'\n'):
+		ws.write( rowCur, 0, line, styleRegular )
+		rowCur += 1
 
 class PrintSheet( object ):
 	def __init__( self ):
