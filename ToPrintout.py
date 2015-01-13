@@ -234,9 +234,7 @@ def ToPrintout( dc ):
 	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
 	
 	notesHeight = 0
-	lines = race.notes.split(u'\n')
-	while lines and not lines[-1].strip():
-		del lines[-1]
+	lines = [line for line in race.notes.split(u'\n') if line.strip()]
 	
 	if lines:
 		gtNotes = GrowTable()
