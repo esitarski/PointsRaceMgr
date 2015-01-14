@@ -1,5 +1,7 @@
 import wx
+import os
 import math
+import datetime
 import Utils
 import Model
 
@@ -8,12 +10,19 @@ class GrowTable( object ):
 	alignCentre = alignCenter = 1<<1
 	alignRight = 1<<2
 	
-	def __init__( self ):
+	alignTop = 1<<3
+	alignBottom = 1<<4
+	
+	def __init__( self, alignHorizontal=alignCentre, alignVertical=alignCentre ):
 		self.table = []
 		self.colWidths = []
 		self.rowHeights = []
 		self.vLines = []
 		self.hLines = []
+		self.alignHorizontal = alignHorizontal
+		self.alignVertical = alignVertical
+		self.width = None
+		self.height = None
 		
 	def set( self, row, col, value, highlight=False, align=alignRight ):
 		self.table += [[] for i in xrange(max(0, row+1 - len(self.table)))]
@@ -56,7 +65,7 @@ class GrowTable( object ):
 		return sum( self.colWidths ), sum( self.rowHeights )
 	
 	def drawTextToFit( self, dc, text, x, y, width, height, align, font=None ):
-		if font:
+		if font and font != dc.GetFont():
 			dc.SetFont( font )
 		fontheight = dc.GetFont().GetPixelSize()[1]
 		cellBorder = self.getCellBorder( fontheight )
@@ -77,6 +86,9 @@ class GrowTable( object ):
 			yTop += lineHeight
 	
 	def drawToFitDC( self, dc, x, y, width, height ):
+		self.penThin = None
+		self.penThick = None
+		
 		fontSizeLeft, fontSizeRight = 2, 512
 		for i in xrange(20):
 			fontSize = (fontSizeLeft + fontSizeRight) // 2
@@ -90,9 +102,19 @@ class GrowTable( object ):
 		
 		fontSize = fontSizeLeft
 		tWidth, tHeight = self.getSize( dc, fontSize )
+		self.width, self.height = tWidth, tHeight
 		
-		x += (width - tWidth) // 2
-		y += (height - tHeight) // 2
+		# Align the entire table in the space.
+		if self.alignHorizontal == self.alignCentre:
+			x += (width - tWidth) // 2
+		elif self.alignHorizontal == self.alignRight:
+			x += width - tWidth
+
+		if self.alignVertical == self.alignCentre:
+			y += (height - tHeight) // 2
+		elif self.alignVertical == self.alignBottom:
+			y += height - tHeight
+			
 		self.x = x
 		self.y = y
 
@@ -116,9 +138,15 @@ class GrowTable( object ):
 			dc.DrawLine( x + sum(self.colWidths[:colStart]), yLine, x + sum(self.colWidths[:colEnd]), yLine )
 			
 	def setPen( self, dc, thick = False ):
-		fontheight = dc.GetFont().GetPixelSize()[1]
-		cellBorder = self.getCellBorder( fontheight )
-		dc.SetPen( wx.Pen(wx.BLACK, cellBorder / 2 if thick else 1 ) )
+		if not self.penThin:
+			self.penThin = wx.Pen( wx.BLACK, 1, wx.SOLID )
+			fontheight = dc.GetFont().GetPixelSize()[1]
+			cellBorder = self.getCellBorder( fontheight )
+			width = cellBorder / 2
+			self.penThick = wx.Pen( wx.BLACK, width, wx.SOLID )
+		newPen = self.penThick if thick else self.penThin
+		if newPen != dc.GetPen():
+			dc.SetPen( newPen )
 
 def ToPrintout( dc ):
 	race = Model.race
@@ -137,27 +165,36 @@ def ToPrintout( dc ):
 	xPix = borderPix
 	yPix = borderPix
 
-	# Race Name
-	# Category
-	# Date, Distance, Number of Laps
+	# Race Information
 	xLeft = xPix
 	yTop = yPix
 	
-	gt = GrowTable()
-	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignCenter )
-	gt.set( 1, 0, race.category, True, align=GrowTable.alignCenter )
-	gt.set( 2, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignCenter )
+	gt = GrowTable(GrowTable.alignLeft)
+	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignLeft )
+	gt.set( 1, 0, race.category, True, align=GrowTable.alignLeft )
+	gt.set( 2, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignLeft )
 	if race.communique:
-		gt.set( 3, 0, u'Communiqu\u00E9: {}'.format(race.communique), highlight=True, align=GrowTable.alignCenter )
-	gt.set( 4, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignCenter )
+		gt.set( 3, 0, u'Communiqu\u00E9: {}'.format(race.communique), highlight=True, align=GrowTable.alignLeft )
+	gt.set( 4, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignLeft )
+	gt.set( 3 if race.communique else 4, 1, u'Approved by:________', align=GrowTable.alignLeft )
 	
 	# Draw the title
 	titleHeight = heightFieldPix * 0.15
-	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, titleHeight )
-	yTop += titleHeight * 1.1
+	
+	image = wx.Image( os.path.join(Utils.getImageFolder(), 'Sprint1.png'), wx.BITMAP_TYPE_PNG )
+	imageWidth, imageHeight = image.GetWidth(), image.GetHeight()
+	imageScale = float(titleHeight) / float(imageHeight)
+	newImageWidth, newImageHeight = int(imageWidth * imageScale), int(imageHeight * imageScale)
+	image.Rescale( newImageWidth, newImageHeight, wx.IMAGE_QUALITY_HIGH )
+	dc.DrawBitmap( wx.BitmapFromImage(image), xLeft, yTop )
+	del image
+	newImageWidth += titleHeight / 10
+	
+	gt.drawToFitDC( dc, xLeft + newImageWidth, yTop, widthFieldPix - newImageWidth, titleHeight )
+	yTop += titleHeight * 1.20
 	
 	# Collect all the sprint and worksheet results information.
-	gt = GrowTable()
+	gt = GrowTable(GrowTable.alignCenter, GrowTable.alignTop)
 	
 	maxSprints = race.laps / race.sprintEvery
 	
@@ -233,18 +270,16 @@ def ToPrintout( dc ):
 	gt.vLine( 3, 0, gt.getNumberRows(), True )
 	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
 	
+	# Format the notes assuming a minimum readable size.
 	notesHeight = 0
-	lines = [line for line in race.notes.split(u'\n') if line.strip()]
+	gtNotes = None
 	
+	lines = [line for line in race.notes.split(u'\n') if line.strip()]
 	if lines:
 		gtNotes = GrowTable()
-		minLinesPerCol = 8
-		if len(lines) > minLinesPerCol*3:
-			numRows = int(math.ceil(len(lines)/3.0))
-		elif len(lines) > minLinesPerCol:
-			numRows = int(math.ceil(len(lines)/2.0))
-		else:
-			numRows = len(lines)
+		maxLinesPerCol = 10
+		numCols = int(math.ceil(len(lines) / float(maxLinesPerCol)))
+		numRows = int(math.ceil(len(lines) / float(numCols)))
 		rowCur, colCur = 0, 0
 		for i, line in enumerate(lines):
 			gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), align=GrowTable.alignRight )
@@ -254,9 +289,23 @@ def ToPrintout( dc ):
 				rowCur = 0
 				colCur += 1
 		lineHeight = heightPix // 65
-		notesHeight = lineHeight * numRows
-		gtNotes.drawToFitDC( dc, xLeft, heightPix - borderPix - notesHeight, widthFieldPix, notesHeight )
-		notesHeight += lineHeight
+		notesHeight = (lineHeight+1) * numRows
 	
 	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - yTop - notesHeight )
+	
+	# Use any remaining space on the page for the notes.
+	if gtNotes:
+		notesTop = yTop + gt.height + lineHeight
+		gtNotes.drawToFitDC( dc, xLeft, notesTop, widthFieldPix, heightPix - borderPix - notesTop )
+	
+	# Add a timestamp footer.
+	fontSize = heightPix//85
+	font = wx.FontFromPixelSize( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
+	dc.SetFont( font )
+	text = u'Generated {}'.format( datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S') )
+	dc.DrawText( text, widthPix - borderPix - dc.GetTextExtent(text)[0], heightPix - borderPix + fontSize/4 )
+	
+	# Add branding
+	text = u'Powered by PointsRaceMgr'
+	dc.DrawText( text, borderPix, heightPix - borderPix + fontSize/4 )
 

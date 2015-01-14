@@ -10,6 +10,7 @@ import datetime
 import xlwt
 import webbrowser
 import cPickle as pickle
+import subprocess
 from optparse import OptionParser
 
 import Utils
@@ -21,6 +22,7 @@ from Worksheet import Worksheet
 from Results import Results
 from Printing import PointsMgrPrintout
 from ToExcelSheet import ToExcelSheet
+from ToPrintout import ToPrintout
 from Notes import NotesDialog
 
 from Version import AppVerName
@@ -84,8 +86,15 @@ class MainWin( wx.Frame ):
 		self.fileMenu.Append( wx.ID_PRINT , "&Print...\tCtrl+P", "Print the current page to a printer" )
 		self.Bind(wx.EVT_MENU, self.menuPrint, id=wx.ID_PRINT )
 		
+		'''
 		self.fileMenu.AppendSeparator()
 		
+		idCur = wx.NewId()
+		idExportToExcel = idCur
+		self.fileMenu.Append( idCur , "&Export to PDF...", "Export as a PDF file" )
+		self.Bind(wx.EVT_MENU, self.menuExportToPDF, id=idCur )
+		'''
+
 		idCur = wx.NewId()
 		idExportToExcel = idCur
 		self.fileMenu.Append( idCur , "&Export to Excel...\tCtrl+E", "Export as an Excel Spreadsheet" )
@@ -519,6 +528,42 @@ class MainWin( wx.Frame ):
 	
 	def menuNotes( self, event ):
 		self.showNotes()
+	
+	def menuExportToPDF( self, event ):
+		self.commit()
+		self.refresh()
+		if not self.fileName:
+			if not Utils.MessageOKCancel( self, u'You must save first.\n\nSave now?', u'Save Now'):
+				return
+			if not self.menuSaveAs( event ):
+				return
+		
+		epsFName = os.path.splitext(self.fileName)[0] + '.eps'
+		dlg = wx.DirDialog( self, u'Folder to write "{}"'.format(os.path.basename(epsFName)),
+						style=wx.DD_DEFAULT_STYLE, defaultPath=os.path.dirname(epsFName) )
+		ret = dlg.ShowModal()
+		dName = dlg.GetPath()
+		dlg.Destroy()
+		if ret != wx.ID_OK:
+			return
+
+		data = wx.PrintData()
+		data.SetPaperId( wx.PAPER_LETTER )
+		data.SetFilename( epsFName )
+		data.SetPrintMode( wx.PRINT_MODE_FILE )
+		
+		dc = wx.PostScriptDC( data )
+		dc.StartDoc("")
+		ToPrintout( dc )
+		dc.EndDoc()
+		
+		pdfFName = os.path.splitext(epsFName)[0] + '.pdf'		
+		subprocess.call( ['ps2pdf', epsFName, pdfFName] )
+		
+		try:
+			webbrowser.open( pdfFName )
+		except:
+			pass
 	
 	def menuExportToExcel( self, event ):
 		self.commit()
