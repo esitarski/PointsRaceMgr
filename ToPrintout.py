@@ -6,29 +6,74 @@ import Utils
 import Model
 
 class GrowTable( object ):
-	alignLeft = 1<<0
-	alignCentre = alignCenter = 1<<1
-	alignRight = 1<<2
-	
-	alignTop = 1<<3
-	alignBottom = 1<<4
+	bold, alignLeft, alignCentre, alignRight, alignTop, alignMiddle, alignBottom = [1<<i for i in xrange(7)]
+	alignCenter = alignCentre
 	
 	def __init__( self, alignHorizontal=alignCentre, alignVertical=alignCentre, cellBorder=True ):
+		self.alignHorizontal = alignHorizontal
+		self.alignVertical = alignVertical
+		self.cellBorder = cellBorder
+		self.clear()
+	
+	def clear( self ):
 		self.table = []
 		self.colWidths = []
 		self.rowHeights = []
 		self.vLines = []
 		self.hLines = []
-		self.alignHorizontal = alignHorizontal
-		self.alignVertical = alignVertical
-		self.cellBorder = cellBorder
 		self.width = None
 		self.height = None
+	
+	def fromGrid( grid, horizontalGridlines=True, verticalGridlines=False ):
+		self.clear()
+		mapHorizontal = {
+			wx.ALIGN_LEFT: self.alignLeft,
+			wx.ALIGN_RIGHT: self.alignRight,
+			wx.ALIGN_CENTER: self.alignCenter,
+		}
+		mapVertical = {
+			wx.ALIGN_TOP: self.alignTop,
+			wx.ALIGN_BOTTOM: self.alignBottom,
+			wx.ALIGN_CENTER: self.alignMiddle,
+		}
+		rowLabel = 0
+		colLabel = 0
+		if grid.GetRowLabelSize() > 0:
+			colLabel = 1
+		if grid.GetColLabelSize() > 0:
+			for c in xrange(grid.GetNumberCols()):
+				self.set( 0, c+colLabel, grid.GetColLabelValue(), self.bold )
+			rowLabel = 1
+		if colLabel > 0:
+			for r in xrange(grid.GetNumberRows()):
+				self.set( r+rowLabel, 0, grid.GetRowLabelValue(), self.bold )
 		
-	def set( self, row, col, value, highlight=False, align=alignRight ):
+		for r in xrange(grid.GetNumberRows()):
+			for c in xrange(grid.GetNumberCols()):
+				v = grid.GetCellValue( r+1, c )
+				if not v:
+					continue
+				aHoriz, aVert = grid.GetCellAlignment(r, c)
+				self.set( r+rowLabel, c+colLabel, v, mapHorizontal.get(aHoriz, self.alignLeft) | mapVertical(aVert, self.alignTop) )
+			
+		numCols, numRow = self.getNumberCols(), self.getNumberRows()
+		if horizontalGridlines:
+			self.hLine( 0, 0, numCols )
+			if rowLabel > 0:
+				self.hLine( 1, 0, numCols, True )
+			for r in xrange(rowLabel+1, grid.GetNumberRows()+1):
+				self.hLine( r+rowLabel, 0, numCols )
+		if verticalGridlines:
+			self.vLine( 0, 0, numRows )
+			if colLabel > 0:
+				self.hLine( 1, 0, numRows, True )
+			for c in xrange(colLabel+1, grid.GetNumberCols()+1):
+				self.hLine( c+colLabel, 0, numRows )
+		
+	def set( self, row, col, value, attr=alignRight|alignTop ):
 		self.table += [[] for i in xrange(max(0, row+1 - len(self.table)))]
-		self.table[row] += [None for i in xrange(max(0, col+1 - len(self.table[row])))]
-		self.table[row][col] = (value, highlight, align)
+		self.table[row] += [(u'', 0) for i in xrange(max(0, col+1 - len(self.table[row])))]
+		self.table[row][col] = (value, attr)
 		return row, col
 		
 	def vLine( self, col, rowStart, rowEnd, thick = False ):
@@ -58,33 +103,38 @@ class GrowTable( object ):
 		self.rowHeights = [0] * self.getNumberRows()
 		height = 0
 		for row, r in enumerate(self.table):
-			for col, (value, highlight, align) in enumerate(r):
-				vWidth, vHeight, lineHeight = dc.GetMultiLineTextExtent(value, fontBold if highlight else font)
+			for col, (value, attr) in enumerate(r):
+				vWidth, vHeight, lineHeight = dc.GetMultiLineTextExtent(value, fontBold if attr&self.bold else font)
 				vWidth += cellBorder * 2
 				vHeight += cellBorder * 2
 				self.colWidths[col] = max(self.colWidths[col], vWidth)
 				self.rowHeights[row] = max(self.rowHeights[row], vHeight)
 		return sum( self.colWidths ), sum( self.rowHeights )
 	
-	def drawTextToFit( self, dc, text, x, y, width, height, align, font=None ):
+	def drawTextToFit( self, dc, text, x, y, width, height, attr, font=None ):
 		if font and font != dc.GetFont():
 			dc.SetFont( font )
 		fontheight = dc.GetFont().GetPixelSize()[1]
 		cellBorder = self.getCellBorder( fontheight )
 		tWidth, tHeight, lineHeight = dc.GetMultiLineTextExtent(text, dc.GetFont())
-		lines = text.split( '\n' )
-		xBorder, yBorder = (width - tWidth) / 2, height - cellBorder - lineHeight*len(lines)
 		xLeft = x + cellBorder
 		xRight = x + width - cellBorder
-		yTop = y + yBorder
+		
+		if attr&self.alignMiddle:
+			yTop = y + (height - tHeight) // 2
+		elif attr&self.alignBottom:
+			yTop = y + height - cellBorder - tHeight
+		else:
+			yTop = y + cellBorder
+		
+		lines = text.split( '\n' )
 		for line in lines:
-			if align == self.alignRight:
+			if attr & self.alignRight:
 				dc.DrawText( line, xRight - dc.GetTextExtent(line)[0], yTop )
-			elif align == self.alignLeft:
+			elif attr & self.alignLeft:
 				dc.DrawText( line, xLeft, yTop )
 			else:
 				dc.DrawText( line, x + (width - dc.GetTextExtent(line)[0]) / 2, yTop )
-				
 			yTop += lineHeight
 	
 	def drawToFitDC( self, dc, x, y, width, height ):
@@ -124,20 +174,33 @@ class GrowTable( object ):
 		yTop = y
 		for row, r in enumerate(self.table):
 			xLeft = x
-			for col, (value, highlight, align) in enumerate(r):
-				self.drawTextToFit( dc, value, xLeft, yTop, self.colWidths[col], self.rowHeights[row], align, fontBold if highlight else font )
+			for col, (value, attr) in enumerate(r):
+				self.drawTextToFit( dc, value, xLeft, yTop, self.colWidths[col], self.rowHeights[row], attr, fontBold if attr&self.bold else font )
 				xLeft += self.colWidths[col]
 			yTop += self.rowHeights[row]
-			
+		
+		# Draw the horizontal and vertical lines.
+		rowHeightSum = [y]
+		for h in self.rowHeights:
+			rowHeightSum.append( rowHeightSum[-1] + h )
+		
+		colWidthSum = [x]
+		for w in self.colWidths:
+			colWidthSum.append( colWidthSum[-1] + w )
+		
+		curThick = None
 		for col, rowStart, rowEnd, thick in self.vLines:
-			xLine = x + sum(self.colWidths[:col])
-			self.setPen( dc, thick )
-			dc.DrawLine( xLine, y + sum(self.rowHeights[:rowStart]), xLine, y + sum(self.rowHeights[:rowEnd]) )
+			if curThick != thick:
+				self.setPen( dc, thick )
+				curThick = thick
+			dc.DrawLine( colWidthSum[col], rowHeightSum[rowStart], colWidthSum[col], rowHeightSum[rowEnd] )
 	
+		curThick = None
 		for row, colStart, colEnd, thick in self.hLines:
-			yLine = self.y + sum(self.rowHeights[:row])
-			self.setPen( dc, thick )
-			dc.DrawLine( x + sum(self.colWidths[:colStart]), yLine, x + sum(self.colWidths[:colEnd]), yLine )
+			if curThick != thick:
+				self.setPen( dc, thick )
+				curThick = thick
+			dc.DrawLine( colWidthSum[colStart], rowHeightSum[row], colWidthSum[colEnd], rowHeightSum[row] )
 			
 	def setPen( self, dc, thick = False ):
 		if not self.penThin:
@@ -172,15 +235,16 @@ def ToPrintout( dc ):
 	yTop = yPix
 	
 	gt = GrowTable(alignHorizontal=GrowTable.alignLeft, alignVertical=GrowTable.alignTop, cellBorder=False)
+	titleAttr = GrowTable.bold | GrowTable.alignLeft
 	rowCur = 0
-	rowCur = gt.set( rowCur, 0, race.name, highlight=True, align=GrowTable.alignLeft )[0] + 1
-	rowCur = gt.set( rowCur, 0, race.category, True, align=GrowTable.alignLeft )[0] + 1
-	rowCur = gt.set( rowCur, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignLeft )[0] + 1
-	rowCur = gt.set( rowCur, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignLeft )[0] + 1
+	rowCur = gt.set( rowCur, 0, race.name, titleAttr )[0] + 1
+	rowCur = gt.set( rowCur, 0, race.category, titleAttr )[0] + 1
+	rowCur = gt.set( rowCur, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), titleAttr )[0] + 1
+	rowCur = gt.set( rowCur, 0, race.date.strftime('%Y-%m-%d'), titleAttr )[0] + 1
 	
 	if race.communique:
-		rowCur = gt.set( rowCur, 0, u'Communiqu\u00E9: {}'.format(race.communique), align=GrowTable.alignRight )[0] + 1
-	rowCur = gt.set( rowCur, 0, u'Approved by:________', align=GrowTable.alignRight )[0] + 1
+		rowCur = gt.set( rowCur, 0, u'Communiqu\u00E9: {}'.format(race.communique), GrowTable.alignRight )[0] + 1
+	rowCur = gt.set( rowCur, 0, u'Approved by:________', GrowTable.alignRight )[0] + 1
 	
 	# Draw the title
 	titleHeight = heightFieldPix * 0.15
@@ -213,7 +277,7 @@ def ToPrintout( dc ):
 	colCur = 0
 	for grid in [gridPoints, gridSprint]:
 		for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols() - colAdjust.get(grid,0)):
-			gt.set( rowCur, colCur, grid.GetColLabelValue(col), True )
+			gt.set( rowCur, colCur, grid.GetColLabelValue(col), GrowTable.bold )
 			colCur += 1
 	rowCur += 1
 	gt.hLine( rowCur-1, 1, gt.getNumberCols(), False )
@@ -247,10 +311,11 @@ def ToPrintout( dc ):
 	
 	rowWorksheet = rowCur
 	
+	titleAttr = GrowTable.bold | GrowTable.alignCentre
 	colCur = 0
 	for grid in [gridBib, gridWorksheet, gridResults]:
 		for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
-			gt.set( rowCur, colCur, grid.GetColLabelValue(col), highlight=True, align=GrowTable.alignCenter )
+			gt.set( rowCur, colCur, grid.GetColLabelValue(col), titleAttr )
 			colCur += 1
 	rowCur += 1
 	
@@ -286,8 +351,8 @@ def ToPrintout( dc ):
 		numRows = int(math.ceil(len(lines) / float(numCols)))
 		rowCur, colCur = 0, 0
 		for i, line in enumerate(lines):
-			gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), align=GrowTable.alignRight )
-			gtNotes.set( rowCur, colCur*2+1, u'{}    '.format(line.strip()), align=GrowTable.alignLeft )
+			gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), GrowTable.alignRight )
+			gtNotes.set( rowCur, colCur*2+1, u'{}    '.format(line.strip()), GrowTable.alignLeft )
 			rowCur += 1
 			if rowCur == numRows:
 				rowCur = 0
@@ -307,9 +372,10 @@ def ToPrintout( dc ):
 	font = wx.FontFromPixelSize( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
 	dc.SetFont( font )
 	text = u'Generated {}'.format( datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S') )
-	dc.DrawText( text, widthPix - borderPix - dc.GetTextExtent(text)[0], heightPix - borderPix + fontSize/4 )
+	footerTop = heightPix - borderPix + fontSize/2
+	dc.DrawText( text, widthPix - borderPix - dc.GetTextExtent(text)[0], footerTop )
 	
 	# Add branding
 	text = u'Powered by PointsRaceMgr'
-	dc.DrawText( text, borderPix, heightPix - borderPix + fontSize/4 )
+	dc.DrawText( text, borderPix, footerTop )
 
