@@ -13,7 +13,7 @@ class GrowTable( object ):
 	alignTop = 1<<3
 	alignBottom = 1<<4
 	
-	def __init__( self, alignHorizontal=alignCentre, alignVertical=alignCentre ):
+	def __init__( self, alignHorizontal=alignCentre, alignVertical=alignCentre, cellBorder=True ):
 		self.table = []
 		self.colWidths = []
 		self.rowHeights = []
@@ -21,6 +21,7 @@ class GrowTable( object ):
 		self.hLines = []
 		self.alignHorizontal = alignHorizontal
 		self.alignVertical = alignVertical
+		self.cellBorder = cellBorder
 		self.width = None
 		self.height = None
 		
@@ -28,6 +29,7 @@ class GrowTable( object ):
 		self.table += [[] for i in xrange(max(0, row+1 - len(self.table)))]
 		self.table[row] += [None for i in xrange(max(0, col+1 - len(self.table[row])))]
 		self.table[row][col] = (value, highlight, align)
+		return row, col
 		
 	def vLine( self, col, rowStart, rowEnd, thick = False ):
 		self.vLines.append( (col, rowStart, rowEnd, thick) )
@@ -47,7 +49,7 @@ class GrowTable( object ):
 		return font, fontBold
 		
 	def getCellBorder( self, fontSize ):
-		return fontSize / 5
+		return max(1, fontSize // 5) if self.cellBorder else 0
 		
 	def getSize( self, dc, fontSize ):
 		font, fontBold = self.getFonts( fontSize )
@@ -169,14 +171,16 @@ def ToPrintout( dc ):
 	xLeft = xPix
 	yTop = yPix
 	
-	gt = GrowTable(GrowTable.alignLeft)
-	gt.set( 0, 0, race.name, highlight=True, align=GrowTable.alignLeft )
-	gt.set( 1, 0, race.category, True, align=GrowTable.alignLeft )
-	gt.set( 2, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignLeft )
+	gt = GrowTable(alignHorizontal=GrowTable.alignLeft, alignVertical=GrowTable.alignTop, cellBorder=False)
+	rowCur = 0
+	rowCur = gt.set( rowCur, 0, race.name, highlight=True, align=GrowTable.alignLeft )[0] + 1
+	rowCur = gt.set( rowCur, 0, race.category, True, align=GrowTable.alignLeft )[0] + 1
+	rowCur = gt.set( rowCur, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), highlight=True, align=GrowTable.alignLeft )[0] + 1
+	rowCur = gt.set( rowCur, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignLeft )[0] + 1
+	
 	if race.communique:
-		gt.set( 3, 0, u'Communiqu\u00E9: {}'.format(race.communique), highlight=True, align=GrowTable.alignLeft )
-	gt.set( 4, 0, race.date.strftime('%Y-%m-%d'), highlight=True, align=GrowTable.alignLeft )
-	gt.set( 3 if race.communique else 4, 1, u'Approved by:________', align=GrowTable.alignLeft )
+		rowCur = gt.set( rowCur, 0, u'Communiqu\u00E9: {}'.format(race.communique), align=GrowTable.alignRight )[0] + 1
+	rowCur = gt.set( rowCur, 0, u'Approved by:________', align=GrowTable.alignRight )[0] + 1
 	
 	# Draw the title
 	titleHeight = heightFieldPix * 0.15
