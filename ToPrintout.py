@@ -8,6 +8,7 @@ import Model
 class GrowTable( object ):
 	bold, alignLeft, alignCentre, alignRight, alignTop, alignMiddle, alignBottom = [1<<i for i in xrange(7)]
 	alignCenter = alignCentre
+	attrDefault = alignRight|alignTop
 	
 	def __init__( self, alignHorizontal=alignCentre, alignVertical=alignCentre, cellBorder=True ):
 		self.alignHorizontal = alignHorizontal
@@ -70,16 +71,18 @@ class GrowTable( object ):
 			for c in xrange(colLabel+1, grid.GetNumberCols()+1):
 				self.hLine( c+colLabel, 0, numRows )
 		
-	def set( self, row, col, value, attr=alignRight|alignTop ):
+	def set( self, row, col, value, attr=attrDefault ):
 		self.table += [[] for i in xrange(max(0, row+1 - len(self.table)))]
-		self.table[row] += [(u'', 0) for i in xrange(max(0, col+1 - len(self.table[row])))]
+		self.table[row] += [(u'', self.attrDefault) for i in xrange(max(0, col+1 - len(self.table[row])))]
 		self.table[row][col] = (value, attr)
 		return row, col
 		
 	def vLine( self, col, rowStart, rowEnd, thick = False ):
+		# Drawn on the left of the col.
 		self.vLines.append( (col, rowStart, rowEnd, thick) )
 		
 	def hLine( self, row, colStart, colEnd, thick = False ):
+		# Drawn on the top of the row.
 		self.hLines.append( (row, colStart, colEnd, thick) )
 		
 	def getNumberCols( self ):
@@ -98,24 +101,21 @@ class GrowTable( object ):
 		
 	def getSize( self, dc, fontSize ):
 		font, fontBold = self.getFonts( fontSize )
-		cellBorder = self.getCellBorder( fontSize )
+		cellBorderX2 = self.getCellBorder( fontSize ) * 2
 		self.colWidths = [0] * self.getNumberCols()
 		self.rowHeights = [0] * self.getNumberRows()
-		height = 0
 		for row, r in enumerate(self.table):
 			for col, (value, attr) in enumerate(r):
 				vWidth, vHeight, lineHeight = dc.GetMultiLineTextExtent(value, fontBold if attr&self.bold else font)
-				vWidth += cellBorder * 2
-				vHeight += cellBorder * 2
-				self.colWidths[col] = max(self.colWidths[col], vWidth)
-				self.rowHeights[row] = max(self.rowHeights[row], vHeight)
+				self.colWidths[col] = max(self.colWidths[col], vWidth + cellBorderX2)
+				self.rowHeights[row] = max(self.rowHeights[row], vHeight + cellBorderX2)
 		return sum( self.colWidths ), sum( self.rowHeights )
 	
 	def drawTextToFit( self, dc, text, x, y, width, height, attr, font=None ):
 		if font and font != dc.GetFont():
 			dc.SetFont( font )
-		fontheight = dc.GetFont().GetPixelSize()[1]
-		cellBorder = self.getCellBorder( fontheight )
+		fontSize = dc.GetFont().GetPixelSize()[1]
+		cellBorder = self.getCellBorder( fontSize )
 		tWidth, tHeight, lineHeight = dc.GetMultiLineTextExtent(text, dc.GetFont())
 		xLeft = x + cellBorder
 		xRight = x + width - cellBorder
@@ -127,15 +127,25 @@ class GrowTable( object ):
 		else:
 			yTop = y + cellBorder
 		
-		lines = text.split( '\n' )
-		for line in lines:
+		for line in text.split( '\n' ):
 			if attr & self.alignRight:
 				dc.DrawText( line, xRight - dc.GetTextExtent(line)[0], yTop )
 			elif attr & self.alignLeft:
 				dc.DrawText( line, xLeft, yTop )
 			else:
-				dc.DrawText( line, x + (width - dc.GetTextExtent(line)[0]) / 2, yTop )
+				dc.DrawText( line, x + (width - dc.GetTextExtent(line)[0]) // 2, yTop )
 			yTop += lineHeight
+			
+	def setPen( self, dc, thick = False ):
+		if not self.penThin:
+			self.penThin = wx.Pen( wx.BLACK, 1, wx.SOLID )
+			fontheight = dc.GetFont().GetPixelSize()[1]
+			cellBorder = self.getCellBorder( fontheight )
+			width = cellBorder / 2
+			self.penThick = wx.Pen( wx.BLACK, width, wx.SOLID )
+		newPen = self.penThick if thick else self.penThin
+		if newPen != dc.GetPen():
+			dc.SetPen( newPen )
 	
 	def drawToFitDC( self, dc, x, y, width, height ):
 		self.penThin = None
@@ -180,6 +190,7 @@ class GrowTable( object ):
 			yTop += self.rowHeights[row]
 		
 		# Draw the horizontal and vertical lines.
+		# Lines are drawn on the left/top of the col/row.
 		rowHeightSum = [y]
 		for h in self.rowHeights:
 			rowHeightSum.append( rowHeightSum[-1] + h )
@@ -201,18 +212,16 @@ class GrowTable( object ):
 				self.setPen( dc, thick )
 				curThick = thick
 			dc.DrawLine( colWidthSum[colStart], rowHeightSum[row], colWidthSum[colEnd], rowHeightSum[row] )
-			
-	def setPen( self, dc, thick = False ):
-		if not self.penThin:
-			self.penThin = wx.Pen( wx.BLACK, 1, wx.SOLID )
-			fontheight = dc.GetFont().GetPixelSize()[1]
-			cellBorder = self.getCellBorder( fontheight )
-			width = cellBorder / 2
-			self.penThick = wx.Pen( wx.BLACK, width, wx.SOLID )
-		newPen = self.penThick if thick else self.penThin
-		if newPen != dc.GetPen():
-			dc.SetPen( newPen )
 
+	def toExcel( self, wx, rowStart=0, colStart=0 ):
+		pass
+	
+	def toPDF( self, pdf, x, y, width, height ):
+		pass
+	
+	def toHtmlTable( self ):
+		pass
+	
 def ToPrintout( dc ):
 	race = Model.race
 	mainWin = Utils.getMainWin()
