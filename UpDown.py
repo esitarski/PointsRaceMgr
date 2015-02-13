@@ -245,7 +245,9 @@ class UpDown( wx.Panel ):
 				pass
 		
 			try:
-				updowns[int(self.gridUpDown.GetCellValue(r, BibUpDown), 10)] = int(self.gridUpDown.GetCellValue(r, ValUpDown), 10)
+				ud = int(self.gridUpDown.GetCellValue(r, ValUpDown), 10)
+				bib = int(self.gridUpDown.GetCellValue(r, BibUpDown), 10)
+				updowns[bib] = updowns.get(bib, 0) + ud
 			except ValueError:
 				pass
 				
