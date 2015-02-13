@@ -62,6 +62,7 @@ class UpDownEditor(gridlib.PyGridCellEditor):
 		
 		self.startValue = self.Empty
 		self._tc.SetValue( 0 )
+		return v if changed else None
 		
 	def Reset( self ):
 		self._tc.SetValue( self.startValue )
@@ -185,8 +186,8 @@ class UpDown( wx.Panel ):
 					pass
 
 		self.gridUpDown.SetCellValue(r, c, value)
-		wx.CallAfter( self.commit )
-		wx.CallAfter( Utils.refreshResults )
+		self.commit()
+		Utils.refreshResults()
 	
 	def onCellEnableEdit( self, evt ):
 		if evt.GetCol() == ValStatus:
