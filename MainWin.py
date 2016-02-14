@@ -131,7 +131,7 @@ class MainWin( wx.Frame ):
 		label = wx.StaticText( self, label=u'Race Name:' )
 		self.gbs.Add( label, pos=(0, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
-		ctrl.Bind(wx.EVT_TEXT_ENTER, self.onChange)
+		ctrl.Bind(wx.EVT_TEXT, self.onChange)
 		self.gbs.Add( ctrl, pos=(0, 1), span=(1,5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND )
 		self.nameLabel = label
 		self.nameCtrl = ctrl
@@ -148,7 +148,7 @@ class MainWin( wx.Frame ):
 		label = wx.StaticText( self, label=u'Communiqu\u00E9:' )
 		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
-		ctrl.Bind(wx.EVT_TEXT_ENTER, self.onChange)
+		ctrl.Bind(wx.EVT_TEXT, self.onChange)
 		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 		self.communiqueLabel = label
 		self.communiqueCtrl = ctrl
@@ -159,7 +159,7 @@ class MainWin( wx.Frame ):
 		label = wx.StaticText( self, label=u'Category:' )
 		self.gbs.Add( label, pos=(1, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
-		ctrl.Bind(wx.EVT_TEXT_ENTER, self.onChange)
+		ctrl.Bind(wx.EVT_TEXT, self.onChange)
 		self.gbs.Add( ctrl, pos=(1, 1), span=(1,5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND )
 		self.categoryLabel = label
 		self.categoryCtrl = ctrl
@@ -483,7 +483,6 @@ class MainWin( wx.Frame ):
 		self.commit()
 		self.refresh()
 
-		
 	def onChange( self, event ):
 		self.commit()
 
@@ -817,7 +816,7 @@ class MainWin( wx.Frame ):
 
 		self.SetTitle( u'{}{} - {} by Edward Sitarski (edward.sitarski@gmail.com)'.format(race.name, ', ' + self.fileName if self.fileName else '', AppVerName) )
 
-		self.distanceCtrl.SetLabel( race.getDistanceStr() )		
+		self.distanceCtrl.SetLabel( race.getDistanceStr() )
 		self.numSprintsCtrl.SetLabel( unicode(race.getNumSprints()) )
 		self.sprints.updateShading()
 		self.gbs.Layout()

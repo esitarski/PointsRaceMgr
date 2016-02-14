@@ -34,7 +34,7 @@ class EnterHandlingGrid( gridlib.Grid ):
 		if c != self.GetNumberCols() - 1 and self.NextColCheck( r, c ):
 			self.NextColTop( c + 1 )
 			return
-			
+		
 		if r != self.GetNumberRows() - 1:
 			self.SetGridCursor( r + 1, c )
 
@@ -77,7 +77,7 @@ class Sprints( wx.Panel ):
 		self.gridSprint = EnterHandlingGrid( self, self.NextColCheck )
 		self.gridSprint.CreateGrid( NumRows, NumCols )
 		for i in xrange( NumCols ):
-			self.gridSprint.SetColLabelValue( i, "Sp%d" % (i+1) )
+			self.gridSprint.SetColLabelValue( i, u"Sp{}".format(i+1) )
 		self.gridSprint.SetRowLabelSize( 0 )
 		self.gridSprint.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 		self.gridSprint.EnableDragRowSize( False )
@@ -86,7 +86,7 @@ class Sprints( wx.Panel ):
 		widestCol = int(self.gridSprint.GetColSize( self.gridSprint.GetNumberCols() - 1 ) * 1.1	)
 		for i in xrange( self.gridSprint.GetNumberCols() ):
 			self.gridSprint.SetColSize( i, widestCol )
-			self.gridSprint.SetColFormatNumber( i )
+			#self.gridSprint.SetColFormatNumber( i )
 		self.gridSprint.Bind(wx.EVT_SCROLLWIN, self.onScroll)
 		
 		self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.onCellChange)
@@ -128,7 +128,7 @@ class Sprints( wx.Panel ):
 			value = self.gridPoints.GetCellValue(r, c)
 			value = notNumberRE.sub( '', value )
 			self.gridPoints.SetCellValue(r, c, value)
-					
+		
 		self.commit()
 		self.refresh()
 		self.updateShading()
@@ -191,7 +191,7 @@ class Sprints( wx.Panel ):
 				num = int(self.gridSprint.GetCellValue(r, c))
 				if numCount[num] > 1:
 					self.gridSprint.SetCellBackgroundColour( r, c, Utils.BadHighlightColour )
-					
+		
 		self.gridSprint.ForceRefresh()
 	
 	def refresh( self ):
@@ -199,8 +199,9 @@ class Sprints( wx.Panel ):
 		race = Model.race
 		if not race:
 			return
+		
 		for (sprint, place), num in race.sprintResults.iteritems():
-			self.gridSprint.SetCellValue( place - 1, sprint - 1, str(num) )
+			self.gridSprint.SetCellValue( place - 1, sprint - 1, unicode(num) )
 	
 		for (place, points) in race.pointsForPlace.iteritems():
 			row = place - 1

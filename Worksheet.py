@@ -77,18 +77,18 @@ class Worksheet( wx.Panel ):
 		if mainWin:
 			for c in xrange( self.gridWorksheet.GetNumberCols() ):
 				self.gridWorksheet.SetColSize( c, mainWin.sprints.gridSprint.GetColSize(c) )
-				self.gridWorksheet.SetColFormatNumber( c )
+				#self.gridWorksheet.SetColFormatNumber( c )
 			self.gridWorksheet.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 
 			for c in xrange( self.gridBib.GetNumberCols() ):
 				self.gridBib.SetColSize( c, mainWin.sprints.gridPoints.GetColSize(c) )
-				self.gridBib.SetColFormatNumber( c )
+				#self.gridBib.SetColFormatNumber( c )
 			self.gridBib.SetDefaultCellAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 		else:
 			widestCol = 40
 			for c in xrange( self.gridWorksheet.GetNumberCols() ):
 				self.gridWorksheet.SetColSize( c, widestCol )
-				self.gridWorksheet.SetColFormatNumber( c )
+				#self.gridWorksheet.SetColFormatNumber( c )
 
 	def refresh( self ):
 		self.clear()

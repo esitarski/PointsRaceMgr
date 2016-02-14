@@ -23,53 +23,6 @@ BibFinish = 10
 
 EmptyCols = [2, 5, 8]
 
-class UpDownEditor(gridlib.PyGridCellEditor):
-	Empty = u''
-	
-	def __init__(self):
-		self._tc = None
-		self.startValue = self.Empty
-		gridlib.PyGridCellEditor.__init__(self)
-		
-	def Create( self, parent, id = wx.ID_ANY, evtHandler = None ):
-		self._tc = wx.SpinCtrl(parent, id, style = wx.TE_PROCESS_ENTER, min=-160, max=160)
-		self.SetControl( self._tc )
-		if evtHandler:
-			self._tc.PushEventHandler( evtHandler )
-	
-	def SetSize( self, rect ):
-		self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2, wx.SIZE_ALLOW_MINUS_ONE )
-	
-	def BeginEdit( self, row, col, grid ):
-		self.startValue = grid.GetTable().GetValue(row, col).strip()
-		v = self.startValue
-		self._tc.SetValue( int(v or u'0') )
-		self._tc.SetFocus()
-		
-	def EndEdit( self, row, col, grid, value = None ):
-		changed = False
-		v = self._tc.GetValue()
-		if v == 0:
-			v = u''
-		elif v > 0:
-			v = u'+' + unicode(v)
-		else:
-			v = unicode(v)
-		
-		if v != self.startValue:
-			changed = True
-			grid.GetTable().SetValue( row, col, v )
-		
-		self.startValue = self.Empty
-		self._tc.SetValue( 0 )
-		return v if changed else None
-		
-	def Reset( self ):
-		self._tc.SetValue( self.startValue )
-		
-	def Clone( self ):
-		return UpDownEditor()
-
 class UpDownGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 	def __init__( self, parent, id=wx.ID_ANY, style=0 ):
 		gridlib.Grid.__init__( self, parent, id=id, style=style )
@@ -92,9 +45,9 @@ class UpDown( wx.Panel ):
 			self.gridUpDown.SetColLabelValue( col, colName )
 			
 			attr = gridlib.GridCellAttr()
-						
-			if col in (BibUpDown, BibFinish, BibStatus, BibExistingPoints, ValExistingPoints):
-				attr.SetEditor( gridlib.GridCellNumberEditor() )
+			
+			if col in {BibUpDown, BibFinish, BibStatus, BibExistingPoints, ValExistingPoints):
+				#attr.SetEditor( gridlib.GridCellNumberEditor() )
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 			
 			elif col == ValUpDown:
@@ -109,7 +62,7 @@ class UpDown( wx.Panel ):
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 				
 			if col == ValUpDown:
-				attr.SetEditor( UpDownEditor() )
+				attr.SetEditor( gridlib.GridCellChoiceEditor(choices=['{:+}'.format(i) if i else u'' for i in xrange(6,-7,-1)]) )
 				
 			if col in EmptyCols:
 				attr.SetBackgroundColour( self.gridUpDown.GetLabelBackgroundColour() )
