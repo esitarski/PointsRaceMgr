@@ -179,7 +179,7 @@ def ToExcelSheet( ws ):
 	riders = race.getRiders()
 	position = 1
 	for r, rider in enumerate(riders):
-		if (race.rankBy == 0 and rider.pointsTotal < 0) or (race.rankBy == 1 and rider.updown < 0):
+		if race.rankBy == race.RankByDistancePoints and rider.updown < 0:
 			pass
 		else:
 			if r > 0:
