@@ -103,12 +103,13 @@ class Worksheet( wx.Panel ):
 		riderToRow = {}
 		position = 1
 		for r, rider in enumerate(riders):
-			if r > 0 and not riders[r-1].tiedWith(rider):
-				position += 1
-			elif r > 0:			# Highlight ties.
-				for ic in xrange(3):
-					self.gridBib.SetCellBackgroundColour( r-1, ic, Utils.BadHighlightColour )
-					self.gridBib.SetCellBackgroundColour( r,   ic, Utils.BadHighlightColour )
+			if r > 0:
+				if not riders[r-1].tiedWith(rider):
+					position += 1
+				else:			# Highlight ties.
+					for ic in xrange(3):
+						self.gridBib.SetCellBackgroundColour( r-1, ic, Utils.BadHighlightColour )
+						self.gridBib.SetCellBackgroundColour( r,   ic, Utils.BadHighlightColour )
 			
 			self.gridBib.SetCellValue( r, 0, unicode(position)	if rider.status == Model.Rider.Finisher else
 											 Model.Rider.statusNames[rider.status] )
