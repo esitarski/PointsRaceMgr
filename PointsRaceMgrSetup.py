@@ -12,9 +12,15 @@ if os.path.exists(distDirParent):
 if not os.path.exists( distDirParent ):
 	os.makedirs( distDirParent )
 
-googleDrive = r"c:\GoogleDrive\Downloads\Windows\PointsRaceMgr"
-if not os.path.exists(googleDrive):
-	googleDrive = r"C:\Users\Edward Sitarski\Google Drive\Downloads\Windows\PointsRaceMgr"
+gds = [
+	r"c:\GoogleDrive\Downloads\Windows",
+	r"C:\Users\edwar\Google Drive\Downloads\Windows",
+	r"C:\Users\Edward Sitarski\Google Drive\Downloads\Windows",
+]
+for googleDrive in gds:
+	if os.path.exists(googleDrive):
+		break
+googleDrive = os.path.join( googleDrive, 'PointsRaceMgr' )
 	
 subprocess.call( [
 	'pyinstaller',
