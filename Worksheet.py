@@ -105,7 +105,7 @@ class Worksheet( wx.Panel ):
 		for r, rider in enumerate(riders):
 			if r > 0 and not riders[r-1].tiedWith(rider):
 				position += 1
-			elif position != 1:			# Highlight ties.
+			elif r > 0:			# Highlight ties.
 				for ic in xrange(3):
 					self.gridBib.SetCellBackgroundColour( r-1, ic, Utils.BadHighlightColour )
 					self.gridBib.SetCellBackgroundColour( r,   ic, Utils.BadHighlightColour )

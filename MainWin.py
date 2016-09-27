@@ -168,8 +168,8 @@ class MainWin( wx.Frame ):
 		self.gbs.Add( label, pos=(1, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
 		ctrl = wx.Choice( self, choices=[
 				u'Points then Finish Order',
-				u'Distance, Points then Finish Order',
-				u'Distance, Points, Num Wins then Finish Order'
+				u'Laps Completed, Points then Finish Order',
+				u'Laps Completed, Points, Num Wins then Finish Order'
 			]
 		)
 		ctrl.SetSelection( 0 )
@@ -334,8 +334,6 @@ class MainWin( wx.Frame ):
 		self.refresh()
 		self.menuConfigurePointsRace()
 		Model.race.setChanged( False )
-		
-		wx.CallAfter( self.showNotes )
 	
 	def showNotes( self ):
 		self.notesDialog.refresh()
@@ -368,7 +366,7 @@ class MainWin( wx.Frame ):
 		if not self.preview.Ok():
 			return
 
-		pfrm = wx.PreviewFrame(self.preview, self, "Print preview")
+		pfrm = wx.PreviewFrame(self.preview, self, "Print Preview")
 
 		pfrm.Initialize()
 		pfrm.SetPosition(self.GetPosition())
@@ -378,7 +376,7 @@ class MainWin( wx.Frame ):
 
 	def menuPrint( self, event ):
 		self.commit()
-		printout = PointsRaceMgrPrintout()
+		printout = PointsMgrPrintout()
 		
 		pdd = wx.PrintDialogData(self.printData)
 		pdd.SetAllPages( 1 )
@@ -401,7 +399,7 @@ class MainWin( wx.Frame ):
 	#--------------------------------------------------------------------------------------------
 
 	def menuHelp( self, event ):
-		pass
+		self.menuAbout( event )
 		
 	#--------------------------------------------------------------------------------------------
 	
@@ -433,7 +431,7 @@ class MainWin( wx.Frame ):
 			4 : 1,
 			5 : 0
 		}
-		self.rankByCtrl.SetSelection( Model.Race.RankByDistancePoints )
+		self.rankByCtrl.SetSelection( Model.Race.RankByLapsPoints )
 		self.snowballCtrl.SetValue( False )
 		self.doublePointsForLastSprintCtrl.SetValue( False )
 		self.pointsForLappingCtrl.SetValue( 0 )
@@ -478,7 +476,7 @@ class MainWin( wx.Frame ):
 		
 	def menuConfigureCriteriumRace( self, event ):
 		self.menuConfigurePointsRace()
-		self.rankByCtrl.SetSelection( Model.Race.RankByDistancePointsNumWins )
+		self.rankByCtrl.SetSelection( Model.Race.RankByLapsPointsNumWins )
 		self.pointsForLappingCtrl.SetValue( 0 )
 		self.commit()
 		self.refresh()
@@ -587,7 +585,7 @@ class MainWin( wx.Frame ):
 		xlFName = os.path.join( dName, os.path.basename(xlFName) )
 		
 		wb = xlwt.Workbook()
-		sheetName = re.sub('[:\\/?*\[\]]', ' ', '%s' % race.category)[:31]
+		sheetName = re.sub('[:\\/?*\[\]]', ' ', u'{}'.format(race.category))[:31]
 		sheetCur = wb.add_sheet( sheetName )
 		ToExcelSheet( sheetCur )
 
@@ -607,6 +605,7 @@ class MainWin( wx.Frame ):
 	
 	def onCloseWindow( self, event ):
 		self.commit()
+		self.refresh()
 		race = Model.race
 		if race.isChanged():
 			if not self.fileName:
@@ -718,6 +717,8 @@ class MainWin( wx.Frame ):
 		if not race:
 			return False
 			
+		self.commit()
+		self.refresh()
 		dlg = wx.FileDialog( self, message=u"Save a Race File",
 							defaultFile = '',
 							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',
@@ -747,6 +748,9 @@ class MainWin( wx.Frame ):
 		self.onCloseWindow( event )
 
 	def menuAbout( self, event ):
+		self.commit()
+		self.refresh()
+		
 		# First we create and fill the info object
 		info = wx.AboutDialogInfo()
 		info.Name = AppVerName
@@ -754,29 +758,30 @@ class MainWin( wx.Frame ):
 		info.SetCopyright( "(C) 2011-{}".format( datetime.datetime.now().year ) )
 		info.Description = wordwrap( unicode(
 			"Manage a points race - Track or Criterium.\n\n"
-			"* Click on ConfigureRace and choose a basic Race Format\n"
+			"* Click on ConfigureRace and choose a standard Race Format\n"
 			"  (or customize your own race).\n"
 			"* Enter other Specific Race Information at the top\n"
 			"* Enter Sprint Results in the upper 'Sp1, Sp2, ...' columns\n"
 			"* Enter Laps Up/Down on the top-right table\n"
 			"* Enter the order the riders finish in the Finish Order column.\n"
 			"  (this is only necessary if riders are still tied by procedure below)\n"
-			"* Enter Rider DQ/Pull in the Status column\n"
-			"* Correct Ranking by is automatically updated in the lower left half of the screen\n"
+			"* Enter Rider DNF/DNS/DQ/Pull in the Status column\n"
+			"* Enter Existing Points is an Omnium.\n",
+			"* Correct Ranking is automatically updated in the lower left half of the screen\n"
 			"    * The lower center shows the sprint points per rider\n"
 			"    * The lower right shows subtotals, laps up/down and wins (if applicable)\n"
 			"* Export results to Excel for final editing and publication\n\n"
-			"If ranking by 'Points then Finish Order' (eg. Points Race), riders are ranked by:\n"
+			"If ranking by 'Points, then Finish Order' (eg. Points Race), riders are ranked by:\n"
 			"  1.  Most Points\n"
 			"  2.  If a tie, by Finish Order (if known in last sprint)\n"
 			"  3.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
-			"If ranking by 'Distance, Points then Finish Order' (eg. Madison), riders are ranked by:\n"
-			"  1.  Most Distance Covered (as adjusted by Laps +-)\n"
+			"If ranking by 'Laps Completed, Points, then Finish Order' (eg. Madison), riders are ranked by:\n"
+			"  1.  Most Laps Completed (as adjusted by Laps +-)\n"
 			"  2.  If a tie, by Most Points\n"
 			"  3.  If a tie, by Finish Order (if known in last sprint)\n"
 			"  4.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
-			"If ranking by 'DDistance, Points, Num Wins then Finish Order' (eg. Criterium with Points), riders are ranked by:\n"
-			"  1.  Most Distance Covered (as adjusted by Laps +-)\n"
+			"If ranking by 'Laps Completed, Points, Num Wins, then Finish Order' (eg. Criterium with Points), riders are ranked by:\n"
+			"  1.  Most Laps Completed (as adjusted by Laps +-)\n"
 			"  2.  If a tie, by Most Points\n"
 			"  3.  If still a tie, by Most Sprint Wins\n"
 			"  4.  If still a tie, by Finish Order (if known in last sprint)\n"
@@ -785,7 +790,7 @@ class MainWin( wx.Frame ):
 			"PointsRaceMgr will use the Finish Order to break ties.\n"
 			"\n"
 			"If you are scoring the final Points race in an Omnium, use the 'Existing Points' to add points awarded for each rider.  "
-			"These will be added to the poits total and listed in the results."
+			"These will be added to the points total in the results."
 			""),
 			600, wx.ClientDC(self))
 		info.WebSite = ("http://sites.google.com/site/crossmgrsoftware", "CrossMgr home page")

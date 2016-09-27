@@ -281,6 +281,9 @@ def ToPrintout( dc ):
 	colAdjust = {}
 	colAdjust[gridPoints] = 1
 	
+	def makeTwoLines( s ):
+		return '\n' + s if '\n' not in s else s
+	
 	# First get the sprint results.
 	rowCur = 0
 	colCur = 0
@@ -324,7 +327,7 @@ def ToPrintout( dc ):
 	colCur = 0
 	for grid in [gridBib, gridWorksheet, gridResults]:
 		for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
-			gt.set( rowCur, colCur, grid.GetColLabelValue(col), titleAttr )
+			gt.set( rowCur, colCur, makeTwoLines(grid.GetColLabelValue(col)), titleAttr )
 			colCur += 1
 	rowCur += 1
 	

@@ -164,7 +164,7 @@ def ToExcelSheet( ws ):
 	if race.pointsForLapping:
 		ws.write( rowCur, colCur, 'Lap Pnts', style )
 		colCur += 1
-	if race.rankBy == race.RankByDistancePointsNumWins:
+	if race.rankBy == race.RankByLapsPointsNumWins:
 		ws.write( rowCur, colCur, 'Num Wins', style )
 		colCur += 1
 	if race.existingPoints:
@@ -179,7 +179,7 @@ def ToExcelSheet( ws ):
 	riders = race.getRiders()
 	position = 1
 	for r, rider in enumerate(riders):
-		if race.rankBy == race.RankByDistancePoints and rider.updown < 0:
+		if (race.rankBy == 0 and rider.pointsTotal < 0) or (race.rankBy == 1 and rider.updown < 0):
 			pass
 		else:
 			if r > 0:
@@ -199,7 +199,7 @@ def ToExcelSheet( ws ):
 		if race.pointsForLapping:
 			ws.write( rowCur + r, colCur, rider.updown * race.pointsForLapping if rider.updown != 0 else '', styleRegular )
 			colCur += 1
-		if race.rankBy == race.RankByDistancePointsNumWins:
+		if race.rankBy == race.RankByLapsPointsNumWins:
 			ws.write( rowCur + r, colCur, rider.numWins if rider.numWins > 0 else '', styleRegular )
 			colCur += 1
 		if race.existingPoints:

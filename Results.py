@@ -82,7 +82,7 @@ class Results( wx.Panel ):
 			fields.append( 'lapsTotal' )
 		
 		# Only update the Num Wins column if required for the ranking.
-		if race.rankBy == race.RankByDistancePointsNumWins:
+		if race.rankBy == race.RankByLapsPointsNumWins:
 			headers.append(u'Num\nWins')
 			fields.append('numWins')
 		

@@ -75,6 +75,38 @@ class UpDownGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 		gridlib.Grid.__init__( self, parent, id=id, style=style )
 		gae.GridAutoEditMixin.__init__(self)
 		
+		self.cBibExistingPoints = 0
+		self.cExistingPoints = 1
+		
+		self.cBibLaps = 3
+		self.cLaps = 4
+		
+		self.cBibStatus = 6
+		self.cStatus = 7
+		
+		self.cBibFinishOrder = 10
+		self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+
+	def OnKeyDown(self, evt):
+		if evt.GetKeyCode() != wx.WXK_RETURN:
+			evt.Skip()
+			return
+		if evt.ControlDown():   # the edit control needs this key
+			evt.Skip()
+			return
+		self.DisableCellEditControl()
+		
+		r = self.GetGridCursorRow()
+		c = self.GetGridCursorCol()
+		
+		# Move the cursor to the next logical column.
+		if c in (self.cBibExistingPoints, self.cBibLaps, self.cBibStatus):
+			self.SetGridCursor( r, c+1 )
+		elif c in (self.cExistingPoints, self.cLaps, self.cStatus):
+			self.SetGridCursor( r+1, c-1 )
+		elif c == self.cBibFinishOrder:
+			self.SetGridCursor( r+1, c )
+		
 class UpDown( wx.Panel ):
 	def __init__( self, parent, id = wx.ID_ANY ):
 		super(UpDown, self).__init__( parent, id, style=wx.BORDER_SUNKEN)

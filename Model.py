@@ -75,9 +75,9 @@ class Rider(object):
 	def getKey( self ):
 		if   race.rankBy == race.RankByPoints:
 			return (Rider.statusSortSeq[self.status], -self.pointsTotal, self.finishOrder, self.num)
-		elif race.rankBy == race.RankByDistancePoints:
+		elif race.rankBy == race.RankByLapsPoints:
 			return (Rider.statusSortSeq[self.status], -self.updown, -self.pointsTotal, self.finishOrder, self.num)
-		else:	# race.RankByDistancePointsNumWins
+		else:	# race.RankByLapsPointsNumWins
 			return (Rider.statusSortSeq[self.status], -self.updown, -self.pointsTotal, -self.numWins, self.finishOrder, self.num)
 
 	def tiedWith( s, r ):
@@ -91,8 +91,8 @@ class Rider(object):
 		
 class Race(object):
 	RankByPoints = 0
-	RankByDistancePoints = 1
-	RankByDistancePointsNumWins = 2
+	RankByLapsPoints = 1
+	RankByLapsPointsNumWins = 2
 
 	pointsForLapping = 20
 	doublePointsForLastSprint = False

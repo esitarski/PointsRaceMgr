@@ -31,6 +31,7 @@ class EnterHandlingGrid( gridlib.Grid ):
 		r = self.GetGridCursorRow()
 		c = self.GetGridCursorCol()
 		
+		# Move the cursor to the next logical column.
 		if c != self.GetNumberCols() - 1 and self.NextColCheck( r, c ):
 			self.NextColTop( c + 1 )
 			return
