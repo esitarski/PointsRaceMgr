@@ -31,11 +31,11 @@ class UpDownEditor(gridlib.PyGridCellEditor):
 		self.startValue = self.Empty
 		gridlib.PyGridCellEditor.__init__(self)
 		
-	def Create( self, parent, id = wx.ID_ANY, evtHandler = None ):
+	def Create( self, parent, id = wx.ID_ANY, eventHandler = None ):
 		self._tc = wx.SpinCtrl(parent, id, style = wx.TE_PROCESS_ENTER, min=-160, max=160)
 		self.SetControl( self._tc )
-		if evtHandler:
-			self._tc.PushEventHandler( evtHandler )
+		if eventHandler:
+			self._tc.PushEventHandler( eventHandler )
 	
 	def SetSize( self, rect ):
 		self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2, wx.SIZE_ALLOW_MINUS_ONE )
@@ -85,14 +85,14 @@ class UpDownGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 		self.cStatus = 7
 		
 		self.cBibFinishOrder = 10
-		self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+		self.Bind(wx.event_KEY_DOWN, self.OnKeyDown)
 
-	def OnKeyDown(self, evt):
-		if evt.GetKeyCode() != wx.WXK_RETURN:
-			evt.Skip()
+	def OnKeyDown(self, event):
+		if event.GetKeyCode() != wx.WXK_RETURN:
+			event.Skip()
 			return
-		if evt.ControlDown():   # the edit control needs this key
-			evt.Skip()
+		if event.ControlDown():   # the edit control needs this key
+			event.Skip()
 			return
 		self.DisableCellEditControl()
 		
@@ -125,11 +125,8 @@ class UpDown( wx.Panel ):
 			
 			attr = gridlib.GridCellAttr()
 						
-			if col in (BibUpDown, BibFinish, BibStatus, BibExistingPoints, ValExistingPoints):
+			if col in (BibUpDown, ValUpDown, BibFinish, BibStatus, BibExistingPoints, ValExistingPoints):
 				attr.SetEditor( gridlib.GridCellNumberEditor() )
-				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
-			
-			elif col == ValUpDown:
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 			
 			elif col == ValStatus:
@@ -139,9 +136,6 @@ class UpDown( wx.Panel ):
 			else:
 				attr.SetReadOnly()
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
-				
-			if col == ValUpDown:
-				attr.SetEditor( UpDownEditor() )
 				
 			if col in EmptyCols:
 				attr.SetBackgroundColour( self.gridUpDown.GetLabelBackgroundColour() )
@@ -165,10 +159,10 @@ class UpDown( wx.Panel ):
 		for col in EmptyCols:
 			self.gridUpDown.SetColSize( col, 16 )
 		
-		self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.onCellChange)
-		self.Bind(gridlib.EVT_GRID_SELECT_CELL, self.onCellEnableEdit)
-		self.Bind(gridlib.EVT_GRID_LABEL_LEFT_CLICK, self.onLabelClick)
-		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED, self.onGridEditorCreated)
+		self.Bind(gridlib.event_GRID_CELL_CHANGE, self.onCellChange)
+		self.Bind(gridlib.event_GRID_SELECT_CELL, self.onCellEnableEdit)
+		self.Bind(gridlib.event_GRID_LABEL_LEFT_CLICK, self.onLabelClick)
+		self.Bind(gridlib.event_GRID_EDITOR_CREATED, self.onGridEditorCreated)
 		self.hbs.Add( self.gridUpDown, 1, wx.GROW|wx.ALL, border = 4 )
 		
 		self.gridUpDown.AutoSizeColumn( 9 )
@@ -176,12 +170,12 @@ class UpDown( wx.Panel ):
 		self.SetSizer(self.hbs)
 		self.hbs.SetSizeHints(self)
 
-	def onLeaveWindow( self, evt ):
+	def onLeaveWindow( self, event ):
 		pass
 		
 	def onGridEditorCreated( self, event ):
 		editor = event.GetControl()
-		editor.Bind( wx.EVT_KILL_FOCUS, self.onKillFocus )
+		editor.Bind( wx.event_KILL_FOCUS, self.onKillFocus )
 		event.Skip()
 		
 	def onKillFocus( self, event ):
@@ -190,14 +184,14 @@ class UpDown( wx.Panel ):
 		grid.HideCellEditControl()
 		event.Skip()
 		
-	def onLabelClick( self, evt ):
+	def onLabelClick( self, event=None ):
 		self.gridUpDown.DisableCellEditControl()
 		wx.CallAfter( self.refresh )
 		event.Skip()
 		
-	def onCellChange( self, evt ):
-		r = evt.GetRow()
-		c = evt.GetCol()
+	def onCellChange( self, event ):
+		r = event.GetRow()
+		c = event.GetCol()
 		value = self.gridUpDown.GetCellValue(r, c)
 		value = value.strip()
 		neg = True if value and value[0] == u'-' and value != u'-' else False
@@ -221,10 +215,10 @@ class UpDown( wx.Panel ):
 		self.commit()
 		Utils.refreshResults()
 	
-	def onCellEnableEdit( self, evt ):
-		if evt.GetCol() == ValStatus:
+	def onCellEnableEdit( self, event ):
+		if event.GetCol() == ValStatus:
 			wx.CallAfter( self.gridUpDown.EnableCellEditControl )
-		evt.Skip()
+		event.Skip()
 	
 	def clear( self ):
 		for r in xrange( self.gridUpDown.GetNumberRows() ):
@@ -272,35 +266,40 @@ class UpDown( wx.Panel ):
 		statusIndex = dict( (n, i) for i, n in enumerate(Model.Rider.statusNames) )
 		for r in xrange(self.gridUpDown.GetNumberRows()):
 			try:
-				existingPoints[int(self.gridUpDown.GetCellValue(r, BibExistingPoints), 10)] = int(self.gridUpDown.GetCellValue(r, ValExistingPoints), 10)
+				bib = int(self.gridUpDown.GetCellValue(r, BibExistingPoints), 10)
+				points = int(self.gridUpDown.GetCellValue(r, ValExistingPoints), 10)
+				if bib:
+					existingPoints[bib] = points
 			except ValueError:
 				pass
 		
 			try:
-				ud = int(self.gridUpDown.GetCellValue(r, ValUpDown), 10)
 				bib = int(self.gridUpDown.GetCellValue(r, BibUpDown), 10)
-				updowns[bib] = updowns.get(bib, 0) + ud
+				ud = int(self.gridUpDown.GetCellValue(r, ValUpDown), 10)
+				if bib:
+					updowns[bib] = updowns.get(bib, 0) + ud
 			except ValueError:
 				pass
-				
+					
+			try:
+				bib = int(self.gridUpDown.GetCellValue(r, BibStatus), 10)
+				i = statusIndex[self.gridUpDown.GetCellValue(r, ValStatus)]
+				status[bib] = i
+			except (ValueError, KeyError):
+				pass
+			
 			try:
 				bib = int(self.gridUpDown.GetCellValue(r, BibFinish), 10)
-				if bib == 0:
-					continue
-				finishStr = self.gridUpDown.GetCellValue(r, ValFinish).strip()
-				if finishStr:
-					finishVal = int(finishStr)
+				if bib:
+					finishStr = self.gridUpDown.GetCellValue(r, ValFinish).strip()
+					if finishStr:
+						finishVal = int(finishStr)
+						lastFinishVal = finishVal
+					else:
+						finishVal = lastFinishVal + 1
+					finishOrder[bib] = finishVal
 					lastFinishVal = finishVal
-				else:
-					finishVal = lastFinishVal + 1
-				finishOrder[bib] = finishVal
-				lastFinishVal = finishVal
 			except ValueError:
-				pass
-				
-			try:
-				status[int(self.gridUpDown.GetCellValue(r, BibStatus), 10)] = statusIndex[self.gridUpDown.GetCellValue(r, ValStatus)]
-			except (ValueError, KeyError):
 				pass
 
 		race.setExistingPoints( existingPoints )

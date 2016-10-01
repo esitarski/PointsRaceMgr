@@ -1,4 +1,5 @@
 import random
+import operator
 import datetime
 import sys
 
@@ -196,11 +197,6 @@ class Race(object):
 			self.existingPoints = existingPoints
 			self.setChanged()
 	
-	def setUpDowns( self, updowns ):
-		if self.updowns != updowns:
-			self.updowns = updowns
-			self.setChanged()
-			
 	def setFinishOrder( self, finishOrder ):
 		if self.finishOrder != finishOrder:
 			self.finishOrder = finishOrder
@@ -240,13 +236,15 @@ class Race(object):
 		#traceback.print_stack()
 	
 	def getUpDown( self ):
-		riders = self.getRiders()
-		riderIndex = { (r.num, i) for i, r in enumerate(riders) }
-		ud = [(rider, updown) for rider, updown in self.updowns.iteritems()]
-		ud.sort( lambda x, y: cmp(riderIndex[x[0]], riderIndex[y[0]]) if x[0] in riderIndex and y[0] in riderIndex \
-								else cmp(x[0], y[0]) )
+		ud = [(num, updown) for num, updown in self.updowns.iteritems()]
+		ud.sort( key=lambda v: (Rider.statusSortSeq[self.riderStatus.get(v[0],0)], -v[1], v[0]) )
 		return ud
 	
+	def setUpDowns( self, updowns ):
+		if self.updowns != updowns:
+			self.updowns = updowns
+			self.setChanged()
+			
 	def getFinishOrder( self ):
 		return sorted( self.finishOrder.iteritems(), key = lambda x: x[1] )
 	
