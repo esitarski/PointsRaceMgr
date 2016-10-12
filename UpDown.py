@@ -85,7 +85,7 @@ class UpDownGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 		self.cStatus = 7
 		
 		self.cBibFinishOrder = 10
-		self.Bind(wx.event_KEY_DOWN, self.OnKeyDown)
+		self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
 	def OnKeyDown(self, event):
 		if event.GetKeyCode() != wx.WXK_RETURN:
@@ -159,10 +159,10 @@ class UpDown( wx.Panel ):
 		for col in EmptyCols:
 			self.gridUpDown.SetColSize( col, 16 )
 		
-		self.Bind(gridlib.event_GRID_CELL_CHANGE, self.onCellChange)
-		self.Bind(gridlib.event_GRID_SELECT_CELL, self.onCellEnableEdit)
-		self.Bind(gridlib.event_GRID_LABEL_LEFT_CLICK, self.onLabelClick)
-		self.Bind(gridlib.event_GRID_EDITOR_CREATED, self.onGridEditorCreated)
+		self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.onCellChange)
+		self.Bind(gridlib.EVT_GRID_SELECT_CELL, self.onCellEnableEdit)
+		self.Bind(gridlib.EVT_GRID_LABEL_LEFT_CLICK, self.onLabelClick)
+		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED, self.onGridEditorCreated)
 		self.hbs.Add( self.gridUpDown, 1, wx.GROW|wx.ALL, border = 4 )
 		
 		self.gridUpDown.AutoSizeColumn( 9 )
@@ -175,7 +175,7 @@ class UpDown( wx.Panel ):
 		
 	def onGridEditorCreated( self, event ):
 		editor = event.GetControl()
-		editor.Bind( wx.event_KILL_FOCUS, self.onKillFocus )
+		editor.Bind( wx.EVT_KILL_FOCUS, self.onKillFocus )
 		event.Skip()
 		
 	def onKillFocus( self, event ):
@@ -194,22 +194,15 @@ class UpDown( wx.Panel ):
 		c = event.GetCol()
 		value = self.gridUpDown.GetCellValue(r, c)
 		value = value.strip()
-		neg = True if value and value[0] == u'-' and value != u'-' else False
-		if c != ValStatus:
-			value = notNumberRE.sub( u'', value )
-			if value in (u'-', u'-0', u'0'):
-				value = u''
-				neg = False
 		if c == ValUpDown:
-			if neg:
-				value = u'-' + value
-			else:
-				try:
-					v = int(value)
-					if v > 0:
-						value = u'+' + value
-				except:
-					pass
+			try:
+				value = u'{:+d}'.format(int(value))
+			except:
+				pass
+		elif c != ValStatus:
+			value = notNumberRE.sub( u'', value )
+			if value in (u'-0', u'0', u'+0'):
+				value = u''
 
 		self.gridUpDown.SetCellValue(r, c, value)
 		self.commit()
@@ -231,12 +224,9 @@ class UpDown( wx.Panel ):
 		if not race:
 			return
 			
-		riderInfo = {}
-		
 		for r, (num, updown) in enumerate(race.getUpDown()):
 			self.gridUpDown.SetCellValue( r, BibUpDown, unicode(num) )
-			prefix = '+' if updown > 0 else u''
-			self.gridUpDown.SetCellValue( r, ValUpDown, prefix + unicode(updown) )
+			self.gridUpDown.SetCellValue( r, ValUpDown, u'{:+d}'.format(updown) )
 		
 		for r, (num, s) in enumerate(race.getStatus()):
 			self.gridUpDown.SetCellValue( r, BibStatus, unicode(num) )
@@ -304,8 +294,8 @@ class UpDown( wx.Panel ):
 
 		race.setExistingPoints( existingPoints )
 		race.setUpDowns( updowns )
-		race.setFinishOrder( finishOrder )
 		race.setStatus( status )
+		race.setFinishOrder( finishOrder )
 	
 if __name__ == '__main__':
 	app = wx.App( False )

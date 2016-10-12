@@ -706,7 +706,6 @@ class MainWin( wx.Frame ):
 		
 	def menuSave( self, event = None ):
 		self.commit()
-		self.refresh()
 		if not self.fileName:
 			self.menuSaveAs( event )
 		else:
@@ -718,7 +717,6 @@ class MainWin( wx.Frame ):
 			return False
 			
 		self.commit()
-		self.refresh()
 		dlg = wx.FileDialog( self, message=u"Save a Race File",
 							defaultFile = '',
 							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',

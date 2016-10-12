@@ -246,13 +246,13 @@ class Race(object):
 			self.setChanged()
 			
 	def getFinishOrder( self ):
-		return sorted( self.finishOrder.iteritems(), key = lambda x: x[1] )
+		return sorted( self.finishOrder.iteritems(), key = operator.itemgetter(1) )
 	
 	def getStatus( self ):
 		return sorted( self.riderStatus.iteritems(), key = lambda x: (Rider.statusSortSeq[x[1]], x[0]) )
 			
 	def getExistingPoints( self ):
-		return sorted( self.existingPoints.iteritems(), key = lambda x: x[1], reverse = True )
+		return sorted( self.existingPoints.iteritems(), key = operator.itemgetter(1), reverse = True )
 	
 	def getMaxSprints( self ):
 		try:
