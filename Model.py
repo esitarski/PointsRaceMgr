@@ -24,16 +24,17 @@ def setRace( r ):
 #------------------------------------------------------------------------------------------------------------------
 RiderInfo = namedtuple( 'RiderInfo', ['bib', 'name', 'team', 'license', 'uci_code'] )
 class RiderInfo(object):
-	FieldNames  = ('bib', 'last_name', 'first_name', 'team', 'license', 'uci_code')
-	HeaderNames = ('Bib', 'Last Name', 'First Name', 'Team', 'License', 'UCI Code')
+	FieldNames  = ('bib', 'last_name', 'first_name', 'team', 'license', 'uci_code', 'existing_points')
+	HeaderNames = ('Bib', 'Last Name', 'First Name', 'Team', 'License', 'UCI Code', 'Existing\nPoints')
 
-	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', license=u'', uci_code=u'' ):
+	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', license=u'', uci_code=u'', existing_points=0.0 ):
 		self.bib = int(bib)
 		self.last_name = last_name
 		self.first_name = first_name
 		self.team = team
 		self.license = license
 		self.uci_code = uci_code
+		self.existing_points = float(existing_points)
 
 	def __eq__( self, ri ):
 		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
@@ -217,6 +218,14 @@ class Race(object):
 	def setExistingPoints( self, existingPoints ):
 		if self.existingPoints != existingPoints:
 			self.existingPoints = existingPoints
+			for bib, points in existingPoints.iteritems():
+				ri = self.riderInfo.get( bib, None )
+				if ri is None:
+					self.riderInfo[bib] = ri = RiderInfo( bib )
+				ri.existing_points = points
+			for bib, ri in self.riderInfo.iteritems():
+				if ri.existing_points and bib not in existingPoints:
+					ri.existing_points = 0.0
 			self.setChanged()
 	
 	def setFinishOrder( self, finishOrder ):
@@ -255,6 +264,7 @@ class Race(object):
 		ri2 = sorted(self.riderInfo.itervalues(), key=operator.attrgetter('bib'))
 		if len(ri1) != len(ri2) or not all(r1 == r2 for r1, r2 in zip(ri1, ri2)):
 			self.riderInfo = riderInfo
+			self.existingPoints = {bib:ri.existing_points for bib, ri in self.riderInfo.iteritems() if ri.existing_points}
 			self.setChanged()
 	
 	def isChanged( self ):

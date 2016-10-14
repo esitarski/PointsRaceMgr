@@ -112,6 +112,10 @@ standard_field_aliases = (
 		('Team','Team Name','TeamName','Rider Team','Club','Club Name','ClubName','Rider Club'),
 		"Team",
 	),
+	('existing_points',
+		('Points', 'Existing Points'),
+		"Existing Points",
+	),
 	('license_code',
 		(
 			'Lic', 'Lic #',

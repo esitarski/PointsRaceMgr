@@ -125,10 +125,14 @@ class UpDown( wx.Panel ):
 			
 			attr = gridlib.GridCellAttr()
 						
-			if col in (BibUpDown, ValUpDown, BibFinish, BibStatus, BibExistingPoints, ValExistingPoints):
+			if col in (BibUpDown, ValUpDown, BibFinish, BibStatus, BibExistingPoints):
 				attr.SetEditor( gridlib.GridCellNumberEditor() )
 				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
 			
+			elif col == ValExistingPoints:
+				attr.SetEditor( gridlib.GridCellFloatEditor(precision=1) )
+				attr.SetAlignment( wx.ALIGN_RIGHT, wx.ALIGN_CENTRE )
+				
 			elif col == ValStatus:
 				attr.SetEditor( gridlib.GridCellChoiceEditor([' '] + Model.Rider.statusNames[1:], False) )
 				attr.SetAlignment( wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
@@ -241,7 +245,7 @@ class UpDown( wx.Panel ):
 		
 		for r, (num, p) in enumerate(race.getExistingPoints()):
 			self.gridUpDown.SetCellValue( r, BibExistingPoints, unicode(num) )
-			self.gridUpDown.SetCellValue( r, ValExistingPoints, unicode(p) )
+			self.gridUpDown.SetCellValue( r, ValExistingPoints, u'{:.1f}'.format(p) )
 			
 	def commit( self ):
 		race = Model.race
@@ -257,7 +261,7 @@ class UpDown( wx.Panel ):
 		for r in xrange(self.gridUpDown.GetNumberRows()):
 			try:
 				bib = int(self.gridUpDown.GetCellValue(r, BibExistingPoints), 10)
-				points = int(self.gridUpDown.GetCellValue(r, ValExistingPoints), 10)
+				points = float(self.gridUpDown.GetCellValue(r, ValExistingPoints))
 				if bib:
 					existingPoints[bib] = points
 			except ValueError:

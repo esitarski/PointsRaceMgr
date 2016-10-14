@@ -14,23 +14,30 @@ class AutoEditGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 	def __init__( self, parent, id=wx.ID_ANY, style=0 ):
 		gridlib.Grid.__init__( self, parent, id=id, style=style )
 		gae.GridAutoEditMixin.__init__(self)
-		
+
 #--------------------------------------------------------------------------------
 class StartList(wx.Panel):
 
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
 		
-		explanation = wx.StaticText( self, label=u'Click Header name to sort.  To delete, set Bib to blank.' )
+		explanation = wx.StaticText( self, label=u'Click Header name to sort on that column.  To delete, set Bib to blank and switch screens.' )
+		
+		self.addRows = wx.Button( self, label=u'Add Rows' )
+		self.addRows.Bind( wx.EVT_BUTTON, self.onAddRows )
+		
 		self.importFromExcel = wx.Button( self, label=u'Import from Excel' )
 		self.importFromExcel.Bind( wx.EVT_BUTTON, self.onImportFromExcel )
 		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
 		hs.Add( explanation, flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=4 )
+		hs.Add( self.addRows, flag=wx.ALL, border=4 )
 		hs.Add( self.importFromExcel, flag=wx.ALL|wx.ALIGN_RIGHT, border=4 )
  
 		self.fieldNames  = Model.RiderInfo.FieldNames
 		self.headerNames = Model.RiderInfo.HeaderNames
+		
+		self.iExistingPointsCol = next(c for c, f in enumerate(self.fieldNames) if 'existing' in f)
 		
 		self.grid = AutoEditGrid( self, style = wx.BORDER_SUNKEN )
 		self.grid.DisableDragRowSize()
@@ -46,10 +53,12 @@ class StartList(wx.Panel):
 			attr = gridlib.GridCellAttr()
 			if col == 0:
 				attr.SetRenderer( gridlib.GridCellNumberRenderer() )
+			elif col == len(self.fieldNames) - 1:
+				attr.SetRenderer( gridlib.GridCellFloatRenderer(precision=1) )
 			self.grid.SetColAttr( col, attr )
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
-		sizer.Add( hs, 0, flag=wx.ALL, border = 4 )
+		sizer.Add( hs, 0, flag=wx.ALL|wx.EXPAND, border = 4 )
 		sizer.Add(self.grid, 1, flag=wx.EXPAND|wx.ALL, border = 6)
 		self.SetSizer(sizer)
 		
@@ -58,7 +67,10 @@ class StartList(wx.Panel):
 		
 	def updateGrid( self ):
 		race = Model.race
-		riderInfoList = sorted( (race.riderInfo.itervalues()) if race else [], key=operator.attrgetter(self.fieldNames[self.sortCol], 'bib') )
+		if self.sortCol == self.iExistingPointsCol:
+			riderInfoList = sorted( (race.riderInfo.itervalues()) if race else [], key=lambda r: (-r.existing_points, r.bib) )
+		else:
+			riderInfoList = sorted( (race.riderInfo.itervalues()) if race else [], key=operator.attrgetter(self.fieldNames[self.sortCol], 'bib') )
 		self.grid.BeginBatch()
 		Utils.AdjustGridSize( self.grid, rowsRequired = len(riderInfoList) )
 		for row, ri in enumerate(riderInfoList):
@@ -66,12 +78,37 @@ class StartList(wx.Panel):
 				self.grid.SetCellValue( row, col, unicode(getattr(ri, field)) )
 		self.grid.AutoSize()
 		self.grid.EndBatch()
+		self.Layout()
 		
 	def onColumnHeader( self, event ):
 		self.sortCol = event.GetCol()
 		self.updateGrid()
 		
+	def onAddRows( self, event ):
+		growSize = 10
+		Utils.AdjustGridSize( self.grid, rowsRequired = self.grid.GetNumberRows()+growSize )
+		self.Layout()
+		self.grid.MakeCellVisible( self.grid.GetNumberRows()-growSize, 0 )
+		
 	def onImportFromExcel( self, event ):
+		dlg = wx.MessageBox(
+			u'Import from Excel\n\n'
+			u'Reads the first sheet in the file.\n'
+			u'Looks for the first row starting with "Bib","BibNum","Bib Num", "Bib #" or "Bib#".\n\n'
+			u'Recognizes the following header fields (in any order, case insensitive):\n'
+			u'\u2022 Bib|BibNum|Bib Num|Bib #|Bib#: Bib Number\n'
+			u'\u2022 LastName|Last Name|LName: Last Name\n'
+			u'\u2022 FirstName|First Name|FName: First Name\n'
+			u'\u2022 Name: in the form "LastName, FirstName".  Used only if no Last Name or First Name\n'
+			u'\u2022 Team|Team Name|TeamName|Rider Team|Club|Club Name|ClubName|Rider Club: Team\n'
+			u'\u2022 License|Licence: Regional License (not uci code)\n'
+			u'\u2022 UCI Code|UCICode|UCI: UCI code.\n'
+			u'\u2022 Points|Existing Points: Existing points at the start of the race.\n'
+			,
+			u'Import from Excel',
+			wx.OK|wx.CANCEL | wx.ICON_INFORMATION,
+		)
+		
 		# Get the excel filename.
 		openFileDialog = wx.FileDialog(self, "Open Excel file", "", "",
 									   "Excel files (*.xls,*.xlsx,*.xlsm)|*.xls;*.xlsx;*.xlsm", wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -101,6 +138,7 @@ class StartList(wx.Panel):
 					'license':		unicode(f('license_code',u'')).strip(),
 					'team':			unicode(f('team',u'')).strip(),
 					'uci_code':		unicode(f('uci_code',u'')).strip(),
+					'existing_points':	unicode(f('existing_points',u'0')).strip(),
 				}
 				
 				info['bib'] = unicode(info['bib']).strip()
@@ -123,6 +161,12 @@ class StartList(wx.Panel):
 					info['bib'] = int(unicode(info['bib']).strip())
 				except ValueError:
 					continue
+				
+				# If there are existing points they must be numeric.
+				try:
+					info['existing_points'] = int(info['existing_points'])
+				except ValueError:
+					info['existing_points'] = 0
 				
 				ri = Model.RiderInfo( **info )
 				riderInfo[ri.bib] = ri
