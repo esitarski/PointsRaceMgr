@@ -1,8 +1,7 @@
 import wx
-import wx.lib.masked.numctrl as NC
-import  wx.lib.intctrl as IC
-import wx.lib.agw.fourwaysplitter as FWS
 from wx.lib.wordwrap import wordwrap
+import wx.lib.agw.flatnotebook as fnb
+
 import sys
 import os
 import re
@@ -16,10 +15,9 @@ from optparse import OptionParser
 import Utils
 import Model
 import Version
-from Sprints import Sprints
-from UpDown import UpDown
-from Worksheet import Worksheet
-from Results import Results
+from ScoreSheet import ScoreSheet
+from StartList import StartList
+from ResultsList import ResultsList
 from Printing import PointsMgrPrintout
 from ToExcelSheet import ToExcelSheet
 from ToPrintout import ToPrintout
@@ -35,6 +33,8 @@ def ShowSplashScreen():
 class MainWin( wx.Frame ):
 	def __init__( self, parent, id = wx.ID_ANY, title='', size=(200,200) ):
 		wx.Frame.__init__(self, parent, id, title, size=size)
+
+		Model.newRace()
 
 		self.SetBackgroundColour( wx.WHITE )
 		
@@ -55,10 +55,36 @@ class MainWin( wx.Frame ):
 		# self.printData.SetOrientation(wx.LANDSCAPE)
 		
 		self.notesDialog = NotesDialog( self )
-
-		Utils.setMainWin( self )
 		
+		#------------------------------------------------------------------------------
+		# Configure the notebook.
+
+		sty = wx.BORDER_SUNKEN
+		self.notebook = fnb.FlatNotebook(self, wx.ID_ANY, agwStyle=fnb.FNB_VC8|fnb.FNB_NO_X_BUTTON)
+		self.notebook.Bind( fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.onPageChanging )
+		
+		# Add all the pages to the notebook.
+		self.pages = []
+
+		def addPage( page, name ):
+			self.notebook.AddPage( page, name )
+			self.pages.append( page )
+			
+		self.attrClassName = [
+			[ 'scoreSheet',		ScoreSheet,			'ScoreSheet' ],
+			[ 'startList',		StartList,			'StartList' ],
+			[ 'resultsList',	ResultsList,		'Results' ],
+		]
+		
+		for i, (a, c, n) in enumerate(self.attrClassName):
+			setattr( self, a, c(self.notebook) )
+			addPage( getattr(self, a), n )
+			
+		self.notebook.SetSelection( 0 )
+		
+		#------------------------------------------------------------------------------
 		# Configure the main menu.
+		
 		self.menuBar = wx.MenuBar(wx.MB_DOCKABLE)
 
 		#-----------------------------------------------------------------------
@@ -122,193 +148,35 @@ class MainWin( wx.Frame ):
 		
 		self.menuBar.Append( self.fileMenu, "&File" )
 
-		#-----------------------------------------------------------------------
-		self.vbs = wx.BoxSizer( wx.VERTICAL )
-		
-		self.gbs = wx.GridBagSizer( 4, 4 )
-		
-		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Race Name:' )
-		self.gbs.Add( label, pos=(0, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
-		ctrl.Bind(wx.EVT_TEXT, self.onChange)
-		self.gbs.Add( ctrl, pos=(0, 1), span=(1,5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND )
-		self.nameLabel = label
-		self.nameCtrl = ctrl
-		
-		hs = wx.BoxSizer( wx.HORIZONTAL )
-		label = wx.StaticText( self, label=u'Date:' )
-		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.DatePickerCtrl( self, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(132,-1) )
-		ctrl.Bind( wx.EVT_DATE_CHANGED, self.onChange )
-		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.dateLabel = label
-		self.dateCtrl = ctrl
-		
-		label = wx.StaticText( self, label=u'Communiqu\u00E9:' )
-		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
-		ctrl.Bind(wx.EVT_TEXT, self.onChange)
-		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.communiqueLabel = label
-		self.communiqueCtrl = ctrl
-		
-		self.gbs.Add( hs, pos=(0, 6), span=(1, 3) )
-		
-		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Category:' )
-		self.gbs.Add( label, pos=(1, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
-		ctrl.Bind(wx.EVT_TEXT, self.onChange)
-		self.gbs.Add( ctrl, pos=(1, 1), span=(1,5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND )
-		self.categoryLabel = label
-		self.categoryCtrl = ctrl
-		
-		label = wx.StaticText( self, label=u'Rank By:', style = wx.ALIGN_RIGHT )
-		self.gbs.Add( label, pos=(1, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.Choice( self, choices=[
-				u'Points then Finish Order',
-				u'Laps Completed, Points then Finish Order',
-				u'Laps Completed, Points, Num Wins then Finish Order'
-			]
-		)
-		ctrl.SetSelection( 0 )
-		self.Bind(wx.EVT_CHOICE, self.onRankByChange, ctrl)
-		self.gbs.Add( ctrl, pos=(1, 7), span=(1, 2), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.rankByLabel = label
-		self.rankByCtrl = ctrl
-
-		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Laps:' )
-		self.gbs.Add( label, pos=(2, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = IC.IntCtrl( self, min=1, max=300, value=1, limited=True, style=wx.ALIGN_RIGHT, size=(32,-1) )
-		ctrl.Bind(IC.EVT_INT, self.onLapsChange)
-		self.gbs.Add( ctrl, pos=(2, 1), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.lapsLabel = label
-		self.lapsCtrl = ctrl
-		
-		label = wx.StaticText( self, label=u'Distance:' )
-		self.gbs.Add( label, pos=(2, 3), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.StaticText( self, -1, '10.0' )
-		self.gbs.Add( ctrl, pos=(2, 4), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
-		unitsLabel = wx.StaticText( self, -1, 'km' )
-		self.gbs.Add( unitsLabel, pos=(2, 5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.distanceLabel = label
-		self.distanceCtrl = ctrl
-
-		label = wx.StaticText( self, label=u'Number of Sprints:', style = wx.ALIGN_RIGHT )
-		self.gbs.Add( label, pos=(2, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.StaticText( self )
-		self.gbs.Add( ctrl, pos=(2, 7), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.numSprintsLabel = label
-		self.numSprintsCtrl = ctrl
-
-		label = wx.CheckBox( self, label=u'Snowball Points' )
-		self.gbs.Add( label, pos=(2, 8), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = label
-		ctrl.Bind( wx.EVT_CHECKBOX, self.onSnowballChange )
-		self.snowballLabel = label
-		self.snowballCtrl = ctrl
-
-		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Sprint Every:' )
-		self.gbs.Add( label, pos=(3, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = IC.IntCtrl( self, min=1, max=300, value=1, limited=True, style=wx.ALIGN_RIGHT, size=(32,-1) )
-		ctrl.Bind(IC.EVT_INT, self.onSprintEveryChange)
-		self.gbs.Add( ctrl, pos=(3, 1), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		unitsLabel = wx.StaticText( self, -1, 'laps' )
-		self.gbs.Add( unitsLabel, pos=(3, 2), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
-		self.sprintEveryLabel = label
-		self.sprintEveryCtrl = ctrl
-		self.sprintEveryUnitsLabel = unitsLabel
-		
-		label = wx.StaticText( self, label=u'Course Length:' )
-		self.gbs.Add( label, pos=(3, 3), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		
-		ctrl = NC.NumCtrl( self, min = 0, integerWidth = 3, fractionWidth = 2, style=wx.ALIGN_RIGHT, size=(32,-1), useFixedWidthFont = False )
-		ctrl.SetAllowNegative(False)
-		ctrl.Bind(wx.EVT_TEXT, self.onCourseLengthChange)
-		self.gbs.Add( ctrl, pos=(3, 4), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		
-		unitCtrl = wx.Choice( self, choices=[u'm', u'km'] )
-		unitCtrl.SetSelection( 0 )
-		self.Bind(wx.EVT_CHOICE, self.onCourseLengthUnitChange, unitCtrl)
-		self.gbs.Add( unitCtrl, pos=(3, 5), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
-		self.courseLengthLabel = label
-		self.courseLengthCtrl = ctrl
-		self.courseLengthUnitCtrl = unitCtrl
-
-		label = wx.StaticText( self, label=u'Lap Gain/Lose Points:' )
-		self.gbs.Add( label, pos=(3, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = IC.IntCtrl( self, min=0, max=100, value=0, limited=True, style=wx.ALIGN_RIGHT, size=(32,-1) )
-		ctrl.Bind(IC.EVT_INT, self.onChange)
-		self.gbs.Add( ctrl, pos=(3, 7), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.pointsForLappingLabel = label
-		self.pointsForLappingCtrl = ctrl
-
-		label = wx.CheckBox( self, label=u'Double Points for Last Sprint' )
-		self.gbs.Add( label, pos=(3, 8), flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = label
-		ctrl.Bind( wx.EVT_CHECKBOX, self.onDoublePointsForLastSprintChange )
-		self.doublePointsForLastSprintLabel = label
-		self.doublePointsForLastSprintCtrl = ctrl
-		
-		branding = wx.HyperlinkCtrl( self, id=wx.ID_ANY, label=u"Powered by CrossMgr", url=u"http://www.sites.google.com/site/crossmgrsoftware/" )
-		branding.SetBackgroundColour( wx.WHITE )
-		self.gbs.Add( branding, pos=(3, 9), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-
-		#-----------------------------------------------------------------------------------------------------------
-		self.vbs.Add( self.gbs, flag = wx.ALL, border = 4 )
-		
-		# Manage the display with a 4-way splitter.
-		sty = wx.SP_LIVE_UPDATE | wx.SP_3DBORDER
-		self.splitter = FWS.FourWaySplitter( self, agwStyle=sty )
-		self.splitter.SetHSplit( 5800 )
-		self.splitter.SetVSplit( 4000 )
-		self.splitter.SetBackgroundColour( wx.Colour(176,196,222) )		# Light Steel Blue
-
-		self.sprints = Sprints( self.splitter )
-		self.splitter.AppendWindow( self.sprints )
-		
-		self.updown = UpDown( self.splitter )
-		self.splitter.AppendWindow( self.updown )
-		
-		self.worksheet = Worksheet( self.splitter )
-		self.splitter.AppendWindow( self.worksheet )
-		
-		self.results = Results( self.splitter )
-		self.splitter.AppendWindow( self.results )
-		
-		#-----------------------------------------------------------------------
 		self.configureMenu = wx.Menu()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Points Race", "Configure Points Race" )
-		self.Bind(wx.EVT_MENU, self.menuConfigurePointsRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointsRace, id=idCur )
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Madison", "Configure Madison" )
-		self.Bind(wx.EVT_MENU, self.menuConfigureMadison, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureMadison, id=idCur )
 		
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"Point-a-&Lap", "Configure Point-a-Lap Race" )
-		self.Bind(wx.EVT_MENU, self.menuConfigurePointALapRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointALapRace, id=idCur )
 
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Tempo", "Configure Tempo Points Race" )
-		self.Bind(wx.EVT_MENU, self.menuConfigureTempoRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoRace, id=idCur )
 
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Snowball", "Configure Snowball Points Race" )
-		self.Bind(wx.EVT_MENU, self.menuConfigureSnowballRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureSnowballRace, id=idCur )
 		
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Criterium", "Configure Criterium Race" )
-		self.Bind(wx.EVT_MENU, self.menuConfigureCriteriumRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureCriteriumRace, id=idCur )
 		
 		self.menuBar.Append( self.configureMenu, u"&ConfigureRace" )
 		#-----------------------------------------------------------------------
@@ -322,19 +190,50 @@ class MainWin( wx.Frame ):
 
 		self.menuBar.Append( self.helpMenu, u"&Help" )
 
-		#------------------------------------------------------------------------------
 		self.SetMenuBar( self.menuBar )
 		#------------------------------------------------------------------------------
 		self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
 		
-		self.vbs.Add( self.splitter, 1, wx.GROW )
+		self.vbs = wx.BoxSizer( wx.VERTICAL )
+		self.vbs.Add( self.notebook, 1, wx.GROW )
 		self.SetSizer( self.vbs )
 		
 		Model.newRace()
 		self.refresh()
-		self.menuConfigurePointsRace()
+		self.scoreSheet.ConfigurePointsRace()
 		Model.race.setChanged( False )
 	
+	def callPageRefresh( self, i ):
+		try:
+			self.pages[i].refresh()
+		except (AttributeError, IndexError) as e:
+			pass
+
+	def setTitle( self ):
+		race = Model.race
+		if self.fileName:
+			title = u'{}: {}{} - {}'.format(race.category, '*' if race.isChanged() else '', self.fileName, Version.AppVerName)
+		else:
+			title = u'{}: {}'.format( race.category, Version.AppVerName )
+		self.SetTitle( title )
+	
+	def callPageCommit( self, i ):
+		try:
+			self.pages[i].commit()
+			self.setTitle()
+		except IndexError as e:
+			print e
+
+	def onPageChanging( self, event ):
+		notebook = event.GetEventObject()
+		self.callPageCommit( event.GetOldSelection() )
+		self.callPageRefresh( event.GetSelection() )
+		try:
+			Utils.writeLog( u'page: {}\n'.format(notebook.GetPage(event.GetSelection()).__class__.__name__) )
+		except IndexError:
+			pass
+		event.Skip()	# Required to properly repaint the screen.
+
 	def showNotes( self ):
 		self.notesDialog.refresh()
 		width, height = self.notesDialog.GetSizeTuple()
@@ -401,128 +300,6 @@ class MainWin( wx.Frame ):
 	def menuHelp( self, event ):
 		self.menuAbout( event )
 		
-	#--------------------------------------------------------------------------------------------
-	
-	def configurePointsRace( self ):
-		self.rankByCtrl.SetSelection( Model.Race.RankByPoints )
-		self.snowballCtrl.SetValue( False )
-		self.doublePointsForLastSprintCtrl.SetValue( False )
-		self.pointsForLappingCtrl.SetValue( 20 )
-		self.lapsCtrl.SetValue( 120 )
-		self.sprintEveryCtrl.SetValue( 10 )
-		self.commit()
-		self.refresh()
-
-	def menuConfigurePointsRace( self, event = None ):
-		Model.race.pointsForPlace = {
-			1 : 5,
-			2 : 3,
-			3 : 2,
-			4 : 1,
-			5 : 0
-		}
-		self.configurePointsRace()
-		
-	def menuConfigureMadison( self, event ):
-		Model.race.pointsForPlace = {
-			1 : 5,
-			2 : 3,
-			3 : 2,
-			4 : 1,
-			5 : 0
-		}
-		self.rankByCtrl.SetSelection( Model.Race.RankByLapsPoints )
-		self.snowballCtrl.SetValue( False )
-		self.doublePointsForLastSprintCtrl.SetValue( False )
-		self.pointsForLappingCtrl.SetValue( 0 )
-		self.lapsCtrl.SetValue( 100 )
-		self.sprintEveryCtrl.SetValue( 20 )
-		self.commit()
-		self.refresh()
-	
-	def menuConfigurePointALapRace( self, event ):
-		Model.race.pointsForPlace = {
-			1 : 1,
-			2 : 0,
-			3 : -1,
-			4 : -1,
-			5 : -1
-		}
-		self.configurePointsRace()
-	
-	def menuConfigureTempoRace( self, event ):
-		Model.race.pointsForPlace = {
-			1 : 2,
-			2 : 1,
-			3 : 0,
-			4 : -1,
-			5 : -1
-		}
-		self.configurePointsRace()
-	
-	def menuConfigureSnowballRace( self, event ):
-		Model.race.pointsForPlace = {
-			1 : 1,
-			2 : 0,
-			3 : -1,
-			4 : -1,
-			5 : -1
-		}
-		self.snowballCtrl.SetValue( True )
-		self.rankByCtrl.SetSelection( Model.Race.RankByPoints )
-		self.commit()
-		self.refresh()
-
-		
-	def menuConfigureCriteriumRace( self, event ):
-		self.menuConfigurePointsRace()
-		self.rankByCtrl.SetSelection( Model.Race.RankByLapsPointsNumWins )
-		self.pointsForLappingCtrl.SetValue( 0 )
-		self.commit()
-		self.refresh()
-
-	def onChange( self, event ):
-		self.commit()
-
-	def onCourseLengthUnitChange( self, event ):
-		race = Model.race
-		race.courseLengthUnit = self.courseLengthUnitCtrl.GetCurrentSelection()
-		self.updateDependentFields()
-	
-	def onRankByChange( self, event ):
-		race = Model.race
-		race.rankBy = self.rankByCtrl.GetCurrentSelection()
-		self.updateDependentFields()
-		self.refreshResults()
-	
-	def onCourseLengthChange( self, event ):
-		race = Model.race
-		race.courseLength = self.courseLengthCtrl.GetValue()
-		self.updateDependentFields()
-		
-	def onLapsChange( self, event ):
-		race = Model.race
-		race.laps = self.lapsCtrl.GetValue()
-		self.updateDependentFields()
-		self.refreshResults()
-		
-	def onSprintEveryChange( self, event ):
-		race = Model.race
-		race.sprintEvery = self.sprintEveryCtrl.GetValue()
-		self.updateDependentFields()
-		self.refreshResults()
-			
-	def onSnowballChange( self, event ):
-		race = Model.race
-		race.snowball = self.snowballCtrl.GetValue()
-		self.refreshResults()
-		
-	def onDoublePointsForLastSprintChange( self, event ):
-		race = Model.race
-		race.doublePointsForLastSprint = self.doublePointsForLastSprintCtrl.GetValue()
-		self.updateDependentFields()
-		self.refreshResults()
-	
 	def menuNotes( self, event ):
 		self.showNotes()
 	
@@ -634,7 +411,7 @@ class MainWin( wx.Frame ):
 			race.setChanged( False )
 			pickle.dump( race, f, 2 )
 		self.updateRecentFiles()
-		self.updateDependentFields()
+		self.soresheet.updateDependentFields()
 		
 	def writeRace( self ):
 		race = Model.race
@@ -811,78 +588,16 @@ class MainWin( wx.Frame ):
 		wx.AboutBox(info)
 
 	#--------------------------------------------------------------------------------------
-
-	def updateDependentFields( self ):
-		race = Model.race
-		if not race:
-			return
-
-		self.SetTitle( u'{}{} - {} by Edward Sitarski (edward.sitarski@gmail.com)'.format(race.name, ', ' + self.fileName if self.fileName else '', AppVerName) )
-
-		self.distanceCtrl.SetLabel( race.getDistanceStr() )
-		self.numSprintsCtrl.SetLabel( unicode(race.getNumSprints()) )
-		self.sprints.updateShading()
-		self.gbs.Layout()
-
 	def commit( self ):
-		if self.inRefresh:	# Don't commit anything while we are refreshing.
-			return
-		race = Model.race
-		if not race:
-			return
+		self.callPageCommit( self.notebook.GetSelection() )
+		self.setTitle()
+	
+	def refreshCurrentPage( self ):
+		self.setTitle()
+		self.callPageRefresh( self.notebook.GetSelection() )
 
-		for field in [	'name', 'category', 'communique', 'laps', 'sprintEvery', 'courseLength',
-						'doublePointsForLastSprint', 'pointsForLapping', 'snowball']:
-			v = getattr(self, field + 'Ctrl').GetValue()
-			race.setattr( field, v )
-			
-		for field in ['rankBy', 'courseLengthUnit']:
-			v = getattr(self, field + 'Ctrl').GetCurrentSelection()
-			race.setattr( field, v )
-			
-		for field in ['date']:
-			dt = getattr(self, field + 'Ctrl').GetValue()
-			v = datetime.date( dt.GetYear(), dt.GetMonth() + 1, dt.GetDay() )	# Adjust for 0-based month.
-			race.setattr( field, v )
-			
-		self.notesDialog.commit()
-		self.updateDependentFields()
-	
-	def commitPanes( self ):
-		self.commit()
-		self.sprints.commit()
-		self.updown.commit()
-		self.refreshResults()
-	
-	def refreshResults( self ):
-		self.worksheet.refresh()
-		self.results.refresh()
-		self.notesDialog.refresh()
-	
-	def refresh( self, pane = None ):
-		self.inRefresh = True
-		race = Model.race
-		
-		for field in [	'name', 'category', 'communique', 'laps', 'sprintEvery', 'courseLength',
-						'doublePointsForLastSprint', 'pointsForLapping', 'snowball']:
-			getattr(self, field + 'Ctrl').SetValue( getattr(race, field) )
-		
-		for field in ['rankBy', 'courseLengthUnit']:
-			getattr(self, field + 'Ctrl').SetSelection( getattr(race, field) )
-			
-		for field in ['date']:
-			d = getattr( race, field )
-			dt = wx.DateTime()
-			dt.Set(d.day, d.month - 1, d.year, 0, 0, 0, 0)	# Adjust to 0-based month
-			getattr(self, field + 'Ctrl').SetValue( dt )
-					
-		self.updateDependentFields()
-				
-		for p in [self.sprints, self.worksheet, self.updown, self.results]:
-			if p != pane:
-				p.refresh()
-				
-		self.inRefresh = False
+	def refresh( self ):
+		self.refreshCurrentPage()
 
 def MainLoop():
 	parser = OptionParser( usage = "usage: %prog [options] [RaceFile.tp5]" )

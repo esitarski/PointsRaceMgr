@@ -2,6 +2,7 @@ import random
 import operator
 import datetime
 import sys
+from collections import namedtuple
 
 #------------------------------------------------------------------------------
 # Define a global current race.
@@ -21,7 +22,25 @@ def setRace( r ):
 	race = r
 
 #------------------------------------------------------------------------------------------------------------------
+RiderInfo = namedtuple( 'RiderInfo', ['bib', 'name', 'team', 'license', 'uci_code'] )
+class RiderInfo(object):
+	FieldNames  = ('bib', 'last_name', 'first_name', 'team', 'license', 'uci_code')
+	HeaderNames = ('Bib', 'Last Name', 'First Name', 'Team', 'License', 'UCI Code')
 
+	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', license=u'', uci_code=u'' ):
+		self.bib = int(bib)
+		self.last_name = last_name
+		self.first_name = first_name
+		self.team = team
+		self.license = license
+		self.uci_code = uci_code
+
+	def __eq__( self, ri ):
+		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
+		
+	def __repr__( self ):
+		return 'RiderInfo({})'.format(u','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
+		
 class Rider(object):
 	# Rider Status.
 	Finisher  = 0
@@ -40,7 +59,7 @@ class Rider(object):
 	}
 	
 	existingPoints = 0
-
+	
 	def __init__( self, num ):
 		self.num = num
 		self.pointsTotal = 0
@@ -113,6 +132,8 @@ class Race(object):
 	existingPoints = {}			# Existing cumalative points.
 	communique = u''			# Communique initialization
 	notes = u''					# Notes initialization
+	
+	riderInfo = {}				# Rider info indexed by bib.
 
 	def __init__( self ):
 		self.reset()
@@ -138,6 +159,7 @@ class Race(object):
 		self.finishOrder = {}
 		self.riderStatus = {}
 		self.existingPoints = {}
+		self.riderInfo = {}
 
 		self.isChangedFlag = True
 	
@@ -226,6 +248,13 @@ class Race(object):
 			
 		if pointsForLapping is not None and self.pointsForLapping != pointsForLapping:
 			self.pointsForLapping = pointsForLapping
+			self.setChanged()
+			
+	def setRiderInfo( self, riderInfo ):
+		ri1 = sorted(riderInfo.itervalues(), key=operator.attrgetter('bib'))
+		ri2 = sorted(self.riderInfo.itervalues(), key=operator.attrgetter('bib'))
+		if len(ri1) != len(ri2) or not all(r1 == r2 for r1, r2 in zip(ri1, ri2)):
+			self.riderInfo = riderInfo
 			self.setChanged()
 	
 	def isChanged( self ):
