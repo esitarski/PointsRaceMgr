@@ -362,8 +362,9 @@ class MainWin( wx.Frame ):
 		xlFName = os.path.join( dName, os.path.basename(xlFName) )
 		
 		wb = xlwt.Workbook()
-		sheetName = re.sub('[:\\/?*\[\]]', ' ', u'{}'.format(race.category))[:31]
-		sheetCur = wb.add_sheet( sheetName )
+		sheetCur = wb.add_sheet( 'Results' )
+		self.resultsList.toExcelSheet( sheetCur )
+		sheetCur = wb.add_sheet( 'Details' )
 		ToExcelSheet( sheetCur )
 
 		try:
@@ -411,7 +412,7 @@ class MainWin( wx.Frame ):
 			race.setChanged( False )
 			pickle.dump( race, f, 2 )
 		self.updateRecentFiles()
-		self.soresheet.updateDependentFields()
+		self.scoreSheet.updateDependentFields()
 		
 	def writeRace( self ):
 		race = Model.race
@@ -424,8 +425,8 @@ class MainWin( wx.Frame ):
 			
 		try:
 			self.writeRaceValidFileName()
-		except:
-			Utils.MessageOK( self, u'WriteRace:\n\nError writing to file.\n\nRace NOT saved.\n\nTry "File|Save As..." again.', iconMask = wx.ICON_ERROR )
+		except Exception as e:
+			Utils.MessageOK( self, u'WriteRace:\n\n{}\n\nError writing to file.\n\nRace NOT saved.\n\nTry "File|Save As..." again.'.format(e), iconMask = wx.ICON_ERROR )
 
 	def menuNew( self, event ):
 		if Model.race.isChanged():

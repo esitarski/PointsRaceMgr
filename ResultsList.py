@@ -4,6 +4,9 @@ import wx.grid as gridlib
 import os
 import sys
 import operator
+import xlwt
+import re
+
 import Utils
 import Model
 
@@ -89,13 +92,67 @@ class ResultsList(wx.Panel):
 			for c, v in enumerate(values):
 				self.grid.SetCellValue( r, c, v )
 		self.grid.AutoSize()
-		self.grid.EndBatch()		
+		self.grid.EndBatch()
+		
+		self.Layout()
 		
 	def refresh( self ):
 		self.updateGrid()
 		
 	def commit( self ):
 		pass
+		
+	def toExcelSheet( self, ws ):
+		self.refresh()
+		
+		race = Model.race
+		
+		labelStyle = xlwt.easyxf( "alignment: horizontal right;" )
+		fieldStyle = xlwt.easyxf( "alignment: horizontal right;" )
+		unitsStyle = xlwt.easyxf( "alignment: horizontal left;" )
+	
+		fnt = xlwt.Font()
+		fnt.name = 'Arial'
+		fnt.bold = True
+		
+		headerStyle = xlwt.XFStyle()
+		headerStyle.font = fnt
+		
+		fnt = xlwt.Font()
+		fnt.name = 'Arial'
+		fnt.bold = True
+		fnt.height = int(fnt.height * 1.5)
+		
+		titleStyle = xlwt.XFStyle()
+		titleStyle.font = fnt
+
+		rowCur = 0
+		
+		ws.write_merge( rowCur, rowCur, 0, 6, race.name, titleStyle )
+		if race.communique:
+			ws.write( rowCur, 7    , u'Communiqu\u00E9:', labelStyle )
+			ws.write( rowCur, 7 + 1, race.communique, unitsStyle )
+		ws.write( rowCur, 9, race.date.isoformat()[2:], unitsStyle )
+		rowCur += 1
+		ws.write( rowCur, 0, u'Category', labelStyle )
+		ws.write( rowCur, 1, race.category, unitsStyle )
+		
+		rowCur += 2
+		for c in xrange(self.grid.GetNumberCols()):
+			ws.write( rowCur, c, self.grid.GetColLabelValue(c), headerStyle )
+			
+		def toInt( v ):
+			try:
+				return int(v)
+			except:
+				return v
+			
+		for r in xrange(self.grid.GetNumberRows()):
+			rowCur += 1
+			for c in xrange(self.grid.GetNumberCols()):
+				v = self.grid.GetCellValue(r,c)
+				if v != u'':
+					ws.write( rowCur, c, toInt(self.grid.GetCellValue(r,c)) )
 			
 ########################################################################
 
