@@ -76,7 +76,7 @@ class ResultsList(wx.Panel):
 			content.append( values )
 		
 		empty = set(c for c in xrange(len(headers))
-			if all(not values[c] for values in content) or all(values[c]=='0.0' for values in content))
+			if all((not values[c] or values[c] == '0.0') for values in content))
 		
 		def pluck( a ):
 			return [v for c, v in enumerate(a) if c not in empty]
@@ -85,9 +85,9 @@ class ResultsList(wx.Panel):
 		content = [pluck(values) for values in content]
 		
 		for c in xrange(len(headers)):
-			if all((not row[c] or row[c].endswith(u'.0')) for row in content):
-				for row in content:
-					row[c] = row[c][:-2]
+			if all((not values[c] or values[c].endswith(u'.0')) for values in content):
+				for values in content:
+					values[c] = values[c][:-2]
 		
 		Utils.AdjustGridSize( self.grid, len(content), len(headers) )
 		
