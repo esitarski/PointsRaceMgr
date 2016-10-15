@@ -51,7 +51,7 @@ class ResultsList(wx.Panel):
 	def updateGrid( self ):
 		race = Model.race
 		headers = self.getHeaders()
-		fieldNamesResults = self.fieldNames[:-1]
+		fieldNamesResults = self.fieldNames[:-1] # Ignore 'existing_points" as it comes from the scoreSheet.
 		
 		attrs = []
 		for col, h in enumerate(headers):

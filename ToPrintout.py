@@ -194,6 +194,8 @@ class GrowTable( object ):
 		rowHeightSum = [y]
 		for h in self.rowHeights:
 			rowHeightSum.append( rowHeightSum[-1] + h )
+		for i in xrange(50):
+			rowHeightSum.append( rowHeightSum[-1] + rowHeightSum[-1] - rowHeightSum[-2] )
 		
 		colWidthSum = [x]
 		for w in self.colWidths:
@@ -204,6 +206,11 @@ class GrowTable( object ):
 			if curThick != thick:
 				self.setPen( dc, thick )
 				curThick = thick
+			colWidthSum[col]
+			rowHeightSum[rowStart]
+			colWidthSum[col]
+			print rowEnd, rowHeightSum
+			rowHeightSum[rowEnd]
 			dc.DrawLine( colWidthSum[col], rowHeightSum[rowStart], colWidthSum[col], rowHeightSum[rowEnd] )
 	
 		curThick = None
@@ -224,7 +231,7 @@ class GrowTable( object ):
 	
 def ToPrintout( dc ):
 	race = Model.race
-	mainWin = Utils.getMainWin()
+	scoreSheet = Utils.getMainWin()
 	
 	#---------------------------------------------------------------------------------------
 	# Format on the page.
@@ -275,8 +282,8 @@ def ToPrintout( dc ):
 	
 	maxSprints = race.laps / race.sprintEvery
 	
-	gridPoints = mainWin.sprints.gridPoints
-	gridSprint = mainWin.sprints.gridSprint
+	gridPoints = scoreSheet.sprints.gridPoints
+	gridSprint = scoreSheet.sprints.gridSprint
 	
 	colAdjust = {}
 	colAdjust[gridPoints] = 1
@@ -315,9 +322,9 @@ def ToPrintout( dc ):
 	upperColMax = colCur
 	
 	# Collect the worksheet and results information
-	gridBib = mainWin.worksheet.gridBib
-	gridWorksheet = mainWin.worksheet.gridWorksheet
-	gridResults = mainWin.results.gridResults
+	gridBib = scoreSheet.worksheet.gridBib
+	gridWorksheet = scoreSheet.worksheet.gridWorksheet
+	gridResults = scoreSheet.results.gridResults
 	
 	colAdjust[gridBib] = 1
 	
