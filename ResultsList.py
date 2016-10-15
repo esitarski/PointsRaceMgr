@@ -43,7 +43,7 @@ class ResultsList(wx.Panel):
 	def getHeaders( self ):
 		return (
 			[self.resultsGrid.GetColLabelValue(0)] +
-			list(self.headerNames) +
+			list(self.headerNames[:-1]) +
 			[self.resultsGrid.GetColLabelValue(c) for c in xrange(2,self.resultsGrid.GetNumberCols()-1)] +
 			[self.summaryGrid.GetColLabelValue(c) for c in xrange(self.summaryGrid.GetNumberCols())]
 		)
@@ -51,11 +51,12 @@ class ResultsList(wx.Panel):
 	def updateGrid( self ):
 		race = Model.race
 		headers = self.getHeaders()
+		fieldNamesResults = self.fieldNames[:-1]
 		
 		attrs = []
 		for col, h in enumerate(headers):
 			attr = gridlib.GridCellAttr()
-			if col <= 1 or col > len(self.fieldNames):
+			if col <= 1 or col > len(fieldNamesResults):
 				attr.SetRenderer( gridlib.GridCellNumberRenderer() )
 			attr.SetReadOnly()
 			attrs.append( attr )
@@ -68,19 +69,25 @@ class ResultsList(wx.Panel):
 				info = Model.RiderInfo( bib )
 			values = (
 				[self.resultsGrid.GetCellValue(row, 0)] +
-				[unicode(getattr(info,f)) for f in self.fieldNames] +
+				[unicode(getattr(info,f)) for f in fieldNamesResults] +
 				[self.resultsGrid.GetCellValue(row, c) for c in xrange(2,self.resultsGrid.GetNumberCols()-1)] +
 				[self.summaryGrid.GetCellValue(row, c) for c in xrange(self.summaryGrid.GetNumberCols())]
 			)
 			content.append( values )
 		
-		empty = set(c for c in xrange(len(headers)) if all(not values[c] for values in content))
+		empty = set(c for c in xrange(len(headers))
+			if all(not values[c] for values in content) or all(values[c]=='0.0' for values in content))
 		
 		def pluck( a ):
 			return [v for c, v in enumerate(a) if c not in empty]
 		headers = pluck( headers )
 		attrs = pluck( attrs )
 		content = [pluck(values) for values in content]
+		
+		for c in xrange(len(headers)):
+			if all((not row[c] or row[c].endswith(u'.0')) for row in content):
+				for row in content:
+					row[c] = row[c][:-2]
 		
 		Utils.AdjustGridSize( self.grid, len(content), len(headers) )
 		
