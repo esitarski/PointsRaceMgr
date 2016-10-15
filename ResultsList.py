@@ -69,7 +69,8 @@ class ResultsList(wx.Panel):
 				info = Model.RiderInfo( bib )
 			values = (
 				[self.resultsGrid.GetCellValue(row, 0)] +
-				[unicode(getattr(info,f)) for f in fieldNamesResults] +
+				[unicode(getattr(info,f)).upper() if f == 'last_name' else unicode(getattr(info,f))
+					for f in fieldNamesResults] +
 				[self.resultsGrid.GetCellValue(row, c) for c in xrange(2,self.resultsGrid.GetNumberCols()-1)] +
 				[self.summaryGrid.GetCellValue(row, c) for c in xrange(self.summaryGrid.GetNumberCols())]
 			)
