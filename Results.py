@@ -67,6 +67,8 @@ class Results( wx.Panel ):
 		if not race:
 			return
 			
+		riders = race.getRiders()
+		
 		headers = []
 		fields = []
 		
@@ -89,12 +91,17 @@ class Results( wx.Panel ):
 		if race.existingPoints:
 			headers.append( u'Existing\nPoints' )
 			fields.append( 'existingPoints' )
+		
+		if all( int(rider.pointsTotal) == float(rider.pointsTotal) for rider in riders ):
+			def formatPointsTotal( p ):
+				return unicode(int(p))
+		else:
+			def formatPointsTotal( p ):
+				return unicode('{:.1f}'.format(p))
 			
 		# Always add the finish order as the last criteria.
 		headers.append( u'Finish\nOrder' )
 		fields.append( 'finishOrder' )
-		
-		riders = race.getRiders()
 		
 		Utils.AdjustGridSize( self.gridResults, len(riders), len(headers) )
 		for i, h in enumerate(headers):
@@ -104,7 +111,10 @@ class Results( wx.Panel ):
 		for r, rider in enumerate(riders):
 			for c, field in enumerate(fields):
 				v = getattr(rider,field)
-				s = unicode(v) if v != 0 else u''
+				if field == 'existingPoints':
+					s = formatPointsTotal( v )
+				else:
+					s = unicode(v) if v != 0 else u''
 				if s and field == 'updown' and s[:1] != u'-':
 					s = '+' + s
 				if field == 'finishOrder' and s == u'1000':

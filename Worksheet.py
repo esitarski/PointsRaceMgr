@@ -102,6 +102,13 @@ class Worksheet( wx.Panel ):
 		self.gridWorksheet.InsertRows( 0, len(riders), True )
 		riderToRow = {}
 		position = 1
+		
+		if all( int(rider.pointsTotal) == float(rider.pointsTotal) for rider in riders ):
+			def formatPointsTotal( p ):
+				return unicode(int(p))
+		else:
+			def formatPointsTotal( p ):
+				return unicode('{:.1f}'.format(p))
 		for r, rider in enumerate(riders):
 			if r > 0:
 				if not riders[r-1].tiedWith(rider):
@@ -114,7 +121,7 @@ class Worksheet( wx.Panel ):
 			self.gridBib.SetCellValue( r, 0, unicode(position)	if rider.status == Model.Rider.Finisher else
 											 Model.Rider.statusNames[rider.status] )
 			self.gridBib.SetCellValue( r, 1, unicode(rider.num) )
-			self.gridBib.SetCellValue( r, 2, unicode(rider.pointsTotal) )
+			self.gridBib.SetCellValue( r, 2, formatPointsTotal(rider.pointsTotal) )
 			riderToRow[rider.num] = r
 		
 		for (sprint, place), num in race.sprintResults.iteritems():

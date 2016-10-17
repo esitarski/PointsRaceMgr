@@ -84,11 +84,33 @@ class ResultsList(wx.Panel):
 		headers = pluck( headers )
 		attrs = pluck( attrs )
 		content = [pluck(values) for values in content]
+
+		def isIntOrBlank( v ):
+			if not v:
+				return True
+			try:
+				return float(v) == int(v.split('.')[0])
+			except:
+				return False
+
+		def isFloatOrBlank( v ):
+			if not v:
+				return True
+			try:
+				f = float(v)
+				return True
+			except:
+				return False
 		
 		for c in xrange(len(headers)):
-			if all((not values[c] or values[c].endswith(u'.0')) for values in content):
+			if all(isIntOrBlank(values[c]) for values in content):
 				for values in content:
-					values[c] = values[c][:-2]
+					if values[c].endswith(u'.0'):
+						values[c] = values[c][:-2]
+			elif all(isFloatOrBlank(values[c]) for values in content):
+				for values in content:
+					if values[c] and not values[c].endswith(u'.0'):
+						values[c] += u'.0'
 		
 		Utils.AdjustGridSize( self.grid, len(content), len(headers) )
 		
