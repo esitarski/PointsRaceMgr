@@ -427,7 +427,7 @@ def ImportStartList( parent ):
 
 if __name__ == '__main__':
 	app = wx.PySimpleApp()
-	mainWin = wx.Frame(None,title="SprintMan", size=(600,400))
+	mainWin = wx.Frame(None,title="PointsRaceMan", size=(600,400))
 	mainWin.Show()
 	ImportStartList( mainWin )
 	app.MainLoop()

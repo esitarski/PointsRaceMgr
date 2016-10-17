@@ -1,5 +1,6 @@
 import  wx
 from  ToPrintout import ToPrintout
+import Utils
 
 #----------------------------------------------------------------------
 
@@ -8,13 +9,16 @@ class PointsMgrPrintout(wx.Printout):
 		wx.Printout.__init__(self)
 
 	def HasPage(self, page):
-		return page == 1
+		return page in (1, 2)
 
 	def GetPageInfo(self):
-		return (1,1,1,1)
+		return (1,2,1,2)
 
 	def OnPrintPage(self, page):
 		dc = self.GetDC()
-		ToPrintout( dc )
+		if page == 1:
+			Utils.getMainWin().GetParent().GetParent().resultsList.toPrintout( dc )
+		else:
+			ToPrintout( dc )
 		return True
 

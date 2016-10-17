@@ -498,15 +498,23 @@ class MainWin( wx.Frame ):
 		dlg = wx.FileDialog( self, message=u"Save a Race File",
 							defaultFile = '',
 							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',
-							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.CHANGE_DIR )
-		ret = dlg.ShowModal()
-		if ret != wx.ID_OK:
-			dlg.Destroy()
-			return False
+							style=wx.SAVE | wx.CHANGE_DIR )
+		while 1:
+			ret = dlg.ShowModal()
+			if ret != wx.ID_OK:
+				dlg.Destroy()
+				return False
+				
+			fileName = os.path.splitext(dlg.GetPath())[0] + '.tp5'
 			
-		self.fileName = dlg.GetPath()
-		dlg.Destroy()
+			if os.path.exists(self.fileName):
+				if Utils.MessageOKCancel( self, u'File Exists.\n\nOverwrite?', iconMask=wx.ICON_WARNING ):
+					break
+			else:
+				break	
 		
+		dlg.Destroy()	
+		self.fileName = fileName	
 		try:
 			self.writeRaceValidFileName()
 			return True

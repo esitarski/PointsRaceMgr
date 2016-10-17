@@ -6,9 +6,12 @@ import sys
 import operator
 import xlwt
 import re
+import datetime
 
 import Utils
 import Model
+
+from ToPrintout import GrowTable
 
 #--------------------------------------------------------------------------------
 class ResultsList(wx.Panel):
@@ -183,7 +186,73 @@ class ResultsList(wx.Panel):
 				v = self.grid.GetCellValue(r,c)
 				if v != u'':
 					ws.write( rowCur, c, toInt(self.grid.GetCellValue(r,c)) )
-			
+
+	def toPrintout( self, dc ):
+		self.refresh()
+		race = Model.race
+		
+		#---------------------------------------------------------------------------------------
+		# Format on the page.
+		(widthPix, heightPix) = dc.GetSizeTuple()
+		
+		# Get a reasonable border.
+		borderPix = max(widthPix, heightPix) / 25
+		
+		widthFieldPix = widthPix - borderPix * 2
+		heightFieldPix = heightPix - borderPix * 2
+		
+		xPix = borderPix
+		yPix = borderPix
+
+		# Race Information
+		xLeft = xPix
+		yTop = yPix
+		
+		gt = GrowTable(alignHorizontal=GrowTable.alignLeft, alignVertical=GrowTable.alignTop, cellBorder=False)
+		titleAttr = GrowTable.bold | GrowTable.alignLeft
+		rowCur = 0
+		rowCur = gt.set( rowCur, 0, race.name, titleAttr )[0] + 1
+		rowCur = gt.set( rowCur, 0, race.category, titleAttr )[0] + 1
+		rowCur = gt.set( rowCur, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), titleAttr )[0] + 1
+		rowCur = gt.set( rowCur, 0, race.date.strftime('%Y-%m-%d'), titleAttr )[0] + 1
+		
+		if race.communique:
+			rowCur = gt.set( rowCur, 0, u'Communiqu\u00E9: {}'.format(race.communique), GrowTable.alignRight )[0] + 1
+		rowCur = gt.set( rowCur, 0, u'Approved by:________', GrowTable.alignRight )[0] + 1
+		
+		# Draw the title
+		titleHeight = heightFieldPix * 0.15
+		
+		image = wx.Image( os.path.join(Utils.getImageFolder(), 'Sprint1.png'), wx.BITMAP_TYPE_PNG )
+		imageWidth, imageHeight = image.GetWidth(), image.GetHeight()
+		imageScale = float(titleHeight) / float(imageHeight)
+		newImageWidth, newImageHeight = int(imageWidth * imageScale), int(imageHeight * imageScale)
+		image.Rescale( newImageWidth, newImageHeight, wx.IMAGE_QUALITY_HIGH )
+		dc.DrawBitmap( wx.BitmapFromImage(image), xLeft, yTop )
+		del image
+		newImageWidth += titleHeight / 10
+		
+		gt.drawToFitDC( dc, xLeft + newImageWidth, yTop, widthFieldPix - newImageWidth, titleHeight )
+		yTop += titleHeight * 1.20
+		
+		# Collect all the sprint and worksheet results information.
+		gt = GrowTable(GrowTable.alignCenter, GrowTable.alignTop)
+		gt.fromGrid( self.grid )
+		
+		gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - yTop )
+		
+		# Add a timestamp footer.
+		fontSize = heightPix//85
+		font = wx.FontFromPixelSize( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
+		dc.SetFont( font )
+		text = u'Generated {}'.format( datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S') )
+		footerTop = heightPix - borderPix + fontSize/2
+		dc.DrawText( text, widthPix - borderPix - dc.GetTextExtent(text)[0], footerTop )
+		
+		# Add branding
+		text = u'Powered by PointsRaceMgr'
+		dc.DrawText( text, borderPix, footerTop )
+
 ########################################################################
 
 class ResultsListFrame(wx.Frame):

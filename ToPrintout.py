@@ -25,7 +25,7 @@ class GrowTable( object ):
 		self.width = None
 		self.height = None
 	
-	def fromGrid( grid, horizontalGridlines=True, verticalGridlines=False ):
+	def fromGrid( self, grid, horizontalGridlines=True, verticalGridlines=False ):
 		self.clear()
 		mapHorizontal = {
 			wx.ALIGN_LEFT: self.alignLeft,
@@ -41,28 +41,43 @@ class GrowTable( object ):
 		colLabel = 0
 		if grid.GetRowLabelSize() > 0:
 			colLabel = 1
-		if grid.GetColLabelSize() > 0:
+		if grid.GetColLabelSize() > 0 and grid.GetNumberCols():
+			maxNewLines = max(grid.GetColLabelValue(c).count('\n') for c in xrange(grid.GetNumberCols()))
+			def fixNewLines( v ):
+				d = maxNewLines - v.count(u'\n')
+				return v if d == 0 else u'\n'*d + v
 			for c in xrange(grid.GetNumberCols()):
-				self.set( 0, c+colLabel, grid.GetColLabelValue(), self.bold )
+				self.set( 0, c+colLabel, fixNewLines(grid.GetColLabelValue(c)), self.bold )
 			rowLabel = 1
 		if colLabel > 0:
 			for r in xrange(grid.GetNumberRows()):
-				self.set( r+rowLabel, 0, grid.GetRowLabelValue(), self.bold )
+				self.set( r+rowLabel, 0, grid.GetRowLabelValue(r), self.bold )
 		
+		def isNumeric( v ):
+			if not v:
+				return True
+			try:
+				f = float(v)
+				return True
+			except:
+				return False
+		
+		allNumericCol = set( c for c in xrange(grid.GetNumberCols()) if all(isNumeric(grid.GetCellValue(r, c)) for r in xrange(grid.GetNumberRows())) )
 		for r in xrange(grid.GetNumberRows()):
 			for c in xrange(grid.GetNumberCols()):
-				v = grid.GetCellValue( r+1, c )
+				v = grid.GetCellValue( r, c )
 				if not v:
 					continue
 				aHoriz, aVert = grid.GetCellAlignment(r, c)
-				self.set( r+rowLabel, c+colLabel, v, mapHorizontal.get(aHoriz, self.alignLeft) | mapVertical(aVert, self.alignTop) )
+				if c in allNumericCol:
+					aHoriz = wx.ALIGN_RIGHT
+				self.set( r+rowLabel, c+colLabel, v, mapHorizontal.get(aHoriz, self.alignLeft) | mapVertical.get(aVert, self.alignTop) )
 			
 		numCols, numRow = self.getNumberCols(), self.getNumberRows()
 		if horizontalGridlines:
-			self.hLine( 0, 0, numCols )
 			if rowLabel > 0:
 				self.hLine( 1, 0, numCols, True )
-			for r in xrange(rowLabel+1, grid.GetNumberRows()+1):
+			for r in xrange(rowLabel, grid.GetNumberRows()+1):
 				self.hLine( r+rowLabel, 0, numCols )
 		if verticalGridlines:
 			self.vLine( 0, 0, numRows )
@@ -209,7 +224,6 @@ class GrowTable( object ):
 			colWidthSum[col]
 			rowHeightSum[rowStart]
 			colWidthSum[col]
-			print rowEnd, rowHeightSum
 			rowHeightSum[rowEnd]
 			dc.DrawLine( colWidthSum[col], rowHeightSum[rowStart], colWidthSum[col], rowHeightSum[rowEnd] )
 	

@@ -336,7 +336,7 @@ class ExportGrid( object ):
 		with tag(buf, 'p', {'class': 'smallfont'}):
 			buf.write( 'Powered by ' )
 			with tag(buf, 'a', dict(href="http://www.sites.google.com/site/crossmgrsoftware")):
-				buf.write( 'SprintMgr' )
+				buf.write( 'CrossMgr' )
 		return buf
 			
 if __name__ == '__main__':
