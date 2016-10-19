@@ -400,9 +400,8 @@ h2{ font-size: 200%; }
 .bigfont { font-size: 120%; }
 .hidden { display: none; }
 
-.numeric {
-	text-align: right;
-}
+table.results td.numeric { text-align: right; }
+table.details td.numeric { text-align: right; }
 
 table.results {
 	font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
