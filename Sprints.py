@@ -4,10 +4,10 @@ import Model
 import Utils
 import re
 
-NumCols = 20
+NumCols = 24
 NumRows = 5	
 
-notNumberRE = re.compile( '[^0-9]' )
+notNumberRE = re.compile( '[^-0-9]' )
 
 class EnterHandlingGrid( gridlib.Grid ):
 	def __init__(self, parent, NextColCheck ):
@@ -68,10 +68,11 @@ class Sprints( wx.Panel ):
 		self.gridPoints.SetColSize( 0, 40 )
 		self.gridPoints.SetColSize( 2, 64 )
 		self.gridPoints.SetColSize( 3, 16 )
-		attr = gridlib.GridCellAttr()
-		attr.SetReadOnly()
-		self.gridPoints.SetColAttr( 0, attr )
-		self.gridPoints.SetColAttr( 1, attr )
+		
+		for c in xrange(self.gridPoints.GetNumberCols()):
+			attr = gridlib.GridCellAttr()
+			attr.SetReadOnly()
+			self.gridPoints.SetColAttr( c, attr )
 		
 		self.hbs.Add( self.gridPoints, 0, wx.ALL, border=4 )
 		

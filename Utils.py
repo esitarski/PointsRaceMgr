@@ -208,6 +208,20 @@ def getHomeDir():
 	except:
 		homedir = os.path.expanduser('~')
 	return homedir
+	
+#---------------------------------------------------------------------------
+
+from contextlib import contextmanager
+
+@contextmanager
+def tag( buf, name, attrs = {} ):
+	if not isinstance(attrs, dict) and attrs:
+		attrs = { 'class': attrs }
+	buf.write(
+		u'<{}>'.format(u' '.join( [name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.iteritems()] ) )
+	)
+	yield
+	buf.write( u'</{}>\n'.format(name) )
 
 #------------------------------------------------------------------------
 try:

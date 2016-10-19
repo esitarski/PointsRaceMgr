@@ -3,12 +3,14 @@ import wx.grid as gridlib
 
 import os
 import sys
+import cgi
 import operator
 import xlwt
 import re
 import datetime
 
 import Utils
+from Utils import tag
 import Model
 
 from ToPrintout import GrowTable
@@ -24,6 +26,7 @@ class ResultsList(wx.Panel):
 		
 		self.fieldNames  = Model.RiderInfo.FieldNames
 		self.headerNames = Model.RiderInfo.HeaderNames
+		self.numericCols = set()
 		
 		self.grid = gridlib.Grid( self, style = wx.BORDER_SUNKEN )
 		self.grid.DisableDragRowSize()
@@ -105,12 +108,15 @@ class ResultsList(wx.Panel):
 			except:
 				return False
 		
+		self.numericCols = set()
 		for c in xrange(len(headers)):
 			if all(isIntOrBlank(values[c]) for values in content):
+				self.numericCols.add( c )
 				for values in content:
 					if values[c].endswith(u'.0'):
 						values[c] = values[c][:-2]
 			elif all(isFloatOrBlank(values[c]) for values in content):
+				self.numericCols.add( c )
 				for values in content:
 					if values[c] and not values[c].endswith(u'.0'):
 						values[c] += u'.0'
@@ -252,6 +258,20 @@ class ResultsList(wx.Panel):
 		# Add branding
 		text = u'Powered by PointsRaceMgr'
 		dc.DrawText( text, borderPix, footerTop )
+
+	def toHtml( self, html ):
+		with tag( html, 'table', {'class':'results'} ):
+			with tag( html, 'thead' ):
+				with tag( html, 'tr' ):
+					for col in xrange(self.grid.GetNumberCols()):
+						with tag( html, 'th' ):
+							html.write( cgi.escape(self.grid.GetColLabelValue(col)).replace('\n', '<br\>') )
+			with tag( html, 'tbody' ):
+				for row in xrange(self.grid.GetNumberRows()):
+					with tag( html, 'tr', {'class': 'odd'} if row & 1 else {} ):
+						for col in xrange(self.grid.GetNumberCols()):
+							with tag( html, 'td', {'class': 'numeric'} if col in self.numericCols else {} ):
+								html.write( cgi.escape(self.grid.GetCellValue(row, col)) )
 
 ########################################################################
 

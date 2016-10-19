@@ -1,8 +1,10 @@
 import wx
 import os
+import cgi
 import math
 import datetime
 import Utils
+from Utils import tag
 import Model
 
 class GrowTable( object ):
@@ -62,14 +64,14 @@ class GrowTable( object ):
 			except:
 				return False
 		
-		allNumericCol = set( c for c in xrange(grid.GetNumberCols()) if all(isNumeric(grid.GetCellValue(r, c)) for r in xrange(grid.GetNumberRows())) )
+		numericCols = set( c for c in xrange(grid.GetNumberCols()) if all(isNumeric(grid.GetCellValue(r, c)) for r in xrange(grid.GetNumberRows())) )
 		for r in xrange(grid.GetNumberRows()):
 			for c in xrange(grid.GetNumberCols()):
 				v = grid.GetCellValue( r, c )
 				if not v:
 					continue
 				aHoriz, aVert = grid.GetCellAlignment(r, c)
-				if c in allNumericCol:
+				if c in numericCols:
 					aHoriz = wx.ALIGN_RIGHT
 				self.set( r+rowLabel, c+colLabel, v, mapHorizontal.get(aHoriz, self.alignLeft) | mapVertical.get(aVert, self.alignTop) )
 			
@@ -240,30 +242,58 @@ class GrowTable( object ):
 	def toPDF( self, pdf, x, y, width, height ):
 		pass
 	
-	def toHtmlTable( self ):
-		pass
-	
-def ToPrintout( dc ):
+	def toHtml( self, html, attrs={} ):
+		topBorder = set()
+		bottomBorder = set()
+		leftBorder = set()
+		rightBorder = set()
+		
+		numberRows, numberCols = self.getNumberRows(), self.getNumberCols()
+		for row, colStart, colEnd, thick in self.hLines:
+			if row < numberRows:
+				for col in xrange(colStart, colEnd):
+					topBorder.add( (row, col) )
+			else:
+				for col in xrange(colStart, colEnd):
+					bottomBorder.add( (numberRows-1, col) )
+		
+		for col, rowStart, rowEnd, think in self.vLines:
+			if col < numberCols:
+				for row in xrange(rowStart, rowEnd):
+					leftBorder.add( (row, col) )
+			else:
+				for row in xrange(rowStart, rowEnd):
+					rightBorder.add( (row, numberCols-1) )
+		
+		with tag( html, 'table', attrs ):
+			with tag( html, 'tbody' ):
+				for row, r in enumerate(self.table):
+					with tag( html, 'tr' ):
+						for col in xrange(numberCols):
+							value, attr = r[col] if col < len(r) else (u'', 0)
+							value = unicode(value)
+							classDef = []
+							if (row, col) in topBorder:
+								classDef.append('topBorder')
+							if (row, col) in bottomBorder:
+								classDef.append('bottomBorder')
+							if (row, col) in leftBorder:
+								classDef.append('leftBorder')
+							if (row, col) in rightBorder:
+								classDef.append('rightBorder')
+							if (attr & self.alignRight) and value:
+								classDef.append('rightAlign')						
+							attrs = {'class': ' '.join(classDef)} if classDef else {}
+							with tag( html, 'td', attrs ):
+								if (attr & self.bold) and value:
+									with tag( html, 'strong' ):
+										html.write( cgi.escape(value) )
+								else:
+									html.write( cgi.escape(value) )
+
+def getTitleGrowTable( includeApprovedBy = True ):
 	race = Model.race
 	scoreSheet = Utils.getMainWin()
-	
-	#---------------------------------------------------------------------------------------
-	# Format on the page.
-	(widthPix, heightPix) = dc.GetSizeTuple()
-	
-	# Get a reasonable border.
-	borderPix = max(widthPix, heightPix) / 25
-	
-	widthFieldPix = widthPix - borderPix * 2
-	heightFieldPix = heightPix - borderPix * 2
-	
-	xPix = borderPix
-	yPix = borderPix
-
-	# Race Information
-	xLeft = xPix
-	yTop = yPix
-	
 	gt = GrowTable(alignHorizontal=GrowTable.alignLeft, alignVertical=GrowTable.alignTop, cellBorder=False)
 	titleAttr = GrowTable.bold | GrowTable.alignLeft
 	rowCur = 0
@@ -274,23 +304,13 @@ def ToPrintout( dc ):
 	
 	if race.communique:
 		rowCur = gt.set( rowCur, 0, u'Communiqu\u00E9: {}'.format(race.communique), GrowTable.alignRight )[0] + 1
-	rowCur = gt.set( rowCur, 0, u'Approved by:________', GrowTable.alignRight )[0] + 1
-	
-	# Draw the title
-	titleHeight = heightFieldPix * 0.15
-	
-	image = wx.Image( os.path.join(Utils.getImageFolder(), 'Sprint1.png'), wx.BITMAP_TYPE_PNG )
-	imageWidth, imageHeight = image.GetWidth(), image.GetHeight()
-	imageScale = float(titleHeight) / float(imageHeight)
-	newImageWidth, newImageHeight = int(imageWidth * imageScale), int(imageHeight * imageScale)
-	image.Rescale( newImageWidth, newImageHeight, wx.IMAGE_QUALITY_HIGH )
-	dc.DrawBitmap( wx.BitmapFromImage(image), xLeft, yTop )
-	del image
-	newImageWidth += titleHeight / 10
-	
-	gt.drawToFitDC( dc, xLeft + newImageWidth, yTop, widthFieldPix - newImageWidth, titleHeight )
-	yTop += titleHeight * 1.20
-	
+	if includeApprovedBy:
+		rowCur = gt.set( rowCur, 0, u'Approved by:________', GrowTable.alignRight )[0] + 1
+	return gt
+
+def getBodyGrowTable():
+	race = Model.race
+	scoreSheet = Utils.getMainWin()
 	# Collect all the sprint and worksheet results information.
 	gt = GrowTable(GrowTable.alignCenter, GrowTable.alignTop)
 	
@@ -371,27 +391,75 @@ def ToPrintout( dc ):
 	
 	gt.vLine( 3, 0, gt.getNumberRows(), True )
 	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
+	return gt
+
+def getNotesGrowTable():
+	race = Model.race
+	lines = [line for line in race.notes.split(u'\n') if line.strip()]
+	if not lines:
+		return None
+	
+	gtNotes = GrowTable()
+	maxLinesPerCol = 10
+	numCols = int(math.ceil(len(lines) / float(maxLinesPerCol)))
+	numRows = int(math.ceil(len(lines) / float(numCols)))
+	rowCur, colCur = 0, 0
+	for i, line in enumerate(lines):
+		gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), GrowTable.alignRight )
+		gtNotes.set( rowCur, colCur*2+1, u'{}    '.format(line.strip()), GrowTable.alignLeft )
+		rowCur += 1
+		if rowCur == numRows:
+			rowCur = 0
+			colCur += 1
+	
+	return gtNotes
+	
+def ToPrintout( dc ):
+	race = Model.race
+	scoreSheet = Utils.getMainWin()
+	
+	#---------------------------------------------------------------------------------------
+	# Format on the page.
+	(widthPix, heightPix) = dc.GetSizeTuple()
+	
+	# Get a reasonable border.
+	borderPix = max(widthPix, heightPix) / 25
+	
+	widthFieldPix = widthPix - borderPix * 2
+	heightFieldPix = heightPix - borderPix * 2
+	
+	xPix = borderPix
+	yPix = borderPix
+
+	# Race Information
+	xLeft = xPix
+	yTop = yPix
+	
+	gt = getTitleGrowTable()
+	
+	# Draw the title
+	titleHeight = heightFieldPix * 0.15
+	
+	image = wx.Image( os.path.join(Utils.getImageFolder(), 'Sprint1.png'), wx.BITMAP_TYPE_PNG )
+	imageWidth, imageHeight = image.GetWidth(), image.GetHeight()
+	imageScale = float(titleHeight) / float(imageHeight)
+	newImageWidth, newImageHeight = int(imageWidth * imageScale), int(imageHeight * imageScale)
+	image.Rescale( newImageWidth, newImageHeight, wx.IMAGE_QUALITY_HIGH )
+	dc.DrawBitmap( wx.BitmapFromImage(image), xLeft, yTop )
+	del image
+	newImageWidth += titleHeight / 10
+	
+	gt.drawToFitDC( dc, xLeft + newImageWidth, yTop, widthFieldPix - newImageWidth, titleHeight )
+	yTop += titleHeight * 1.20
+	
+	gt = getBodyGrowTable()
 	
 	# Format the notes assuming a minimum readable size.
+	gtNotes = getNotesGrowTable()
 	notesHeight = 0
-	gtNotes = None
-	
-	lines = [line for line in race.notes.split(u'\n') if line.strip()]
-	if lines:
-		gtNotes = GrowTable()
-		maxLinesPerCol = 10
-		numCols = int(math.ceil(len(lines) / float(maxLinesPerCol)))
-		numRows = int(math.ceil(len(lines) / float(numCols)))
-		rowCur, colCur = 0, 0
-		for i, line in enumerate(lines):
-			gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), GrowTable.alignRight )
-			gtNotes.set( rowCur, colCur*2+1, u'{}    '.format(line.strip()), GrowTable.alignLeft )
-			rowCur += 1
-			if rowCur == numRows:
-				rowCur = 0
-				colCur += 1
+	if gtNotes:	
 		lineHeight = heightPix // 65
-		notesHeight = (lineHeight+1) * numRows
+		notesHeight = (lineHeight+1) * gtNotes.getNumberRows()
 	
 	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - yTop - notesHeight )
 	
@@ -412,3 +480,9 @@ def ToPrintout( dc ):
 	text = u'Powered by PointsRaceMgr'
 	dc.DrawText( text, borderPix, footerTop )
 
+def ToHtml( html ):
+	gt = getBodyGrowTable()
+	gt.toHtml( html, {'class':'details'} )
+	gtNotes = getNotesGrowTable()
+	if gtNotes:
+		gt.toHtml( html )

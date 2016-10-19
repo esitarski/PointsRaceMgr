@@ -206,13 +206,14 @@ class ScoreSheet( wx.Panel ):
 
 	#--------------------------------------------------------------------------------------------
 
-	def configurePointsRace( self ):
+	def configurePointsRaceOptions( self ):
 		self.rankByCtrl.SetSelection( Model.Race.RankByPoints )
 		self.snowballCtrl.SetValue( False )
-		self.doublePointsForLastSprintCtrl.SetValue( False )
+		self.doublePointsForLastSprintCtrl.SetValue( True )
 		self.pointsForLappingCtrl.SetValue( 20 )
 		self.lapsCtrl.SetValue( 120 )
 		self.sprintEveryCtrl.SetValue( 10 )
+		
 		self.commit()
 		self.refresh()
 
@@ -224,24 +225,10 @@ class ScoreSheet( wx.Panel ):
 			4 : 1,
 			5 : 0
 		}
-		self.configurePointsRace()
+		self.configurePointsRaceOptions()
 		
 	def ConfigureMadison( self ):
-		Model.race.pointsForPlace = {
-			1 : 5,
-			2 : 3,
-			3 : 2,
-			4 : 1,
-			5 : 0
-		}
-		self.rankByCtrl.SetSelection( Model.Race.RankByLapsPoints )
-		self.snowballCtrl.SetValue( False )
-		self.doublePointsForLastSprintCtrl.SetValue( False )
-		self.pointsForLappingCtrl.SetValue( 0 )
-		self.lapsCtrl.SetValue( 100 )
-		self.sprintEveryCtrl.SetValue( 20 )
-		self.commit()
-		self.refresh()
+		self.ConfigurePointsRace()
 	
 	def ConfigurePointALapRace( self ):
 		Model.race.pointsForPlace = {
@@ -251,7 +238,11 @@ class ScoreSheet( wx.Panel ):
 			4 : -1,
 			5 : -1
 		}
-		self.configurePointsRace()
+		self.configurePointsRaceOptions()
+		self.doublePointsForLastSprintCtrl.SetValue( False )
+		self.pointsForLappingCtrl.SetValue( 0 )
+		self.commit()
+		self.refresh()
 	
 	def ConfigureTempoRace( self ):
 		Model.race.pointsForPlace = {
@@ -261,7 +252,10 @@ class ScoreSheet( wx.Panel ):
 			4 : -1,
 			5 : -1
 		}
-		self.configurePointsRace()
+		self.configurePointsRaceOptions()
+		self.doublePointsForLastSprintCtrl.SetValue( False )
+		self.commit()
+		self.refresh()
 	
 	def ConfigureSnowballRace( self ):
 		Model.race.pointsForPlace = {
@@ -277,9 +271,10 @@ class ScoreSheet( wx.Panel ):
 		self.refresh()
 		
 	def ConfigureCriteriumRace( self ):
-		self.menuConfigurePointsRace()
+		self.ConfigurePointsRace()
 		self.rankByCtrl.SetSelection( Model.Race.RankByLapsPointsNumWins )
 		self.pointsForLappingCtrl.SetValue( 0 )
+		self.doublePointsForLastSprintCtrl.SetValue( False )
 		self.commit()
 		self.refresh()
 

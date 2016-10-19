@@ -3,16 +3,20 @@ from wx.lib.wordwrap import wordwrap
 import wx.lib.agw.flatnotebook as fnb
 
 import sys
+import cgi
 import os
+import io
 import re
 import datetime
 import xlwt
 import webbrowser
 import cPickle as pickle
 import subprocess
+import traceback
 from optparse import OptionParser
 
 import Utils
+from Utils import tag
 import Model
 import Version
 from ScoreSheet import ScoreSheet
@@ -20,7 +24,7 @@ from StartList import StartList
 from ResultsList import ResultsList
 from Printing import PointsMgrPrintout
 from ToExcelSheet import ToExcelSheet
-from ToPrintout import ToPrintout
+from ToPrintout import ToPrintout, ToHtml
 from Notes import NotesDialog
 
 from Version import AppVerName
@@ -121,6 +125,13 @@ class MainWin( wx.Frame ):
 		self.Bind(wx.EVT_MENU, self.menuExportToPDF, id=idCur )
 		'''
 
+		self.fileMenu.AppendSeparator()
+		
+		idCur = wx.NewId()
+		idExportToExcel = idCur
+		self.fileMenu.Append( idCur , "&Export to HTML...\tCtrl+H", "Export as an HTML Web Page" )
+		self.Bind(wx.EVT_MENU, self.menuExportToHtml, id=idCur )
+
 		idCur = wx.NewId()
 		idExportToExcel = idCur
 		self.fileMenu.Append( idCur , "&Export to Excel...\tCtrl+E", "Export as an Excel Spreadsheet" )
@@ -152,31 +163,31 @@ class MainWin( wx.Frame ):
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Points Race", "Configure Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointsRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointsRace(), id=idCur )
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Madison", "Configure Madison" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureMadison, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureMadison(), id=idCur )
 		
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"Point-a-&Lap", "Configure Point-a-Lap Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointALapRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointALapRace(), id=idCur )
 
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Tempo", "Configure Tempo Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoRace(), id=idCur )
 
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Snowball", "Configure Snowball Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureSnowballRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureSnowballRace(), id=idCur )
 		
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Criterium", "Configure Criterium Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureCriteriumRace, id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureCriteriumRace(), id=idCur )
 		
 		self.menuBar.Append( self.configureMenu, u"&ConfigureRace" )
 		#-----------------------------------------------------------------------
@@ -222,7 +233,8 @@ class MainWin( wx.Frame ):
 			self.pages[i].commit()
 			self.setTitle()
 		except IndexError as e:
-			print e
+			#print e
+			pass
 
 	def onPageChanging( self, event ):
 		notebook = event.GetEventObject()
@@ -339,6 +351,215 @@ class MainWin( wx.Frame ):
 		except:
 			pass
 	
+	def menuExportToHtml( self, event ):
+		self.commit()
+		self.refresh()
+		if not self.fileName:
+			if not Utils.MessageOKCancel( self, u'You must save first.\n\nSave now?', u'Save Now'):
+				return
+			if not self.menuSaveAs( event ):
+				return
+
+		htmlFName = os.path.splitext(self.fileName)[0] + '.html'
+		
+		race = Model.race
+		
+		wb = xlwt.Workbook()
+		sheetCur = wb.add_sheet( 'Results' )
+		self.resultsList.toExcelSheet( sheetCur )
+		sheetCur = wb.add_sheet( 'Details' )
+		ToExcelSheet( sheetCur )
+
+		try:
+			with io.open( htmlFName, 'w', encoding='utf8' ) as html:
+				def write( v ):
+					html.write( unicode(v) )
+				
+				with tag(html, 'html'):
+					with tag(html, 'head'):
+						with tag(html, 'title'):
+							write( race.name.replace('\n', ' ') )
+						with tag(html, 'meta', dict(charset="UTF-8",
+													author="Edward Sitarski",
+													copyright="Edward Sitarski, 2013-{}".format(datetime.datetime.now().strftime('%Y')),
+													generator="PointsRaceMgr")):
+							pass
+						with tag(html, 'style', dict( type="text/css")):
+							write( u'''
+body{ font-family: sans-serif; }
+
+h1{ font-size: 250%; }
+h2{ font-size: 200%; }
+
+#idRaceName {
+	font-size: 200%;
+	font-weight: bold;
+}
+#idImgHeader { box-shadow: 4px 4px 4px #888888; }
+.smallfont { font-size: 80%; }
+.bigfont { font-size: 120%; }
+.hidden { display: none; }
+
+.numeric {
+	text-align: right;
+}
+
+table.results {
+	font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
+	border-collapse:collapse;
+}
+table.results td, table.results th {
+	font-size:1em;
+	padding:3px 7px 2px 7px;
+	text-align: left;
+}
+table.results th {
+	font-size:1.1em;
+	text-align:left;
+	padding-top:5px;
+	padding-bottom:4px;
+	background-color:#7FE57F;
+	color:#000000;
+	vertical-align:bottom;
+}
+table.results tr.odd {
+	color:#000000;
+	background-color:#EAF2D3;
+}
+
+table.details {
+	font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
+	border-collapse:collapse;
+}
+table.details td, table.details th {
+	font-size:1em;
+	padding:3px 7px 2px 7px;
+	text-align: left;
+}
+table.details th {
+	font-size:1.1em;
+	text-align:left;
+	padding-top:5px;
+	padding-bottom:4px;
+	background-color:#7FE57F;
+	color:#000000;
+	vertical-align:bottom;
+}
+
+table.details td.rightAlign, table.details th.rightAlign {
+	text-align:right;
+}
+
+table.details td.leftAlign, table.details th.leftAlign {
+	text-align:left;
+}
+
+table.details td.leftBorder { border-left: 1pt solid #CCC; }
+table.details td.rightBorder { border-right: 1pt solid #CCC; }
+table.details td.topBorder { border-top: 1pt solid #CCC; }
+table.details td.bottomBorder { border-bottom: 1pt solid #CCC; }
+
+.smallFont {
+	font-size: 75%;
+}
+
+table.results td.leftBorder, table.results th.leftBorder
+{
+	border-left:1px solid #98bf21;
+}
+
+table.results tr:hover
+{
+	color:#000000;
+	background-color:#FFFFCC;
+}
+table.results tr.odd:hover
+{
+	color:#000000;
+	background-color:#FFFFCC;
+}
+
+table.results td {
+	border-top:1px solid #98bf21;
+}
+
+table.results td.noborder {
+	border-top:0px solid #98bf21;
+}
+
+table.results td.rightAlign, table.results th.rightAlign {
+	text-align:right;
+}
+
+table.results td.leftAlign, table.results th.leftAlign {
+	text-align:left;
+}
+
+.topAlign {
+	vertical-align:top;
+}
+
+table.results th.centerAlign, table.results td.centerAlign {
+	text-align:center;
+}
+
+.ignored {
+	color: #999;
+	font-style: italic;
+}
+
+table.points tr.odd {
+	color:#000000;
+	background-color:#EAF2D3;
+}
+
+.rank {
+	color: #999;
+	font-style: italic;
+}
+
+.points-cell {
+	text-align: right;
+	padding:3px 7px 2px 7px;
+}
+
+hr { clear: both; }
+
+@media print {
+	.noprint { display: none; }
+	.title { page-break-after: avoid; }
+}
+''')
+					with tag(html, 'body'):
+						with tag(html, 'h1'):
+							write( u'{}: {}'.format(cgi.escape(race.name), race.date.strftime('%Y-%m-%d')) )
+						with tag(html, 'h2'):
+							write( u'Category: {}'.format(cgi.escape(race.category)) )
+						with tag(html, 'h3'):
+							s =  [
+								u'Laps: {}'.format(race.laps),
+								u'Sprint Every: {} laps'.format(race.sprintEvery),
+								u'Distance: {:.1f}{}'.format( race.courseLength*race.laps, ['m','km'][race.courseLengthUnit] ),
+							]
+							write( u',  '.join(s) )
+						self.resultsList.toHtml( html )
+						write( '<br/>' )
+						write( '<hr/>' )
+						write( '<br/>' )
+						ToHtml( html )
+
+		except Exception as e:
+			traceback.print_exc()
+			Utils.MessageOK(self,
+						u'Cannot write "{}"\n\n{}\n\nCheck if this file is open.\nIf so, close it, and try again.'.format(htmlFName,e),
+						'Excel File Error', iconMask=wx.ICON_ERROR )
+		
+		try:
+			webbrowser.open( htmlFName )
+		except:
+			pass
+		#Utils.MessageOK(self, 'Excel file written to:\n\n   {}'.format(htmlFName), 'Excel Write', iconMask=wx.ICON_INFORMATION)
+
 	def menuExportToExcel( self, event ):
 		self.commit()
 		self.refresh()
@@ -348,18 +569,9 @@ class MainWin( wx.Frame ):
 			if not self.menuSaveAs( event ):
 				return
 
-		xlFName = self.fileName[:-4] + '.xls'
-		dlg = wx.DirDialog( self, u'Folder to write "{}"'.format(os.path.basename(xlFName)),
-						style=wx.DD_DEFAULT_STYLE, defaultPath=os.path.dirname(xlFName) )
-		ret = dlg.ShowModal()
-		dName = dlg.GetPath()
-		dlg.Destroy()
-		if ret != wx.ID_OK:
-			return
-
+		xlFName = os.path.splitext(self.fileName)[0] + '.xls'
+		
 		race = Model.race
-			
-		xlFName = os.path.join( dName, os.path.basename(xlFName) )
 		
 		wb = xlwt.Workbook()
 		sheetCur = wb.add_sheet( 'Results' )
@@ -373,7 +585,7 @@ class MainWin( wx.Frame ):
 				webbrowser.open( xlFName )
 			except:
 				pass
-			#Utils.MessageOK(self, 'Excel file written to:\n\n   %s' % xlFName, 'Excel Write', iconMask=wx.ICON_INFORMATION)
+			#Utils.MessageOK(self, 'Excel file written to:\n\n   {}'.format(xlFName), 'Excel Write', iconMask=wx.ICON_INFORMATION)
 		except Exception as e:
 			Utils.MessageOK(self,
 						u'Cannot write "{}"\n\n{}\n\nCheck if this spreadsheet is open.\nIf so, close it, and try again.'.format(xlFName,e),
@@ -507,7 +719,7 @@ class MainWin( wx.Frame ):
 				
 			fileName = os.path.splitext(dlg.GetPath())[0] + '.tp5'
 			
-			if os.path.exists(self.fileName):
+			if os.path.exists(fileName):
 				if Utils.MessageOKCancel( self, u'File Exists.\n\nOverwrite?', iconMask=wx.ICON_WARNING ):
 					break
 			else:
@@ -620,6 +832,13 @@ def MainLoop():
 	dataDir = Utils.getHomeDir()
 	os.chdir( dataDir )
 	redirectFileName = os.path.join(dataDir, 'PointsRaceMgr.log')
+	
+	'''
+	def my_handler( type, value, traceback ):
+		print 'my_handler'
+		print type, value, trackback
+	sys.excepthook = my_handler
+	'''
 	
 	if __name__ == '__main__':
 		Utils.disable_stdout_buffering()
