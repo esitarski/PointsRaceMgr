@@ -125,7 +125,8 @@ class Race(object):
 		4 : 1,
 		5 : 0
 	}
-		
+	startLaps = 0
+	
 	sprintResults = {}			# Results from each sprint.
 	updowns = {}				# Laps up/down
 	finishOrder = {}			# Results from final sprint.
@@ -170,9 +171,9 @@ class Race(object):
 	def getDistanceStr( self ):
 		d = self.getDistance()
 		if d - int(d) < 0.001:
-			return '%d' % int(d)
+			return '{}'.format(int(d))
 		else:
-			return '%.2f' % d
+			return '{:.2f}'.format(d)
 	
 	def setattr( self, attr, v ):
 		if getattr(self, attr, None) != v:
@@ -184,7 +185,7 @@ class Race(object):
 	
 	def getNumSprints( self ):
 		try:
-			numSprints = self.laps // self.sprintEvery
+			numSprints = max(0, self.laps - self.startLaps) // self.sprintEvery
 		except:
 			numSprints = 0
 		return numSprints

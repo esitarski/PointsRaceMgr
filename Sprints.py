@@ -4,7 +4,7 @@ import Model
 import Utils
 import re
 
-NumCols = 24
+NumCols = 35
 NumRows = 5	
 
 notNumberRE = re.compile( '[^-0-9]' )

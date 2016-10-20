@@ -95,13 +95,17 @@ class ScoreSheet( wx.Panel ):
 		self.lapsLabel = label
 		self.lapsCtrl = ctrl
 		
-		label = wx.StaticText( self, label=u'Distance:' )
+		#--------------------------------------------------------------------------------------------------------------
+		label = wx.StaticText( self, label=u'Start Laps:' )
 		self.gbs.Add( label, pos=(2, 3), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 16 )
-		ctrl = wx.StaticText( self, -1, '10.0' )
-		self.gbs.Add( ctrl, pos=(2, 4), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
-		unitsLabel = wx.StaticText( self, -1, 'km' )
-		self.gbs.Add( unitsLabel, pos=(2, 5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
-		self.distanceLabel = label
+		ctrl = IC.IntCtrl( self, min=0, max=300, value=0, limited=True, style=wx.ALIGN_RIGHT, size=(32,-1) )
+		ctrl.Bind(IC.EVT_INT, self.onStartLapsChange)
+		self.gbs.Add( ctrl, pos=(2, 4), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
+		self.startLapsLabel = label
+		self.startLapsCtrl = ctrl
+		
+		ctrl = wx.StaticText( self, -1, u'Distance: 10.0km' )
+		self.gbs.Add( ctrl, pos=(2, 5), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
 		self.distanceCtrl = ctrl
 
 		label = wx.StaticText( self, label=u'Number of Sprints:', style = wx.ALIGN_RIGHT )
@@ -210,6 +214,7 @@ class ScoreSheet( wx.Panel ):
 		self.rankByCtrl.SetSelection( Model.Race.RankByPoints )
 		self.snowballCtrl.SetValue( False )
 		self.doublePointsForLastSprintCtrl.SetValue( True )
+		self.startLapsCtrl.SetValue( 0 )
 		self.pointsForLappingCtrl.SetValue( 20 )
 		self.lapsCtrl.SetValue( 120 )
 		self.sprintEveryCtrl.SetValue( 10 )
@@ -254,6 +259,10 @@ class ScoreSheet( wx.Panel ):
 		}
 		self.configurePointsRaceOptions()
 		self.doublePointsForLastSprintCtrl.SetValue( False )
+		self.pointsForLappingCtrl.SetValue( 4 )
+		self.lapsCtrl.SetValue( 4*10 )
+		self.startLapsCtrl.SetValue( 5 )
+		self.sprintEveryCtrl.SetValue( 1 )
 		self.commit()
 		self.refresh()
 	
@@ -303,6 +312,12 @@ class ScoreSheet( wx.Panel ):
 		self.updateDependentFields()
 		self.refreshResults()
 		
+	def onStartLapsChange( self, event ):
+		race = Model.race
+		race.startLaps = self.startLapsCtrl.GetValue()
+		self.updateDependentFields()
+		self.refreshResults()
+		
 	def onSprintEveryChange( self, event ):
 		race = Model.race
 		race.sprintEvery = self.sprintEveryCtrl.GetValue()
@@ -327,7 +342,7 @@ class ScoreSheet( wx.Panel ):
 		if not race:
 			return
 
-		self.distanceCtrl.SetLabel( race.getDistanceStr() )
+		self.distanceCtrl.SetLabel( u'Distance: {}km'.format(race.getDistanceStr()) )
 		self.numSprintsCtrl.SetLabel( unicode(race.getNumSprints()) )
 		self.sprints.updateShading()
 		self.gbs.Layout()
@@ -339,7 +354,7 @@ class ScoreSheet( wx.Panel ):
 		if not race:
 			return
 
-		for field in [	'name', 'category', 'communique', 'laps', 'sprintEvery', 'courseLength',
+		for field in [	'name', 'category', 'communique', 'laps', 'startLaps', 'sprintEvery', 'courseLength',
 						'doublePointsForLastSprint', 'pointsForLapping', 'snowball']:
 			v = getattr(self, field + 'Ctrl').GetValue()
 			race.setattr( field, v )
@@ -369,7 +384,7 @@ class ScoreSheet( wx.Panel ):
 		self.inRefresh = True
 		race = Model.race
 		
-		for field in [	'name', 'category', 'communique', 'laps', 'sprintEvery', 'courseLength',
+		for field in [	'name', 'category', 'communique', 'laps', 'startLaps', 'sprintEvery', 'courseLength',
 						'doublePointsForLastSprint', 'pointsForLapping', 'snowball']:
 			getattr(self, field + 'Ctrl').SetValue( getattr(race, field) )
 		
