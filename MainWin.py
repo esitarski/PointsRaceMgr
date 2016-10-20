@@ -172,13 +172,15 @@ class MainWin( wx.Frame ):
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"Point-a-&Lap", "Configure Point-a-Lap Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointALapRace(), id=idCur )
-
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Tempo", "Configure Tempo Points Race" )
+		self.configureMenu.Append( idCur, u"&Tempo", "Configure UCI Tempo Points Race" )
 		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoRace(), id=idCur )
 
+		idCur = wx.NewId()
+		self.configureMenu.Append( idCur, u"&Tempo Top 2", "Configure Tempo Points Race Top 2" )
+		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoTop2Race(), id=idCur )
+
+		self.configureMenu.AppendSeparator()
+		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Snowball", "Configure Snowball Points Race" )
 		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureSnowballRace(), id=idCur )

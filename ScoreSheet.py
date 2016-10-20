@@ -235,7 +235,7 @@ class ScoreSheet( wx.Panel ):
 	def ConfigureMadison( self ):
 		self.ConfigurePointsRace()
 	
-	def ConfigurePointALapRace( self ):
+	def ConfigureTempoRace( self ):
 		Model.race.pointsForPlace = {
 			1 : 1,
 			2 : 0,
@@ -245,11 +245,14 @@ class ScoreSheet( wx.Panel ):
 		}
 		self.configurePointsRaceOptions()
 		self.doublePointsForLastSprintCtrl.SetValue( False )
-		self.pointsForLappingCtrl.SetValue( 0 )
+		self.pointsForLappingCtrl.SetValue( 4 )
+		self.lapsCtrl.SetValue( 4*10 )
+		self.startLapsCtrl.SetValue( 5 )
+		self.sprintEveryCtrl.SetValue( 1 )
 		self.commit()
 		self.refresh()
 	
-	def ConfigureTempoRace( self ):
+	def ConfigureTempoTop2Race( self ):
 		Model.race.pointsForPlace = {
 			1 : 2,
 			2 : 1,
