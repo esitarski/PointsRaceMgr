@@ -546,6 +546,13 @@ hr { clear: both; }
 						write( '<hr/>' )
 						write( '<br/>' )
 						ToHtml( html )
+						write( '<br/>' )
+						write( 'Powered by ' )
+						with tag(html, 'a', {
+								'href':'http://sites.google.com/site/crossmgrsoftware/',
+								'target':'_blank'
+							} ):
+							write( 'CrossMgr' )
 
 		except Exception as e:
 			traceback.print_exc()
