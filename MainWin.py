@@ -19,13 +19,13 @@ import Utils
 from Utils import tag
 import Model
 import Version
-from ScoreSheet import ScoreSheet
+from EventList import EventList
+from Configure import Configure
+from RankDetails import RankDetails
+from RankSummary import RankSummary
 from StartList import StartList
-from ResultsList import ResultsList
-from Printing import PointsMgrPrintout
-from ToExcelSheet import ToExcelSheet
-from ToPrintout import ToPrintout, ToHtml
-from Notes import NotesDialog
+from ToPrintout import ToPrintout, ToHtml, ToExcel
+from ExportGrid import ExportGrid
 
 from Version import AppVerName
 
@@ -39,7 +39,7 @@ class MainWin( wx.Frame ):
 		wx.Frame.__init__(self, parent, id, title, size=size)
 
 		Model.newRace()
-
+		
 		self.SetBackgroundColour( wx.WHITE )
 		
 		# Add code to configure file history.
@@ -58,13 +58,18 @@ class MainWin( wx.Frame ):
 		self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 		# self.printData.SetOrientation(wx.LANDSCAPE)
 		
-		self.notesDialog = NotesDialog( self )
+		self.splitter = wx.SplitterWindow( self )
+
+		self.eventList = EventList( self.splitter )
+		mainPanel = wx.Panel( self.splitter )
+		
+		self.configure = Configure( mainPanel )
 		
 		#------------------------------------------------------------------------------
 		# Configure the notebook.
 
 		sty = wx.BORDER_SUNKEN
-		self.notebook = fnb.FlatNotebook(self, wx.ID_ANY, agwStyle=fnb.FNB_VC8|fnb.FNB_NO_X_BUTTON)
+		self.notebook = fnb.FlatNotebook(mainPanel, wx.ID_ANY, agwStyle=fnb.FNB_VC8|fnb.FNB_NO_X_BUTTON)
 		self.notebook.Bind( fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.onPageChanging )
 		
 		# Add all the pages to the notebook.
@@ -75,16 +80,22 @@ class MainWin( wx.Frame ):
 			self.pages.append( page )
 			
 		self.attrClassName = [
-			[ 'scoreSheet',		ScoreSheet,			'ScoreSheet' ],
-			[ 'startList',		StartList,			'StartList' ],
-			[ 'resultsList',	ResultsList,		'Results' ],
+			[ 'rankDetails',	RankDetails,	'Detail',   {'labelClickCallback':self.onRankDetailsColSelect} ],
+			[ 'rankSummary',	RankSummary,	'Summary',	{} ],
+			[ 'startList',		StartList,		'StartList',{} ],
 		]
 		
-		for i, (a, c, n) in enumerate(self.attrClassName):
-			setattr( self, a, c(self.notebook) )
+		for i, (a, c, n, kw) in enumerate(self.attrClassName):
+			kw.update( {'parent': self.notebook} )
+			setattr( self, a, c(**kw) )
 			addPage( getattr(self, a), n )
 			
 		self.notebook.SetSelection( 0 )
+		
+		vsPanel = wx.BoxSizer( wx.VERTICAL )
+		vsPanel.Add( self.configure, 0, wx.EXPAND )
+		vsPanel.Add( self.notebook, 1, wx.EXPAND )
+		mainPanel.SetSizer( vsPanel )
 		
 		#------------------------------------------------------------------------------
 		# Configure the main menu.
@@ -97,6 +108,10 @@ class MainWin( wx.Frame ):
 		self.fileMenu.Append( wx.ID_NEW , "&New...", "Create a new race" )
 		self.Bind(wx.EVT_MENU, self.menuNew, id=wx.ID_NEW )
 
+		idNewNext = idCur = wx.NewId()
+		self.fileMenu.Append( idCur , "&New Next...", "Create a new race from the Current Race" )
+		self.Bind(wx.EVT_MENU, self.menuNew, id=idCur )
+		
 		self.fileMenu.Append( wx.ID_OPEN , "&Open...", "Open a race" )
 		self.Bind(wx.EVT_MENU, self.menuOpen, id=wx.ID_OPEN )
 
@@ -107,42 +122,15 @@ class MainWin( wx.Frame ):
 		self.Bind(wx.EVT_MENU, self.menuSaveAs, id=wx.ID_SAVEAS )
 
 		self.fileMenu.AppendSeparator()
-		self.fileMenu.Append( wx.ID_PAGE_SETUP , "Page &Setup...", "Setup the print page" )
-		self.Bind(wx.EVT_MENU, self.menuPageSetup, id=wx.ID_PAGE_SETUP )
-
-		self.fileMenu.Append( wx.ID_PREVIEW , "Print P&review...\tCtrl+R", "Preview the current page on screen" )
-		self.Bind(wx.EVT_MENU, self.menuPrintPreview, id=wx.ID_PREVIEW )
-
-		self.fileMenu.Append( wx.ID_PRINT , "&Print...\tCtrl+P", "Print the current page to a printer" )
-		self.Bind(wx.EVT_MENU, self.menuPrint, id=wx.ID_PRINT )
 		
-		'''
-		self.fileMenu.AppendSeparator()
-		
-		idCur = wx.NewId()
-		idExportToExcel = idCur
-		self.fileMenu.Append( idCur , "&Export to PDF...", "Export as a PDF file" )
-		self.Bind(wx.EVT_MENU, self.menuExportToPDF, id=idCur )
-		'''
-
-		self.fileMenu.AppendSeparator()
-		
-		idCur = wx.NewId()
-		idExportToExcel = idCur
+		idExportToExcel = idCur = wx.NewId()
 		self.fileMenu.Append( idCur , "&Export to HTML...\tCtrl+H", "Export as an HTML Web Page" )
 		self.Bind(wx.EVT_MENU, self.menuExportToHtml, id=idCur )
 
-		idCur = wx.NewId()
-		idExportToExcel = idCur
+		idExportToExcel = idCur = wx.NewId()
 		self.fileMenu.Append( idCur , "&Export to Excel...\tCtrl+E", "Export as an Excel Spreadsheet" )
 		self.Bind(wx.EVT_MENU, self.menuExportToExcel, id=idCur )
 
-		self.fileMenu.AppendSeparator()
-		idCur = wx.NewId()
-		idNotes = idCur
-		self.fileMenu.Append( idCur, '&Notes...\tCtrl+N', "Notes")
-		self.Bind(wx.EVT_MENU, self.menuNotes, id=idCur )
-		
 		self.fileMenu.AppendSeparator()
 		
 		recent = wx.Menu()
@@ -163,42 +151,42 @@ class MainWin( wx.Frame ):
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Points Race", "Configure Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigurePointsRace(), id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigurePointsRace(), id=idCur )
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Madison", "Configure Madison" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureMadison(), id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureMadison(), id=idCur )
 		
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Tempo", "Configure UCI Tempo Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoRace(), id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoRace(), id=idCur )
 
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Tempo Top 2", "Configure Tempo Points Race Top 2" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureTempoTop2Race(), id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoTop2Race(), id=idCur )
 
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Snowball", "Configure Snowball Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureSnowballRace(), id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureSnowballRace(), id=idCur )
 		
 		self.configureMenu.AppendSeparator()
 		
 		idCur = wx.NewId()
 		self.configureMenu.Append( idCur, u"&Criterium", "Configure Criterium Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.scoreSheet.ConfigureCriteriumRace(), id=idCur )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureCriteriumRace(), id=idCur )
 		
 		self.menuBar.Append( self.configureMenu, u"&ConfigureRace" )
 		#-----------------------------------------------------------------------
 		self.helpMenu = wx.Menu()
 
-		#self.helpMenu.Append( wx.ID_HELP, u"&Help...", "Help about PointsRaceMgr..." )
-		#self.Bind(wx.EVT_MENU, self.menuHelp, id=wx.ID_HELP )
-		
-		self.helpMenu.Append( wx.ID_ABOUT , u"&Help...", "About PointsRaceMgr..." )
+		self.helpMenu.Append( wx.ID_HELP , u"&Help...", "Help..." )
+		self.Bind(wx.EVT_MENU, self.menuHelp, id=wx.ID_HELP )
+
+		self.helpMenu.Append( wx.ID_ABOUT , u"&About...", "About PointsRaceMgr..." )
 		self.Bind(wx.EVT_MENU, self.menuAbout, id=wx.ID_ABOUT )
 
 		self.menuBar.Append( self.helpMenu, u"&Help" )
@@ -208,13 +196,19 @@ class MainWin( wx.Frame ):
 		self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
 		
 		self.vbs = wx.BoxSizer( wx.VERTICAL )
-		self.vbs.Add( self.notebook, 1, wx.GROW )
+		self.vbs.Add( self.splitter, 1, wx.EXPAND )
 		self.SetSizer( self.vbs )
 		
+		self.splitter.SplitVertically( self.eventList, mainPanel )
+		wx.CallAfter( self.splitter.SetSashPosition, 300 )
+		
+		Utils.setMainWin( self )
 		Model.newRace()
 		self.refresh()
-		self.scoreSheet.ConfigurePointsRace()
-		Model.race.setChanged( False )
+		self.configure.ConfigurePointsRace()
+		Model.race.setChanged( False )		
+		
+		wx.CallAfter( self.eventList.newButton.SetFocus )
 	
 	def callPageRefresh( self, i ):
 		try:
@@ -235,9 +229,20 @@ class MainWin( wx.Frame ):
 			self.pages[i].commit()
 			self.setTitle()
 		except IndexError as e:
-			#print e
 			pass
-
+			
+	def onRankDetailsColSelect( self, grid, col ):
+		label = grid.GetColLabelValue(col)
+		labels = set( [label] )
+		if label == u'Sp{}'.format(Model.race.getNumSprints()):
+			labels.add( u'Finish' )
+		
+		egrid = self.eventList.grid
+		egrid.ClearSelection()
+		for row in xrange(egrid.GetNumberRows()):
+			if egrid.GetCellValue(row, 0) in labels:
+				egrid.SelectRow( row, True )
+		
 	def onPageChanging( self, event ):
 		notebook = event.GetEventObject()
 		self.callPageCommit( event.GetOldSelection() )
@@ -248,111 +253,11 @@ class MainWin( wx.Frame ):
 			pass
 		event.Skip()	# Required to properly repaint the screen.
 
-	def showNotes( self ):
-		self.notesDialog.refresh()
-		width, height = self.notesDialog.GetSizeTuple()
-		screenWidth, screenHeight = wx.GetDisplaySize()
-		self.notesDialog.MoveXY( screenWidth-width, screenHeight-height-40 )
-		self.notesDialog.Show( True )
-	
-	def menuPageSetup( self, event ):
-		psdd = wx.PageSetupDialogData(self.printData)
-		psdd.CalculatePaperSizeFromId()
-		dlg = wx.PageSetupDialog(self, psdd)
-		dlg.ShowModal()
-
-		# this makes a copy of the wx.PrintData instead of just saving
-		# a reference to the one inside the PrintDialogData that will
-		# be destroyed when the dialog is destroyed
-		self.printData = wx.PrintData( dlg.GetPageSetupData().GetPrintData() )
-		dlg.Destroy()
-
-	def menuPrintPreview( self, event ):
-		self.commit()
-		printout = PointsMgrPrintout()
-		printout2 = PointsMgrPrintout()
-		
-		data = wx.PrintDialogData(self.printData)
-		self.preview = wx.PrintPreview(printout, printout2, data)
-
-		self.preview.SetZoom( 110 )
-		if not self.preview.Ok():
-			return
-
-		pfrm = wx.PreviewFrame(self.preview, self, "Print Preview")
-
-		pfrm.Initialize()
-		pfrm.SetPosition(self.GetPosition())
-		screenWidth, screenHeight = wx.GetDisplaySize()
-		pfrm.SetSize((screenWidth/2, screenHeight * 0.9))
-		pfrm.Show(True)
-
-	def menuPrint( self, event ):
-		self.commit()
-		printout = PointsMgrPrintout()
-		
-		pdd = wx.PrintDialogData(self.printData)
-		pdd.SetAllPages( 1 )
-		pdd.EnablePageNumbers( 0 )
-		pdd.EnableHelp( 0 )
-		
-		printer = wx.Printer(pdd)
-
-		if not printer.Print(self, printout, True):
-			if printer.GetLastError() == wx.PRINTER_ERROR:
-				Utils.MessageOK(self, "There was a printer problem.\nCheck your printer setup.", "Printer Error",iconMask=wx.ICON_ERROR)
-		else:
-			self.printData = wx.PrintData( printer.GetPrintDialogData().GetPrintData() )
-
-		printout.Destroy()
-
 	def getDirName( self ):
 		return Utils.getDirName()
 
 	#--------------------------------------------------------------------------------------------
 
-	def menuHelp( self, event ):
-		self.menuAbout( event )
-		
-	def menuNotes( self, event ):
-		self.showNotes()
-	
-	def menuExportToPDF( self, event ):
-		self.commit()
-		self.refresh()
-		if not self.fileName:
-			if not Utils.MessageOKCancel( self, u'You must save first.\n\nSave now?', u'Save Now'):
-				return
-			if not self.menuSaveAs( event ):
-				return
-		
-		epsFName = os.path.splitext(self.fileName)[0] + '.eps'
-		dlg = wx.DirDialog( self, u'Folder to write "{}"'.format(os.path.basename(epsFName)),
-						style=wx.DD_DEFAULT_STYLE, defaultPath=os.path.dirname(epsFName) )
-		ret = dlg.ShowModal()
-		dName = dlg.GetPath()
-		dlg.Destroy()
-		if ret != wx.ID_OK:
-			return
-
-		data = wx.PrintData()
-		data.SetPaperId( wx.PAPER_LETTER )
-		data.SetFilename( epsFName )
-		data.SetPrintMode( wx.PRINT_MODE_FILE )
-		
-		dc = wx.PostScriptDC( data )
-		dc.StartDoc("")
-		ToPrintout( dc )
-		dc.EndDoc()
-		
-		pdfFName = os.path.splitext(epsFName)[0] + '.pdf'		
-		subprocess.call( ['ps2pdf', epsFName, pdfFName] )
-		
-		try:
-			webbrowser.open( pdfFName )
-		except:
-			pass
-	
 	def menuExportToHtml( self, event ):
 		self.commit()
 		self.refresh()
@@ -365,12 +270,6 @@ class MainWin( wx.Frame ):
 		htmlFName = os.path.splitext(self.fileName)[0] + '.html'
 		
 		race = Model.race
-		
-		wb = xlwt.Workbook()
-		sheetCur = wb.add_sheet( 'Results' )
-		self.resultsList.toExcelSheet( sheetCur )
-		sheetCur = wb.add_sheet( 'Details' )
-		ToExcelSheet( sheetCur )
 
 		try:
 			with io.open( htmlFName, 'w', encoding='utf8' ) as html:
@@ -381,10 +280,13 @@ class MainWin( wx.Frame ):
 					with tag(html, 'head'):
 						with tag(html, 'title'):
 							write( race.name.replace('\n', ' ') )
-						with tag(html, 'meta', dict(charset="UTF-8",
-													author="Edward Sitarski",
-													copyright="Edward Sitarski, 2013-{}".format(datetime.datetime.now().strftime('%Y')),
-													generator="PointsRaceMgr")):
+						with tag(html, 'meta', dict(charset="UTF-8")):
+							pass
+						with tag(html, 'meta', dict(name='author', content="Edward Sitarski")):
+							pass
+						with tag(html, 'meta', dict(name='copyright', content="Edward Sitarski, 2013-{}".format(datetime.datetime.now().strftime('%Y')))):
+							pass
+						with tag(html, 'meta', dict(name='generator', content="PointsRaceMgr")):
 							pass
 						with tag(html, 'style', dict( type="text/css")):
 							write( u'''
@@ -480,6 +382,7 @@ table.results tr.odd:hover
 	background-color:#FFFFCC;
 }
 
+
 table.results td {
 	border-top:1px solid #98bf21;
 }
@@ -534,16 +437,24 @@ hr { clear: both; }
 					with tag(html, 'body'):
 						with tag(html, 'h1'):
 							write( u'{}: {}'.format(cgi.escape(race.name), race.date.strftime('%Y-%m-%d')) )
+							if race.communique:
+								write( u': Communiqu\u00E9 {}'.format(cgi.escape(race.communique)) )
 						with tag(html, 'h2'):
 							write( u'Category: {}'.format(cgi.escape(race.category)) )
+						
+						d = race.courseLength*race.laps
+						if d == int(d):
+							d = '{:,d}'.format(int(d))
+						else:
+							d = '{:,.1f}'.format(float(d))
+						
 						with tag(html, 'h3'):
 							s =  [
 								u'Laps: {}'.format(race.laps),
 								u'Sprint Every: {} laps'.format(race.sprintEvery),
-								u'Distance: {:.1f}{}'.format( race.courseLength*race.laps, ['m','km'][race.courseLengthUnit] ),
+								u'Distance: {}{}'.format( d, ['m','km'][race.courseLengthUnit] ),
 							]
 							write( u',  '.join(s) )
-						self.resultsList.toHtml( html )
 						write( '<br/>' )
 						write( '<hr/>' )
 						write( '<br/>' )
@@ -579,13 +490,8 @@ hr { clear: both; }
 
 		xlFName = os.path.splitext(self.fileName)[0] + '.xls'
 		
-		race = Model.race
-		
 		wb = xlwt.Workbook()
-		sheetCur = wb.add_sheet( 'Results' )
-		self.resultsList.toExcelSheet( sheetCur )
-		sheetCur = wb.add_sheet( 'Details' )
-		ToExcelSheet( sheetCur )
+		ToExcel( wb )
 
 		try:
 			wb.save( xlFName )
@@ -610,17 +516,17 @@ hr { clear: both; }
 				ret = Utils.MessageYesNoCancel(self, u'Close:\n\nUnsaved changes!\nSave to a file?', u'Missing filename')
 				if ret == wx.ID_YES:
 					if not self.menuSaveAs():
-						events.StopPropagation()
+						event.StopPropagation()
 						return
 				elif ret == wx.ID_CANCEL:
-					events.StopPropagation()
+					event.StopPropagation()
 					return
 			else:
 				ret = Utils.MessageYesNoCancel(self, u'Close:\n\nUnsaved changes!\nSave changes before Exit?', u'Unsaved Changes')
 				if ret == wx.ID_YES:
 					self.writeRace()
 				elif ret == wx.ID_CANCEL:
-					events.StopPropagation()
+					event.StopPropagation()
 					return
 		wx.Exit()
 
@@ -632,7 +538,7 @@ hr { clear: both; }
 			race.setChanged( False )
 			pickle.dump( race, f, 2 )
 		self.updateRecentFiles()
-		self.scoreSheet.updateDependentFields()
+		self.setTitle()
 		
 	def writeRace( self ):
 		race = Model.race
@@ -659,6 +565,20 @@ hr { clear: both; }
 				return
 		self.fileName = ''
 		Model.newRace()
+		self.refresh()
+	
+	def menuNewNext( self, event ):
+		if Model.race.isChanged():
+			ret = Utils.MessageYesNoCancel( self, u'NewRace:\n\nYou have unsaved changes.\n\nSave now?', u'Unsaved changes')
+			if ret == wx.ID_YES:
+				self.menuSave()
+			elif ret == wx.ID_NO:
+				pass
+			elif ret == wx.ID_CANCEL:
+				return
+		self.fileName = ''
+		Model.race.events = []
+		Model.race.setChanged()
 		self.refresh()
 	
 	def updateRecentFiles( self ):
@@ -750,6 +670,41 @@ hr { clear: both; }
 		
 	def menuExit(self, event):
 		self.onCloseWindow( event )
+		
+	def menuHelp(self, event):
+		message = unicode(
+			"Manage a Points Race: Track or Criterium.\n\n"
+			"Click on ConfigureRace menu and choose a standard Race Format "
+			" (or customize your own format).\n"
+			"Configure all other race information at the top.\n"
+			"\n"
+			"While race is underway, press the 'New Event' button.\n"
+			"When the screen pops up, enter the Bibs involved in the race event (space or comma separated)."
+			"Then, set the Event Type which can be a Sprint (default), +/- Laps, Finish, DNF, DNS or DSQ.\n"
+			"Use 'Finish' to enter the finish order.  This will automatically count as the last Sprint.\n"
+			"\n"
+			"Up-to-date results are shown on the Details and Summary screens.\n"
+			"\n"
+			"Use the 'Start List' screen to enter rider information (you can also import it from Excel).\n"
+			"Use the 'Existing Points' field for Omnimum scoring.\n"
+			"\n"
+			"In the 'Details' screen, clicking on the Sprint columns header will instantly find the Sprint Events.\n"
+			"\n"
+			"When running PointsRaceMgr, it is posible to enter data without using a mouse.\n"
+			"Press Enter to trigger 'New Event', enter the Bibs, press Tab and Space to change the Event type, then press Enter to save.\n"
+			"\n"
+			"If ranking by 'Points, then Finish Order' (eg. Points Race, Madison), riders are ranked by:\n"
+			"  1.  Most Points\n"
+			"  2.  If a tie, by Finish Order\n"
+			"If ranking by 'Laps Completed, Points, Num Wins, then Finish Order' (eg. Criterium with Points), riders are ranked by:\n"
+			"  1.  Most Laps Completed (as specified by +/- Laps)\n"
+			"  2.  If a tie, by Most Points\n"
+			"  3.  If still a tie, by Most Sprint Wins\n"
+			"  4.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
+			"")
+		dlg = wx.MessageDialog(self, message, "PointsRaceMgr Help", wx.OK | wx.ICON_INFORMATION)
+		dlg.ShowModal()
+		dlg.Destroy()
 
 	def menuAbout( self, event ):
 		self.commit()
@@ -761,40 +716,8 @@ hr { clear: both; }
 		info.Version = ''
 		info.SetCopyright( "(C) 2011-{}".format( datetime.datetime.now().year ) )
 		info.Description = wordwrap( unicode(
-			"Manage a points race - Track or Criterium.\n\n"
-			"* Click on ConfigureRace and choose a standard Race Format\n"
-			"  (or customize your own race).\n"
-			"* Enter other Specific Race Information at the top\n"
-			"* Enter Sprint Results in the upper 'Sp1, Sp2, ...' columns\n"
-			"* Enter Laps Up/Down on the top-right table\n"
-			"* Enter the order the riders finish in the Finish Order column.\n"
-			"  (this is only necessary if riders are still tied by procedure below)\n"
-			"* Enter Rider DNF/DNS/DQ/Pull in the Status column\n"
-			"* Enter Existing Points is an Omnium.\n",
-			"* Correct Ranking is automatically updated in the lower left half of the screen\n"
-			"    * The lower center shows the sprint points per rider\n"
-			"    * The lower right shows subtotals, laps up/down and wins (if applicable)\n"
-			"* Export results to Excel for final editing and publication\n\n"
-			"If ranking by 'Points, then Finish Order' (eg. Points Race), riders are ranked by:\n"
-			"  1.  Most Points\n"
-			"  2.  If a tie, by Finish Order (if known in last sprint)\n"
-			"  3.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
-			"If ranking by 'Laps Completed, Points, then Finish Order' (eg. Madison), riders are ranked by:\n"
-			"  1.  Most Laps Completed (as adjusted by Laps +-)\n"
-			"  2.  If a tie, by Most Points\n"
-			"  3.  If a tie, by Finish Order (if known in last sprint)\n"
-			"  4.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
-			"If ranking by 'Laps Completed, Points, Num Wins, then Finish Order' (eg. Criterium with Points), riders are ranked by:\n"
-			"  1.  Most Laps Completed (as adjusted by Laps +-)\n"
-			"  2.  If a tie, by Most Points\n"
-			"  3.  If still a tie, by Most Sprint Wins\n"
-			"  4.  If still a tie, by Finish Order (if known in last sprint)\n"
-			"  5.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
-			"When there is a tie, enter the 'Finish Order'.\n"
-			"PointsRaceMgr will use the Finish Order to break ties.\n"
-			"\n"
-			"If you are scoring the final Points race in an Omnium, use the 'Existing Points' to add points awarded for each rider.  "
-			"These will be added to the points total in the results."
+			"Manage a Points Race: Track or Criterium.\n\n"
+			"For details, see Help"
 			""),
 			600, wx.ClientDC(self))
 		info.WebSite = ("http://sites.google.com/site/crossmgrsoftware", "CrossMgr home page")
@@ -802,14 +725,14 @@ hr { clear: both; }
 			"Edward Sitarski (edward.sitarski@gmail.com)",
 		]
 
-		licenseText = unicode("User Beware!\n\n" \
-			"This program is experimental, under development and may have bugs.\n" \
-			"Feedback is sincerely appreciated.\n\n" \
-			"CRITICALLY IMPORTANT MESSAGE:\n" \
-			"This program is not warrented for any use whatsoever.\n" \
-			"It may not produce correct results, it might lose your data.\n" \
-			"The authors of this program assume no reponsibility or liability for data loss or erronious results produced by this program.\n\n" \
-			"Use entirely at your own risk." \
+		licenseText = unicode("User Beware!\n\n"
+			"This program is experimental, under development and may have bugs.\n"
+			"Feedback is sincerely appreciated.\n\n"
+			"CRITICALLY IMPORTANT MESSAGE:\n"
+			"This program is not warrented for any use whatsoever.\n"
+			"It may not produce correct results, it might lose your data.\n"
+			"The authors of this program assume no reponsibility or liability for data loss or erronious results produced by this program.\n\n"
+			"Use entirely at your own risk."
 			"Always use a paper manual backup."
 		)
 		info.License = wordwrap(licenseText, 600, wx.ClientDC(self))
@@ -818,14 +741,18 @@ hr { clear: both; }
 
 	#--------------------------------------------------------------------------------------
 	def commit( self ):
-		self.callPageCommit( self.notebook.GetSelection() )
+		self.configure.commit()
+		self.eventList.commit()
 		self.setTitle()
 	
 	def refreshCurrentPage( self ):
-		self.setTitle()
 		self.callPageRefresh( self.notebook.GetSelection() )
 
-	def refresh( self ):
+	def refresh( self, includeConfigure=True ):
+		self.setTitle()
+		if includeConfigure:
+			self.configure.refresh()
+		self.eventList.refresh()
 		self.refreshCurrentPage()
 
 def MainLoop():
@@ -864,6 +791,10 @@ def MainLoop():
 			pass
 			
 	Utils.writeLog( 'start: {}'.format(Version.AppVerName) )
+	
+	Model.newRace()
+	
+	Model.race._populate()
 	
 	mainWin = MainWin( None, title=AppVerName, size=(800,600) )
 	if not options.regular:

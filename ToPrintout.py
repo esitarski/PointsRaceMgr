@@ -5,6 +5,7 @@ import math
 import datetime
 import Utils
 from Utils import tag
+from ExportGrid import ExportGrid
 import Model
 
 class GrowTable( object ):
@@ -308,115 +309,10 @@ def getTitleGrowTable( includeApprovedBy = True ):
 		rowCur = gt.set( rowCur, 0, u'Approved by:________', GrowTable.alignRight )[0] + 1
 	return gt
 
-def getBodyGrowTable():
+def ToPrintout( dc, grid ):
 	race = Model.race
-	scoreSheet = Utils.getMainWin()
-	# Collect all the sprint and worksheet results information.
-	gt = GrowTable(GrowTable.alignCenter, GrowTable.alignTop)
-	
-	maxSprints = race.laps / race.sprintEvery
-	
-	gridPoints = scoreSheet.sprints.gridPoints
-	gridSprint = scoreSheet.sprints.gridSprint
-	
-	colAdjust = {}
-	colAdjust[gridPoints] = 1
-	
-	def makeTwoLines( s ):
-		return '\n' + s if '\n' not in s else s
-	
-	# First get the sprint results.
-	rowCur = 0
-	colCur = 0
-	for grid in [gridPoints, gridSprint]:
-		for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols() - colAdjust.get(grid,0)):
-			gt.set( rowCur, colCur, grid.GetColLabelValue(col), GrowTable.bold )
-			colCur += 1
-	rowCur += 1
-	gt.hLine( rowCur-1, 1, gt.getNumberCols(), False )
-	gt.hLine( rowCur, 1, gt.getNumberCols(), True )
-	
-	# Find the maximum number of places for points.
-	for rowMax in xrange(gridPoints.GetNumberRows()):
-		if gridPoints.GetCellValue(rowMax, 2) == u'0':
-			break
-	
-	# Add the values from the points and sprint tables.
-	for row in xrange(rowMax):
-		colCur = 0
-		for grid in [gridPoints, gridSprint]:
-			for col in xrange(maxSprints if grid == gridSprint else grid.GetNumberCols() - colAdjust.get(grid,0)):
-				gt.set( rowCur, colCur, grid.GetCellValue(row,col) )
-				colCur += 1
-		rowCur += 1
-		gt.hLine( rowCur, 1, colCur )
-		
-	for col in xrange( 1, colCur+1 ):
-		gt.vLine( col, 0, rowCur )
-	upperColMax = colCur
-	
-	# Collect the worksheet and results information
-	gridBib = scoreSheet.worksheet.gridBib
-	gridWorksheet = scoreSheet.worksheet.gridWorksheet
-	gridResults = scoreSheet.results.gridResults
-	
-	colAdjust[gridBib] = 1
-	
-	rowWorksheet = rowCur
-	
-	titleAttr = GrowTable.bold | GrowTable.alignCentre
-	colCur = 0
-	for grid in [gridBib, gridWorksheet, gridResults]:
-		for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
-			gt.set( rowCur, colCur, makeTwoLines(grid.GetColLabelValue(col)), titleAttr )
-			colCur += 1
-	rowCur += 1
-	
-	gt.hLine( rowCur-1, 0, colCur, True )
-	gt.hLine( rowCur, 0, colCur, True )
-	
-	# Add the values from the bib, worksheet and results tables.
-	for row in xrange(gridWorksheet.GetNumberRows()):
-		colCur = 0
-		for grid in [gridBib, gridWorksheet, gridResults]:
-			if rowMax <= grid.GetNumberRows():
-				for col in xrange(maxSprints if grid == gridWorksheet else grid.GetNumberCols() - colAdjust.get(grid,0)):
-					gt.set( rowCur, colCur, grid.GetCellValue(row,col) )
-					colCur += 1
-		rowCur += 1
-		gt.hLine( rowCur, 0, colCur )
-		
-	for col in xrange( 0, gt.getNumberCols()+1 ):
-		gt.vLine( col, rowWorksheet, rowCur )
-	
-	gt.vLine( 3, 0, gt.getNumberRows(), True )
-	gt.vLine( upperColMax, 0, gt.getNumberRows(), True )
-	return gt
-
-def getNotesGrowTable():
-	race = Model.race
-	lines = [line for line in race.notes.split(u'\n') if line.strip()]
-	if not lines:
-		return None
-	
-	gtNotes = GrowTable()
-	maxLinesPerCol = 10
-	numCols = int(math.ceil(len(lines) / float(maxLinesPerCol)))
-	numRows = int(math.ceil(len(lines) / float(numCols)))
-	rowCur, colCur = 0, 0
-	for i, line in enumerate(lines):
-		gtNotes.set( rowCur, colCur*2, u'{}.'.format(i+1), GrowTable.alignRight )
-		gtNotes.set( rowCur, colCur*2+1, u'{}    '.format(line.strip()), GrowTable.alignLeft )
-		rowCur += 1
-		if rowCur == numRows:
-			rowCur = 0
-			colCur += 1
-	
-	return gtNotes
-	
-def ToPrintout( dc ):
-	race = Model.race
-	scoreSheet = Utils.getMainWin()
+	rankSummary = Utils.getMainWin().rankSummary
+	rankDetails = Utils.getMainWin().rankDetails
 	
 	#---------------------------------------------------------------------------------------
 	# Format on the page.
@@ -453,20 +349,7 @@ def ToPrintout( dc ):
 	yTop += titleHeight * 1.20
 	
 	gt = getBodyGrowTable()
-	
-	# Format the notes assuming a minimum readable size.
-	gtNotes = getNotesGrowTable()
-	notesHeight = 0
-	if gtNotes:	
-		lineHeight = heightPix // 65
-		notesHeight = (lineHeight+1) * gtNotes.getNumberRows()
-	
-	gt.drawToFitDC( dc, xLeft, yTop, widthFieldPix, heightPix - borderPix - yTop - notesHeight )
-	
-	# Use any remaining space on the page for the notes.
-	if gtNotes:
-		notesTop = yTop + gt.height + lineHeight
-		gtNotes.drawToFitDC( dc, xLeft, notesTop, widthFieldPix, heightPix - borderPix - notesTop )
+	gt.drawToFitDC( dc, xLeft + newImageWidth, yTop, widthFieldPix - newImageWidth, titleHeight )
 	
 	# Add a timestamp footer.
 	fontSize = heightPix//85
@@ -481,8 +364,14 @@ def ToPrintout( dc ):
 	dc.DrawText( text, borderPix, footerTop )
 
 def ToHtml( html ):
-	gt = getBodyGrowTable()
-	gt.toHtml( html, {'class':'details'} )
-	gtNotes = getNotesGrowTable()
-	if gtNotes:
-		gt.toHtml( html )
+	for title, report in (('Results', Utils.getMainWin().rankSummary), ('Details', Utils.getMainWin().rankDetails), ):
+		report.refresh()
+		ExportGrid( title, report.grid).toHtml( html )
+		html.write( u'<br/><hr/><br/>' )
+		
+def ToExcel( wb ):
+	for title, report in (('Results', Utils.getMainWin().rankSummary), ('Details', Utils.getMainWin().rankDetails), ):
+		sheetCur = wb.add_sheet( title )
+		report.refresh()
+		ExportGrid( title, report.grid).toExcelSheet( sheetCur )
+

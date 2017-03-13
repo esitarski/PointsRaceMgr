@@ -33,6 +33,9 @@ def FontFontFace( *args, **kwargs ):
 	return Font( *args, **kwargs )
 wx.Font = FontFontFace
 
+def BigFont():
+	return wx.FontFromPixelSize( (0,16), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL )
+
 try:
 	from win32com.shell import shell, shellcon
 except ImportError:
@@ -77,8 +80,8 @@ def ordinal( value ):
 		return value
 
 	if (value % 100)//10 != 1:
-		return "%d%s" % (value, ['th','st','nd','rd','th','th','th','th','th','th'][value%10])
-	return "%d%s" % (value, "th")
+		return "{}{}".format(value, ['th','st','nd','rd','th','th','th','th','th','th'][value%10])
+	return "{}{}".format(value, "th")
 
 GoodHighlightColour = wx.Colour( 0, 255, 0 )
 BadHighlightColour = wx.Colour( 255, 255, 0 )
@@ -221,7 +224,8 @@ def tag( buf, name, attrs = {} ):
 		u'<{}>'.format(u' '.join( [name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.iteritems()] ) )
 	)
 	yield
-	buf.write( u'</{}>\n'.format(name) )
+	if name not in ('meta', 'img'):
+		buf.write( u'</{}>\n'.format(name) )
 
 #------------------------------------------------------------------------
 try:
@@ -285,7 +289,12 @@ def logException( e, exc_info ):
 		for line in d.split( '\n' ):
 			writeLog( line )
 	writeLog( '**** End Exception ****' )
-	
+
+def asInt( v ):
+	return u'{}'.format(int(v))
+def asFloat( v ):
+	return u'{:.1f}'.format(float(v))
+
 #------------------------------------------------------------------------
 
 mainWin = None
@@ -296,18 +305,10 @@ def setMainWin( mw ):
 def getMainWin():
 	return mainWin
 
-def refresh( pane = None ):
-	if mainWin is not None:
-		mainWin.refresh( pane )
-
-def refreshResults():
-	if mainWin is not None:
-		mainWin.refreshResults()
+def refresh():
+	if mainWin:
+		mainWin.refresh()
 		
-def commitPanes():
-	if mainWin is not None:
-		mainWin.commitPanes()
-
 def writeRace():
 	if mainWin is not None:
 		mainWin.writeRace()

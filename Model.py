@@ -1,3 +1,4 @@
+import re
 import random
 import operator
 import datetime
@@ -22,61 +23,62 @@ def setRace( r ):
 	race = r
 
 #------------------------------------------------------------------------------------------------------------------
-RiderInfo = namedtuple( 'RiderInfo', ['bib', 'name', 'team', 'license', 'uci_code'] )
 class RiderInfo(object):
-	FieldNames  = ('bib', 'last_name', 'first_name', 'team', 'license', 'uci_code', 'existing_points')
-	HeaderNames = ('Bib', 'Last Name', 'First Name', 'Team', 'License', 'UCI Code', 'Existing\nPoints')
+	FieldNames  = ('bib', 'existing_points', 'last_name', 'first_name', 'team', 'team_code', 'license', 'nation_code', 'uci_id')
+	HeaderNames = ('Bib', 'Existing\nPoints', 'Last Name', 'First Name', 'Team', 'Team Code', 'License', 'Nat Code', 'UCI ID')
 
-	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', license=u'', uci_code=u'', existing_points=0.0 ):
+	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', team_code=u'', license=u'', uci_id=u'', nation_code=u'', existing_points=0.0 ):
 		self.bib = int(bib)
 		self.last_name = last_name
 		self.first_name = first_name
 		self.team = team
+		self.team_code = team_code
 		self.license = license
-		self.uci_code = uci_code
-		self.existing_points = float(existing_points)
+		self.uci_id = uci_id
+		self.nation_code = nation_code
+		self.existing_points = float(existing_points or '0.0')
 
 	def __eq__( self, ri ):
 		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
 		
 	def __repr__( self ):
 		return 'RiderInfo({})'.format(u','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
-		
+
 class Rider(object):
-	# Rider Status.
 	Finisher  = 0
 	DNF       = 1
-	Pulled    = 2
+	PUL   	  = 2
 	DNS       = 3
-	DQ 		  = 4
-	NP		  = 5
-	statusNames = ['Finisher', 'DNF', 'PUL', 'DNS', 'DQ', 'NP']
+	DSQ 	  = 4
+	statusNames = ['Finisher', 'DNF', 'PUL', 'DNS', 'DSQ']
 	statusSortSeq = { 'Finisher':1,	Finisher:1,
-					  'PUL':2,		Pulled:2,
+					  'PUL':2,		PUL:2,
 					  'DNF':3,		DNF:3,
 					  'DNS':4,		DNS:4,
-					  'DQ':5,		DQ:5,
-					  'NP':6,		NP:6,
+					  'DSQ':5,		DSQ:5,
 	}
-	
-	existingPoints = 0
 	
 	def __init__( self, num ):
 		self.num = num
+		self.reset()
+		
+	def reset( self ):
 		self.pointsTotal = 0
+		self.sprintPlacePoints = {}
 		self.sprintsTotal = 0
 		self.lapsTotal = 0
 		self.updown = 0
 		self.numWins = 0
 		self.existingPoints = 0
-		self.status = Rider.Finisher
 		self.finishOrder = 1000
+		self.status = Rider.Finisher
 		
 	def addSprintResult( self, sprint, place ):
 		points = race.getSprintPoints(sprint, place)
 		if points > 0:
 			self.pointsTotal += points
 			self.sprintsTotal += points
+			self.sprintPlacePoints[sprint] = (place, points)
 		
 		if place == 1:
 			self.numWins += 1
@@ -85,12 +87,15 @@ class Rider(object):
 		self.finishOrder = finishOrder
 	
 	def addUpDown( self, updown ):
-		self.updown = updown
+		assert updown == -1 or updown == 1
+		self.updown += updown
 		self.pointsTotal += race.pointsForLapping * updown
 		self.lapsTotal += race.pointsForLapping * updown
 
 	def addExistingPoints( self, existingPoints ):
-		self.existingPoints = existingPoints
+		if existingPoints == int(existingPoints):
+			existingPoints = int(existingPoints)
+		self.existingPoints += existingPoints
 		self.pointsTotal += existingPoints
 		
 	def getKey( self ):
@@ -110,33 +115,86 @@ class Rider(object):
 			self.statusNames[self.status]
 		)
 		
+class GetRank( object ):
+	def __init__( self ):
+		self.rankLast, self.rrLast = None, None
+	
+	def __call__( self, rank, rr ):
+		if rr.status != Rider.Finisher:
+			return Rider.statusNames[rr.status]
+		elif self.rrLast and self.rrLast.tiedWith(rr):
+			return unicode(self.rankLast)
+		else:
+			self.rankLast, self.rrLast = rank, rr
+			return unicode(rank)
+		
+class RaceEvent(object):
+	DNS, DNF, PUL, DSQ, LapUp, LapDown, Sprint, Finish = tuple( xrange(8) )
+	
+	Events = (
+		('Sp', Sprint),
+		('+ Lap', LapUp),
+		('- Lap', LapDown),
+		('DNF', DNF),
+		('Finish', Finish),
+		('PUL', PUL),
+		('DNS', DNS),
+		('DSQ', DSQ),
+	)
+	EventName = {v:n for n,v in Events}
+	
+	@staticmethod
+	def getCleanBibs( bibs ):
+		if not isinstance(bibs, list):
+			try:
+				bibs = [int(f) for f in re.sub(r'[^\d]', ' ', bibs).split()]
+			except:
+				bibs = []
+				
+		seen = set()
+		nonDupBibs = []
+		for b in bibs:
+			if b > 0 and b not in seen:
+				seen.add( b )
+				nonDupBibs.append( b )
+
+		return nonDupBibs
+	
+	def __init__( self, eventType=Sprint, bibs=[] ):
+		if not isinstance(eventType, int):
+			for n, v in self.Events:
+				if eventType.startswith(n):
+					eventType = v
+					break
+			else:
+				eventType = self.Sprint
+		
+		self.eventType = eventType		
+		self.bibs = RaceEvent.getCleanBibs( bibs )
+
+	@property
+	def eventTypeName( self ):
+		return self.EventName[self.eventType]
+			
+	def __eq__( s, t ):
+		return s.eventType == t.eventType and s.bibs == t.bibs
+		
+	def __repr__( self ):
+		return 'RaceEvent( eventType={}, bibs=[{}] )'.format(self.eventType, ','.join('{}'.format(b) for b in self.bibs))
+		
 class Race(object):
 	RankByPoints = 0
 	RankByLapsPoints = 1
 	RankByLapsPointsNumWins = 2
 
-	pointsForLapping = 20
-	doublePointsForLastSprint = False
-	snowball = False
-	pointsForPlace = {
+	pointsForPlaceDefault = {
 		1 : 5,
 		2 : 3,
 		3 : 2,
 		4 : 1,
-		5 : 0
 	}
 	startLaps = 0
 	
-	sprintResults = {}			# Results from each sprint.
-	updowns = {}				# Laps up/down
-	finishOrder = {}			# Results from final sprint.
-	riderStatus = {}			# Status (Finisher, DNF, etc.)
-	existingPoints = {}			# Existing cumalative points.
-	communique = u''			# Communique initialization
-	notes = u''					# Notes initialization
-	
-	riderInfo = {}				# Rider info indexed by bib.
-
 	def __init__( self ):
 		self.reset()
 
@@ -154,14 +212,13 @@ class Race(object):
 		self.pointsForLapping = 20
 		self.doublePointsForLastSprint = False
 		self.snowball = False
-		self.pointsForPlace = Race.pointsForPlace.copy()
+		self.pointsForPlace = Race.pointsForPlaceDefault.copy()
 
-		self.sprintResults = {}
-		self.updowns = {}
-		self.finishOrder = {}
-		self.riderStatus = {}
-		self.existingPoints = {}
-		self.riderInfo = {}
+		self.events = []
+		self.riders = {}
+		self.riderInfo = []
+		
+		self.sprintCount = 0
 
 		self.isChangedFlag = True
 	
@@ -169,11 +226,11 @@ class Race(object):
 		return self.courseLength * self.laps / (1000.0 if self.courseLengthUnit == 0 else 1.0)
 	
 	def getDistanceStr( self ):
-		d = self.getDistance()
+		d = self.courseLength * self.laps
 		if d - int(d) < 0.001:
-			return '{}'.format(int(d))
+			return '{:,}'.format(int(d)) + ['m','km'][self.courseLengthUnit]
 		else:
-			return '{:.2f}'.format(d)
+			return '{:,.2f}'.format(d) + ['m','km'][self.courseLengthUnit]
 	
 	def setattr( self, attr, v ):
 		if getattr(self, attr, None) != v:
@@ -197,77 +254,58 @@ class Race(object):
 				maxPlace = max( maxPlace, place )
 		return maxPlace
 	
-	def clearSprintResults( self ):
-		self.sprintResults = {}
+	def getRider( self, bib ):
+		try:
+			return self.riders[bib]
+		except KeyError:
+			self.riders[bib] = Rider( bib )
+			return self.riders[bib]
+			
+	def getSprintPoints( self, sprint, place ):
+		points = self.pointsForPlace.get(place,0)
+		if self.snowball:
+			points *= sprint
+		if self.doublePointsForLastSprint and sprint == self.getNumSprints():
+			points *= 2
+		return points
 	
-	def addSprintResult( self, sprint, num, place ):
-		self.sprintResults[(sprint, place)] = num
-
-	def addUpDown( self, num, updown ):
-		self.updowns[num] = updown
+	def processEvents( self ):
+		self.riders = {}
 		
-	def clear( self ):
-		self.sprintResults = {}
-		self.updowns = {}
-		self.riderStatus = {}
+		for info in self.riderInfo:
+			self.getRider(info.bib).addExistingPoints( info.existing_points )
 		
-	def setSprintResults( self, sprintResults ):
-		if self.sprintResults != sprintResults:
-			self.sprintResults = sprintResults
-			self.setChanged()
-	
-	def setExistingPoints( self, existingPoints ):
-		if self.existingPoints != existingPoints:
-			self.existingPoints = existingPoints
-			for bib, points in existingPoints.iteritems():
-				ri = self.riderInfo.get( bib, None )
-				if ri is None:
-					self.riderInfo[bib] = ri = RiderInfo( bib )
-				ri.existing_points = points
-			for bib, ri in self.riderInfo.iteritems():
-				if ri.existing_points and bib not in existingPoints:
-					ri.existing_points = 0.0
-			self.setChanged()
-	
-	def setFinishOrder( self, finishOrder ):
-		if self.finishOrder != finishOrder:
-			self.finishOrder = finishOrder
-			self.setChanged()
+		self.sprintCount = 0
+		for e in self.events:
+			if e.eventType == RaceEvent.Sprint:
+				self.sprintCount += 1
+				for place, b in enumerate(e.bibs, 1):
+					self.getRider(b).addSprintResult(self.sprintCount, place)
+			elif e.eventType == RaceEvent.LapUp:
+				for b in e.bibs:
+					self.getRider(b).addUpDown(1)
+			elif e.eventType == RaceEvent.LapDown:
+				for b in e.bibs:
+					self.getRider(b).addUpDown(-1)
+			elif e.eventType == RaceEvent.Finish:
+				self.sprintCount += 1
+				for place, b in enumerate(e.bibs, 1):
+					r = self.getRider(b)
+					r.addSprintResult(self.sprintCount, place)
+					r.addFinishOrder(place)
+			elif e.eventType == RaceEvent.DNF:
+				for b in e.bibs:
+					self.getRider(b).status = Rider.DNF
+			elif e.eventType == RaceEvent.DNS:
+				for b in e.bibs:
+					self.getRider(b).status = Rider.DNS
+			elif e.eventType == RaceEvent.PUL:
+				for b in e.bibs:
+					self.getRider(b).status = Rider.PUL
+			elif e.eventType == RaceEvent.DSQ:
+				for b in e.bibs:
+					self.getRider(b).status = Rider.DSQ
 			
-	def setStatus( self, status ):
-		status = dict( (n, s) for n, s in status.iteritems() if s != Rider.Finisher )
-		if status != self.riderStatus:
-			self.riderStatus = status
-			self.setChanged()
-	
-	def setPoints( self, pointsForPlace = None, pointsForLapping = None ):
-		if pointsForPlace is not None and self.pointsForPlace != pointsForPlace:
-			self.pointsForPlace = pointsForPlace
-			# Normalize the pointsForPlace if it contains negative entries.
-			minEmpty = len(self.pointsForPlace)
-			for place, points in self.pointsForPlace.iteritems():
-				if points < 0:
-					minEmpty = min( minEmpty, place )
-			if minEmpty == 1:
-				self.pointsForPlace[2] = 0
-				minEmpty = 2
-			for place, points in self.pointsForPlace.iteritems():
-				if place > minEmpty:
-					self.pointsForPlace[place] = -1
-			self.setChanged()
-			
-		if pointsForLapping is not None and self.pointsForLapping != pointsForLapping:
-			self.pointsForLapping = pointsForLapping
-			self.setChanged()
-			
-	def setRiderInfo( self, riderInfo ):
-		ri1 = sorted(riderInfo.itervalues(), key=operator.attrgetter('bib'))
-		ri2 = sorted(self.riderInfo.itervalues(), key=operator.attrgetter('bib'))
-		if len(ri1) != len(ri2) or not all(r1 == r2 for r1, r2 in zip(ri1, ri2)):
-			self.riderInfo = riderInfo
-			self.existingPoints = {bib:ri.existing_points for bib, ri in self.riderInfo.iteritems() if ri.existing_points}
-			self.setChanged()
-	
 	def isChanged( self ):
 		return self.isChangedFlag
 
@@ -275,93 +313,38 @@ class Race(object):
 		self.isChangedFlag = changed
 		#traceback.print_stack()
 	
-	def getUpDown( self ):
-		ud = [(num, updown) for num, updown in self.updowns.iteritems()]
-		ud.sort( key=lambda v: (Rider.statusSortSeq[self.riderStatus.get(v[0],0)], -v[1], v[0]) )
-		return ud
-	
-	def setUpDowns( self, updowns ):
-		if self.updowns != updowns:
-			self.updowns = updowns
-			self.setChanged()
-			
-	def getFinishOrder( self ):
-		return sorted( self.finishOrder.iteritems(), key = operator.itemgetter(1) )
-	
-	def getStatus( self ):
-		return sorted( self.riderStatus.iteritems(), key = lambda x: (Rider.statusSortSeq[x[1]], x[0]) )
-			
-	def getExistingPoints( self ):
-		return sorted( self.existingPoints.iteritems(), key = operator.itemgetter(1), reverse = True )
-	
-	def getMaxSprints( self ):
-		try:
-			return max( sprint for sprint, place in self.sprintResults.iterkeys() )
-		except ValueError:
-			pass
-		return 0
-		
-	def getSprintPoints( self, sprint, place ):
-		return self.pointsForPlace.get(place, 0) * \
-				(sprint if self.snowball else 1) * \
-				(2 if self.doublePointsForLastSprint and sprint == self.getNumSprints() else 1)
-	
 	def getRiders( self ):
-		riders = {}
-		def getRider( num ):
-			try:
-				rider = riders[num]
-			except KeyError:
-				rider = Rider( num )
-				rider.status = self.riderStatus.get( num, Rider.Finisher )
-				riders[num] = rider
-			return rider
+		self.processEvents()
+		return sorted( self.riders.itervalues(), key = operator.methodcaller('getKey') )
+		
+	def setRiderInfo( self, riderInfo ):
+		self.isChangedFlag = (
+			len(self.riderInfo) != len(riderInfo) or
+			any(a != b for a, b in zip(self.riderInfo, riderInfo))
+		)
+		self.riderInfo = riderInfo
 
-		# Add the sprint results.
-		for (sprint, place), num in self.sprintResults.iteritems():
-			getRider(num).addSprintResult( sprint, place )
+	def setEvents( self, events ):
+		self.isChangedFlag = (
+			len(self.events) != len(events) or
+			any(e1 != e2 for e1, e2 in zip(self.events, events))
+		)
+		self.events = events
 		
-		# Add the finish order.
-		for num, place in self.finishOrder.iteritems():
-			getRider(num).addFinishOrder( place )
-		
-		# Add the up/down laps.
-		for num, updown in self.updowns.iteritems():
-			getRider(num).addUpDown( updown )
-		
-		# Add the existing points.
-		for num, existingPoints in self.existingPoints.iteritems():
-			getRider(num).addExistingPoints( existingPoints )
-		
-		# Add the rider status.
-		for num, status in self.riderStatus.iteritems():
-			getRider( num )
-		
-		ridersRet = [r for r in riders.itervalues() or r.updown != 0]
-		ridersRet.sort( key = lambda x: x.getKey() )
-		return ridersRet
-
-	def __contains__( self, sprintNum ):
-		return sprintNum in self.sprintResults
-
-	def __getitem__( self, sprintNum ):
-		return self.sprintResults[sprintNum]
-
 	def _populate( self ):
 		self.reset()
-		random.seed( 1010101 )
-		for s in xrange(15):
-			place = {}
-			for p in xrange(5,0,-1):
-				while True:
-					num = random.randint(1,10)
-					if num not in place:
-						break
-				place[num] = p
-			for num, place in place.iteritems():
-				self.addSprintResult( s + 1, num, place )
-		self.updowns[5] = -2
-		self.updowns[6] = 1
+		self.events.append( RaceEvent(RaceEvent.DNS, [41,42]) )
+		random.seed( 0xed )
+		bibs = range(10,34)
+		self.events.append( RaceEvent(RaceEvent.LapUp, bibs=[13]) )
+		self.events.append( RaceEvent(RaceEvent.LapDown, bibs=[14]) )
+		for lap in xrange(50,-1,-10):
+			random.shuffle( bibs )
+			self.events.append( RaceEvent(bibs=bibs[:5]) )
+		self.events.append( RaceEvent(RaceEvent.DNF, [51,52]) )
+		self.events.append( RaceEvent(RaceEvent.DSQ, [61,62]) )
+		random.shuffle( bibs )
+		self.events.append( RaceEvent(RaceEvent.Finish, bibs) )
 		self.setChanged()
 
 if __name__ == '__main__':

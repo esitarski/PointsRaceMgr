@@ -52,7 +52,7 @@ def getHeaderFName():
 			pass
 		return graphicFName
 	except:
-		return os.path.join(Utils.getImageFolder(), 'SprintMgr.png')
+		return os.path.join(Utils.getImageFolder(), 'PointsRaceMgr.png')
 
 def getHeaderBitmap():
 	''' Get the header bitmap if specified, or use a default.  '''
@@ -72,22 +72,8 @@ def getHeaderBitmap():
 	return wx.Bitmap( os.path.join(Utils.getImageFolder(), 'SprintMgr.png'), wx.BITMAP_TYPE_PNG )
 
 def writeHtmlHeader( buf, title ):
-	with tag(buf, 'table', {'class': 'TitleTable'} ):
-		with tag(buf, 'tr'):
-			with tag(buf, 'td', dict(valign='top')):
-				data = base64.b64encode(open(getHeaderFName(),'rb').read())
-				buf.write( '<img id="idImgHeader" src="data:image/png;base64,%s" />' % data )
-			with tag(buf, 'td'):
-				buf.write( '&nbsp;&nbsp;&nbsp;&nbsp;' )
-			with tag(buf, 'td'):
-				with tag(buf, 'span', {'id': 'idRaceName'}):
-					buf.write( cgi.escape(title).replace('\n', '<br/>\n') )
-				if Model.model.organizer:
-					with tag(buf, 'br'):
-						pass
-					with tag(buf, 'span', {'id': 'idOrganizer'}):
-						buf.write( 'by ' )
-						buf.write( cgi.escape(Model.model.organizer) )
+	with tag(buf, 'span', {'id': 'idRaceName'}):
+		buf.write( unicode(cgi.escape(title).replace('\n', '<br/>\n')) )
 
 class ExportGrid( object ):
 	PDFLineFactor = 1.10
@@ -114,9 +100,8 @@ class ExportGrid( object ):
 		self.leftJustifyCols = {}
 		self.rightJustifyCols = {}
 		
-		rightJustify = set( ['Pos', 'Bib', 'Time'] )
 		for c, n in enumerate(self.colnames):
-			if n in rightJustify:
+			if any(n.startswith(p) for p in ('Rank', 'Bib', 'Time', 'Sp', 'Finish', 'Points', '+', 'Existing',)):
 				self.rightJustifyCols[c] = True
 			else:
 				self.leftJustifyCols[c] = True
@@ -306,7 +291,7 @@ class ExportGrid( object ):
 				rowCur = rowTop + 1 + row
 				if rowCur > rowMax:
 					rowMax = rowCur
-				sheetFit.write( rowCur, col, v, style )
+				sheetFit.write( rowCur, col, v, style, bold=True )
 				
 		# Add branding at the bottom of the sheet.
 		style = xlwt.XFStyle()
@@ -325,18 +310,13 @@ class ExportGrid( object ):
 							buf.write( cgi.escape(col).replace('\n', '<br/>\n') )
 			with tag(buf, 'tbody'):
 				for row in xrange(max(len(d) for d in self.data)):
-					with tag(buf, 'tr'):
+					with tag(buf, 'tr', {'class':'odd'} if row & 1 else {}):
 						for col in xrange(len(self.colnames)):
-							with tag(buf, 'td', {'class':'rAlign'} if col not in self.leftJustifyCols else {}):
+							with tag(buf, 'td', {'class':'rightAlign'} if col not in self.leftJustifyCols else {}):
 								try:
 									buf.write( cgi.escape(self.data[col][row]).replace('\n', '<br/>\n') )
 								except IndexError:
-									buf.write( '&nbsp;' )
-									
-		with tag(buf, 'p', {'class': 'smallfont'}):
-			buf.write( 'Powered by ' )
-			with tag(buf, 'a', dict(href="http://www.sites.google.com/site/crossmgrsoftware")):
-				buf.write( 'CrossMgr' )
+									buf.write( u'&nbsp;' )									
 		return buf
 			
 if __name__ == '__main__':

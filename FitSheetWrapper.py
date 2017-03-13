@@ -19,11 +19,7 @@ class FitSheetWrapper(object):
 		self.heights = {}
 
 	def write(self, r, c, label='', *args, **kwargs):
-		if 'bold' in kwargs:
-			isBold = True
-			del kwargs['bold']
-		else:
-			isBold = False
+		isBold = kwargs.pop('bold', False)
 		
 		self.sheet.write(r, c, label, *args, **kwargs)
 		if isinstance(label, datetime.date):
@@ -39,6 +35,7 @@ class FitSheetWrapper(object):
 				self.sheet.row(r).height = height
 		else:
 			width = arial10.fitWidth(label, isBold)
+		width += 8
 		width = min( int(math.ceil(width)), 65535 )
 		if width > self.widths.get(c, 0):
 			self.widths[c] = width

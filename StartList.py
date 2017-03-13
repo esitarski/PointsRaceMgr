@@ -21,7 +21,7 @@ class StartList(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
 		
-		explanation = wx.StaticText( self, label=u'Click Header name to sort on that column.  To delete, set Bib to blank and switch screens.' )
+		explanation = wx.StaticText( self, label=u'To delete a row, set Bib to blank and switch screens.' )
 		
 		self.addRows = wx.Button( self, label=u'Add Rows' )
 		self.addRows.Bind( wx.EVT_BUTTON, self.onAddRows )
@@ -44,45 +44,40 @@ class StartList(wx.Panel):
 		self.grid.SetRowLabelSize( 0 )
 		self.grid.CreateGrid( 0, len(self.headerNames) )
 		
-		self.sortCol = 0
-		self.grid.Bind( wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.onColumnHeader )
-
-		# Set specialized editors for appropriate columns.
-		for col in xrange(self.grid.GetNumberCols()):
-			self.grid.SetColLabelValue( col, self.headerNames[col] )
-			attr = gridlib.GridCellAttr()
-			if col == 0:
-				attr.SetRenderer( gridlib.GridCellNumberRenderer() )
-			elif col == len(self.fieldNames) - 1:
-				attr.SetRenderer( gridlib.GridCellFloatRenderer(precision=1) )
-			self.grid.SetColAttr( col, attr )
-		
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add( hs, 0, flag=wx.ALL|wx.EXPAND, border = 4 )
 		sizer.Add(self.grid, 1, flag=wx.EXPAND|wx.ALL, border = 6)
 		self.SetSizer(sizer)
+		
+		wx.CallAfter( self.refresh )
 		
 	def getGrid( self ):
 		return self.grid
 		
 	def updateGrid( self ):
 		race = Model.race
-		if self.sortCol == self.iExistingPointsCol:
-			riderInfoList = sorted( (race.riderInfo.itervalues()) if race else [], key=lambda r: (-r.existing_points, r.bib) )
-		else:
-			riderInfoList = sorted( (race.riderInfo.itervalues()) if race else [], key=operator.attrgetter(self.fieldNames[self.sortCol], 'bib') )
+		riderInfo = race.riderInfo if race else []
+		
 		self.grid.BeginBatch()
-		Utils.AdjustGridSize( self.grid, rowsRequired = len(riderInfoList) )
-		for row, ri in enumerate(riderInfoList):
+		Utils.AdjustGridSize( self.grid, len(riderInfo), len(self.headerNames) )
+		
+		# Set specialized editors for appropriate columns.
+		for col, name in enumerate(self.headerNames):
+			self.grid.SetColLabelValue( col, name )
+			attr = gridlib.GridCellAttr()
+			if col == 0:
+				attr.SetRenderer( gridlib.GridCellNumberRenderer() )
+			elif col == 1:
+				attr.SetRenderer( gridlib.GridCellFloatRenderer(precision=1) )
+			attr.SetFont( Utils.BigFont() )
+			self.grid.SetColAttr( col, attr )
+		
+		for row, ri in enumerate(riderInfo):
 			for col, field in enumerate(self.fieldNames):
 				self.grid.SetCellValue( row, col, unicode(getattr(ri, field)) )
 		self.grid.AutoSize()
 		self.grid.EndBatch()
 		self.Layout()
-		
-	def onColumnHeader( self, event ):
-		self.sortCol = event.GetCol()
-		self.updateGrid()
 		
 	def onAddRows( self, event ):
 		growSize = 10
@@ -97,13 +92,14 @@ class StartList(wx.Panel):
 			u'Looks for the first row starting with "Bib","BibNum","Bib Num", "Bib #" or "Bib#".\n\n'
 			u'Recognizes the following header fields (in any order, case insensitive):\n'
 			u'\u2022 Bib|BibNum|Bib Num|Bib #|Bib#: Bib Number\n'
+			u'\u2022 Points|Existing Points: Existing points at the start of the race.\n'
 			u'\u2022 LastName|Last Name|LName: Last Name\n'
 			u'\u2022 FirstName|First Name|FName: First Name\n'
 			u'\u2022 Name: in the form "LastName, FirstName".  Used only if no Last Name or First Name\n'
 			u'\u2022 Team|Team Name|TeamName|Rider Team|Club|Club Name|ClubName|Rider Club: Team\n'
 			u'\u2022 License|Licence: Regional License (not uci code)\n'
-			u'\u2022 UCI Code|UCICode|UCI: UCI code.\n'
-			u'\u2022 Points|Existing Points: Existing points at the start of the race.\n'
+			u'\u2022 UCI ID|UCIID: UCI ID.\n'
+			u'\u2022 Nat Code|NatCode|NationCode: 3 letter nation code.\n'
 			,
 			u'Import from Excel',
 			wx.OK|wx.CANCEL | wx.ICON_INFORMATION,
@@ -137,7 +133,8 @@ class StartList(wx.Panel):
 					'last_name':	unicode(f('last_name',u'')).strip(),
 					'license':		unicode(f('license_code',u'')).strip(),
 					'team':			unicode(f('team',u'')).strip(),
-					'uci_code':		unicode(f('uci_code',u'')).strip(),
+					'uci_id':		unicode(f('uci_id',u'')).strip(),
+					'nation_code':		unicode(f('nation_code',u'')).strip(),
 					'existing_points':	unicode(f('existing_points',u'0')).strip(),
 				}
 				
@@ -152,9 +149,6 @@ class StartList(wx.Panel):
 						info['last_name'], info['first_name'] = name.split(',',1)
 					except:
 						pass
-				
-				if not info['first_name'] and not info['last_name']:
-					continue
 				
 				# If there is a bib it must be numeric.
 				try:
@@ -183,15 +177,15 @@ class StartList(wx.Panel):
 		
 	def commit( self ):
 		race = Model.race
-		riderInfo = {}
+		riderInfo = []
 		for r in xrange(self.grid.GetNumberRows()):
 			info = {f:self.grid.GetCellValue(r, c).strip() for c, f in enumerate(self.fieldNames)}
 			if not info['bib']:
 				continue
-			ri = Model.RiderInfo( **info )
-			riderInfo[ri.bib] = ri
+			riderInfo.append( Model.RiderInfo(**info) )
 		race.setRiderInfo( riderInfo )
-			
+		Utils.refresh()
+
 ########################################################################
 
 class StartListFrame(wx.Frame):
