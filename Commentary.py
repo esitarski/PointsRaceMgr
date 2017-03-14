@@ -1,6 +1,8 @@
 import wx
+import cgi
 import Model
 import Utils
+import StringIO
 
 class Commentary( wx.Panel ):
 	def __init__( self, parent, id = wx.ID_ANY ):
@@ -14,8 +16,8 @@ class Commentary( wx.Panel ):
 		self.text = wx.TextCtrl( self, style=wx.TE_MULTILINE|wx.TE_READONLY )
 		self.hbs.Add( self.text, 1, wx.EXPAND )
 		self.SetSizer(self.hbs)
-
-	def refresh( self ):
+		
+	def getText( self ):
 		race = Model.race
 		riderInfo = {info.bib:info for info in race.riderInfo} if race else {}
 
@@ -36,6 +38,9 @@ class Commentary( wx.Panel ):
 		
 		RaceEvent = Model.RaceEvent
 		
+		pointsForGainedLap = {p:race.pointsForLapping for p in xrange(1,201)}
+		pointsForLostLap   = {p:-race.pointsForLapping for p in xrange(1,201)}
+		
 		lines = []
 		self.sprintCount = 0
 		for e in race.events:
@@ -45,10 +50,10 @@ class Commentary( wx.Panel ):
 				lines.extend( infoLines(e.bibs[:len(race.pointsForPlace)], race.pointsForPlace) )
 			elif e.eventType == RaceEvent.LapUp:
 				lines.append( u'Gained a Lap:' )
-				lines.extend( infoLines(e.bibs, {p:race.pointsForLapping for p in xrange(1,len(e.bibs)+1)}) )
+				lines.extend( infoLines(e.bibs, pointsForGainedLap) )
 			elif e.eventType == RaceEvent.LapDown:
 				lines.append( u'Lost a Lap:' )
-				lines.extend( infoLines(e.bibs, {p:-race.pointsForLapping for p in xrange(1,len(e.bibs)+1)}) )
+				lines.extend( infoLines(e.bibs, pointsForLostLap) )
 			elif e.eventType == RaceEvent.Finish:
 				lines.append( u'Finish:' )
 				self.sprintCount += 1
@@ -70,8 +75,34 @@ class Commentary( wx.Panel ):
 				lines.append( u'DSQ (Disqualified)' )
 				lines.extend( infoLines(e.bibs) )
 			lines.append( u'' )
+		
+		return u'\n'.join(lines)
 
-		self.text.SetValue( u'\n'.join(lines) )
+	def toHtml( self, html ):
+		text = self.getText().replace(u'.', u'')
+		if not text:
+			return u''
+		lines = []
+		inList = False
+		html.write( u'<dl>' )
+		for line in text.split(u'\n'):
+			if line[:1] != u' ':
+				if inList:
+					html.write(u'</ol>\n')
+					html.write(u'</dd>\n')
+					inList = False
+				html.write( u'<dd>\n' )
+				html.write( cgi.escape(line) )
+				html.write( u'<ol>' )
+				inList = True
+			elif line:
+				html.write( u'<li>{}</li>\n'.format(line.strip().split(' ',1)[1].strip()) )
+		html.write(u'</ol>\n')
+		html.write(u'</dd>\n')
+		html.write(u'</dl>\n')
+		
+	def refresh( self ):
+		self.text.SetValue( self.getText() )
 
 	def commit( self ):
 		pass
@@ -83,5 +114,6 @@ if __name__ == '__main__':
 	Model.race._populate()
 	rd = Commentary(mainWin)
 	rd.refresh()
+	print rd.getHtml()
 	mainWin.Show()
 	app.MainLoop()

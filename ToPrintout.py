@@ -368,7 +368,10 @@ def ToHtml( html ):
 		report.refresh()
 		ExportGrid( title, report.grid).toHtml( html )
 		html.write( u'<br/><hr/><br/>' )
-		
+	Utils.getMainWin().commentary.refresh()
+	html.write(u'<span id="idRaceName">Commentary</span>')
+	Utils.getMainWin().commentary.toHtml(html)
+	
 def ToExcel( wb ):
 	for title, report in (('Results', Utils.getMainWin().rankSummary), ('Details', Utils.getMainWin().rankDetails), ):
 		sheetCur = wb.add_sheet( title )
