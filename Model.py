@@ -225,6 +225,11 @@ class Race(object):
 	def getDistance( self ):	# Always return in km
 		return self.courseLength * self.laps / (1000.0 if self.courseLengthUnit == 0 else 1.0)
 	
+	def newNext( self ):
+		self.events = []
+		self.riderInfo = []
+		self.isChangedFlag = True
+	
 	def getDistanceStr( self ):
 		d = self.courseLength * self.laps
 		if d - int(d) < 0.001:

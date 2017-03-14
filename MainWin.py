@@ -110,7 +110,7 @@ class MainWin( wx.Frame ):
 
 		idNewNext = idCur = wx.NewId()
 		self.fileMenu.Append( idCur , "&New Next...", "Create a new race from the Current Race" )
-		self.Bind(wx.EVT_MENU, self.menuNew, id=idCur )
+		self.Bind(wx.EVT_MENU, self.menuNewNext, id=idCur )
 		
 		self.fileMenu.Append( wx.ID_OPEN , "&Open...", "Open a race" )
 		self.Bind(wx.EVT_MENU, self.menuOpen, id=wx.ID_OPEN )
@@ -576,9 +576,19 @@ hr { clear: both; }
 				pass
 			elif ret == wx.ID_CANCEL:
 				return
-		self.fileName = ''
-		Model.race.events = []
-		Model.race.setChanged()
+		if self.fileName:
+			self.fileName = os.path.splitext(self.fileName)[0]
+			for i in xrange(1,100):
+				s = '-{}'.format(i)
+				if self.fileName.endswith(s):
+					self.fileName[:-len(s)] + '-{}'.format(i+1)
+					break
+			else:
+				self.fileName += '-1'
+			self.fileName += '.tp5'
+		else:
+			self.fileName = ''
+		Model.race.newNext()
 		self.refresh()
 	
 	def updateRecentFiles( self ):

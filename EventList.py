@@ -14,7 +14,7 @@ class EventListGrid( ReorderableGrid ):
 		return super(EventListGrid, self).OnRearrangeEnd(evt)
 
 class EventDialog( wx.Dialog ):
-	def __init__( self, parent, title="Edit Event" ):
+	def __init__( self, parent, title="Edit Race Event" ):
 		super( EventDialog, self ).__init__( parent, wx.ID_ANY, title=title )
 		
 		fgs = wx.FlexGridSizer( 2, 2, 4, 4 )
@@ -99,7 +99,7 @@ class EventList( wx.Panel ):
 
 		self.hbs = wx.BoxSizer(wx.VERTICAL)
 		
-		self.newButton = wx.Button( self, label='New Event' )
+		self.newButton = wx.Button( self, label='New Race Event' )
 		self.newButton.Bind( wx.EVT_BUTTON, self.onNewEvent )
 		self.newButton.SetFont(wx.FontFromPixelSize( (0,20), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL ))
 		self.hbs.Add( self.newButton, 0, wx.ALL, border=4 )
