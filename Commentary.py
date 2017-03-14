@@ -1,5 +1,6 @@
 import wx
 import cgi
+import sys
 import Model
 import Utils
 import StringIO
@@ -31,9 +32,9 @@ class Commentary( wx.Panel ):
 				else:
 					pfpText = u''
 				if ri is not None:
-					lines.append( u'    {}{}.  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
+					lines.append( u'    {}.{}  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
 				else:
-					lines.append( u'    {}{}.  {}'.format(place, pfpText, bib) )
+					lines.append( u'    {}.{}  {}'.format(place, pfpText, bib) )
 			return lines
 		
 		RaceEvent = Model.RaceEvent
@@ -86,6 +87,8 @@ class Commentary( wx.Panel ):
 		inList = False
 		html.write( u'<dl>' )
 		for line in text.split(u'\n'):
+			if not line:
+				continue
 			if line[:1] != u' ':
 				if inList:
 					html.write(u'</ol>\n')
@@ -95,8 +98,9 @@ class Commentary( wx.Panel ):
 				html.write( cgi.escape(line) )
 				html.write( u'<ol>' )
 				inList = True
-			elif line:
-				html.write( u'<li>{}</li>\n'.format(line.strip().split(' ',1)[1].strip()) )
+				continue
+			line = line.strip()
+			html.write( u'<li>{}</li>\n'.format(line.split(' ',1)[1].strip()) )
 		html.write(u'</ol>\n')
 		html.write(u'</dd>\n')
 		html.write(u'</dl>\n')
@@ -114,6 +118,6 @@ if __name__ == '__main__':
 	Model.race._populate()
 	rd = Commentary(mainWin)
 	rd.refresh()
-	print rd.getHtml()
+	rd.toHtml( sys.stdout )
 	mainWin.Show()
 	app.MainLoop()
