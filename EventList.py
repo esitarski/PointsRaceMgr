@@ -113,10 +113,14 @@ class EventList( wx.Panel ):
 		self.SetSizer(self.hbs)
 
 	def onNewEvent( self, event ):
-		self.eventDialog.refresh( Model.RaceEvent() )
+		race = Model.race
+		e = Model.RaceEvent()
+		if race.getSprintCount() == race.getNumSprints() - 1:
+			e.eventType = Model.RaceEvent.Finish
+		
+		self.eventDialog.refresh( e )
 		self.eventDialog.CentreOnScreen()
 		if self.eventDialog.ShowModal() == wx.ID_OK:
-			race = Model.race
 			self.eventDialog.commit()
 			race.setEvents( race.events + [self.eventDialog.e] )
 			(Utils.getMainWin() if Utils.getMainWin() else self).refresh()
@@ -157,12 +161,19 @@ class EventList( wx.Panel ):
 			attr.SetFont( Utils.BigFont() )
 			self.grid.SetColAttr( c, attr )
 		
+		Sprint = Model.RaceEvent.Sprint
+		Finish = Model.RaceEvent.Finish
 		sprintCount = 0
 		for row, e in enumerate(events):
-			name = e.eventTypeName
-			if e.eventType == Model.RaceEvent.Sprint:
+			if e.eventType == Sprint:
 				sprintCount += 1
-				name += '{}'.format(sprintCount)
+				name = race.getSprintLabel(sprintCount)
+			else:
+				name = e.eventTypeName
+				if e.eventType == Finish:
+					sprintCount += 1
+					name += u' ({})'.format( race.getSprintLabel(sprintCount) )
+					
 			self.grid.SetCellValue( row, 0, name )
 			self.grid.SetCellValue( row, 1, u','.join(u'{}'.format(b) for b in e.bibs) )
 		

@@ -39,7 +39,7 @@ class RankDetails( wx.Panel ):
 		pointsFmt = Utils.asInt if all(rr.pointsTotal == int(rr.pointsTotal) for rr in riders) else Utils.asFloat
 		existingPointsFmt = Utils.asInt if all(rr.existingPoints == int(rr.existingPoints) for rr in riders) else Utils.asFloat
 		
-		headers = ['Rank', 'Bib', 'Points',] + ['Sp{}'.format(s) for s in xrange(1, race.sprintCount+1)] + ['+/- Laps']
+		headers = ['Rank', 'Bib', 'Points',] + [race.getSprintLabel(s) for s in xrange(1, race.sprintCount+1)] + ['+/- Laps']
 		if hasNumWins:
 			headers.append('Num Wins')
 		if hasExistingPoints:

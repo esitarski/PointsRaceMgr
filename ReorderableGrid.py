@@ -139,7 +139,8 @@ class ReorderableGridRowMixin( object ):
 		# returned are computed as if the window wasn't
 		# scrolled
 		# This function replaces XYToCell for Virtual Grids
-
+		row = col = 0
+		
 		if rowwidth is None:
 			rowwidth = self.GetGridRowLabelWindow().GetRect().width
 		if colheight is None:
@@ -165,7 +166,7 @@ class ReorderableGridRowMixin( object ):
 
 		y += yoff - colheight
 		ypos = 0
-		for row in range(self.GetNumberRows()):
+		for row in xrange(self.GetNumberRows()):
 			nexty = ypos + self.GetRowSize(row)
 			if ypos <= y <= nexty:
 				break

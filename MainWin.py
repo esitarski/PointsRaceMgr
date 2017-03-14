@@ -232,15 +232,17 @@ class MainWin( wx.Frame ):
 			pass
 			
 	def onRankDetailsColSelect( self, grid, col ):
+		race = Model.race
 		label = grid.GetColLabelValue(col)
-		labels = set( [label] )
-		if label == u'Sp{}'.format(Model.race.getNumSprints()):
-			labels.add( u'Finish' )
+		labels = [label]
+		if label == race.getSprintLabel(race.getNumSprints()):
+			labels.append( u'Finish' )
 		
 		egrid = self.eventList.grid
 		egrid.ClearSelection()
 		for row in xrange(egrid.GetNumberRows()):
-			if egrid.GetCellValue(row, 0) in labels:
+			v = egrid.GetCellValue(row, 0)
+			if any(v.startswith(lab) for lab in labels):
 				egrid.SelectRow( row, True )
 		
 	def onPageChanging( self, event ):
@@ -688,29 +690,36 @@ hr { clear: both; }
 			" (or customize your own format).\n"
 			"Configure all other race information at the top.\n"
 			"\n"
-			"While race is underway, press the 'New Event' button.\n"
-			"When the screen pops up, enter the Bibs involved in the race event (space or comma separated)."
-			"Then, set the Event Type which can be a Sprint (default), +/- Laps, Finish, DNF, DNS or DSQ.\n"
+			"While the race is underway, press the 'New Race Event' button.\n"
+			"When the screen pops up, enter the Bibs involved in the Race Event (space or comma separated)."
+			"Then, set the Event Type which can be a Sprint (default), +/- Laps, DNF, Finish, DNS or DSQ.\n"
 			"Use 'Finish' to enter the finish order.  This will automatically count as the last Sprint.\n"
 			"\n"
-			"Up-to-date results are shown on the Details and Summary screens.\n"
+			"You can rearrange the sequence of Race Events by dragging-and-dropping rows in Column 1.\n"
+			"Delete unwanted Race Events by right-clicking on the Event Type in the list.\n"
+			"\n"
+			"Up-to-date results are always shown on the Details and Summary screens.\n"
 			"\n"
 			"Use the 'Start List' screen to enter rider information (you can also import it from Excel).\n"
-			"Use the 'Existing Points' field for Omnimum scoring.\n"
+			"Use the 'Existing Points' field for scoring an Omnimum.\n"
 			"\n"
-			"In the 'Details' screen, clicking on the Sprint columns header will instantly find the Sprint Events.\n"
+			"In the 'Details' screen, clicking on the Sprint columns header will instantly find the Sprint Event corresponding\nto that sprint.\n"
 			"\n"
-			"When running PointsRaceMgr, it is posible to enter data without using a mouse.\n"
-			"Press Enter to trigger 'New Event', enter the Bibs, press Tab and Space to change the Event type, then press Enter to save.\n"
+			"It is possible to enter Race Events without using a mouse.\n"
+			"Press Enter to trigger 'New Race Event', then enter the Bibs, then press Tab and Space to change the Event type,\nthen press Enter to save.\n"
 			"\n"
 			"If ranking by 'Points, then Finish Order' (eg. Points Race, Madison), riders are ranked by:\n"
 			"  1.  Most Points\n"
 			"  2.  If a tie, by Finish Order\n"
-			"If ranking by 'Laps Completed, Points, Num Wins, then Finish Order' (eg. Criterium with Points), riders are ranked by:\n"
+			"If ranking by 'Laps Completed, Points, Num Wins, then Finish Order' (eg. UCI Criterium with Points), riders are ranked by:\n"
 			"  1.  Most Laps Completed (as specified by +/- Laps)\n"
 			"  2.  If a tie, by Most Points\n"
 			"  3.  If still a tie, by Most Sprint Wins\n"
-			"  4.  If still a tie, by Finish Order as specified in the 'Finish Order' column\n\n"
+			"  4.  If still a tie, by Finish Order\n\n"
+			"If ranking by 'Laps Completed, Points, then Finish Order', riders are ranked by:\n"
+			"  1.  Most Laps Completed (as specified by +/- Laps)\n"
+			"  2.  If a tie, by Most Points\n"
+			"  3.  If still a tie, by Finish Order\n\n"
 			"")
 		dlg = wx.MessageDialog(self, message, "PointsRaceMgr Help", wx.OK | wx.ICON_INFORMATION)
 		dlg.ShowModal()

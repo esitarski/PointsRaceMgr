@@ -20,7 +20,8 @@ class Configure( wx.Panel ):
 		super( Configure, self ).__init__(parent, id, size=size)
 		
 		self.SetBackgroundColour( wx.WHITE )
-		
+		self.SetDoubleBuffered(True)
+
 		self.inRefresh = False
 		
 		#-----------------------------------------------------------------------
@@ -42,7 +43,7 @@ class Configure( wx.Panel ):
 		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.DatePickerCtrl( self, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(132,-1) )
 		ctrl.Bind( wx.EVT_DATE_CHANGED, self.onChange )
-		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
+		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=4 )
 		self.dateLabel = label
 		self.dateCtrl = ctrl
 		
@@ -50,7 +51,7 @@ class Configure( wx.Panel ):
 		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
 		ctrl.Bind(wx.EVT_TEXT, self.onChange)
-		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
+		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=4 )
 		self.communiqueLabel = label
 		self.communiqueCtrl = ctrl
 		

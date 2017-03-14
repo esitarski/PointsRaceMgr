@@ -252,6 +252,15 @@ class Race(object):
 			numSprints = 0
 		return numSprints
 	
+	def getSprintCount( self ):
+		Sprint = RaceEvent.Sprint
+		return sum( 1 for e in self.events if e.eventType == Sprint )
+	
+	def getSprintLabel( self, sprint ):
+		if self.doublePointsForLastSprint and sprint == self.getNumSprints():
+			return u'Sp{} \u00D72'.format(sprint)
+		return u'Sp{}'.format(sprint)
+	
 	def getMaxPlace( self ):
 		maxPlace = 2
 		for place, points in self.pointsForPlace.iteritems():
