@@ -24,6 +24,7 @@ from Configure import Configure
 from RankDetails import RankDetails
 from RankSummary import RankSummary
 from StartList import StartList
+from Commentary import Commentary
 from ToPrintout import ToPrintout, ToHtml, ToExcel
 from ExportGrid import ExportGrid
 
@@ -83,6 +84,7 @@ class MainWin( wx.Frame ):
 			[ 'rankDetails',	RankDetails,	'Detail',   {'labelClickCallback':self.onRankDetailsColSelect} ],
 			[ 'rankSummary',	RankSummary,	'Summary',	{} ],
 			[ 'startList',		StartList,		'StartList',{} ],
+			[ 'commentary',		Commentary,		'Commentary',{} ],
 		]
 		
 		for i, (a, c, n, kw) in enumerate(self.attrClassName):

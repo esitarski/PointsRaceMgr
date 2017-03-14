@@ -68,7 +68,7 @@ class RankSummary( wx.Panel ):
 			col += 1
 	
 			# Rider info.
-			ri = riderInfo.get(rr.num, {})
+			ri = riderInfo.get(rr.num, None)
 			for f in fieldNames:
 				self.grid.SetCellValue( row, col, unicode(getattr(ri,f,u'')) )
 				col += 1

@@ -272,7 +272,8 @@ class Configure( wx.Panel ):
 			v = datetime.date( dt.GetYear(), dt.GetMonth() + 1, dt.GetDay() )	# Adjust for 0-based month.
 			race.setattr( field, v )
 			
-		pfp = [int(f) for f in re.sub(r'[^\d]', ' ', self.pointsForPlaceCtrl.GetValue()).split() if f]
+		pfp = [int(f) for f in re.sub(r'[^\d]', ' ', self.pointsForPlaceCtrl.GetValue()).split()]
+		pfp = [f for f in pfp if f > 0]
 		pointsForPlace = {r:p for r, p in enumerate(pfp,1)}
 		race.setattr( 'pointsForPlace', pointsForPlace )
 			
