@@ -25,7 +25,7 @@ class Commentary( wx.Panel ):
 			for place, bib in enumerate(bibs,1):
 				ri = riderInfo.get( bib, None )
 				if pointsForPlace and pointsForPlace.get(place, 0):
-					pfpText = ' ({} pts)'.format(pointsForPlace.get(place, 0))
+					pfpText = ' ({:+d} pts)'.format(pointsForPlace.get(place, 0))
 				else:
 					pfpText = u''
 				if ri is not None:
@@ -44,11 +44,11 @@ class Commentary( wx.Panel ):
 				lines.append( u'Sprint {} Result:'.format(self.sprintCount) )
 				lines.extend( infoLines(e.bibs[:len(race.pointsForPlace)], race.pointsForPlace) )
 			elif e.eventType == RaceEvent.LapUp:
-				lines.append( u'Gained a Lap: +{} pts'.format(race.pointsForLapping) )
-				lines.extend( infoLines(e.bibs) )
+				lines.append( u'Gained a Lap:' )
+				lines.extend( infoLines(e.bibs, {p:race.pointsForLapping for p in xrange(1,len(e.bibs)+1)}) )
 			elif e.eventType == RaceEvent.LapDown:
-				lines.append( u'Lost a Lap: -{} pts'.format(race.pointsForLapping) )
-				lines.extend( infoLines(e.bibs) )
+				lines.append( u'Lost a Lap:' )
+				lines.extend( infoLines(e.bibs, {p:-race.pointsForLapping for p in xrange(1,len(e.bibs)+1)}) )
 			elif e.eventType == RaceEvent.Finish:
 				lines.append( u'Finish:' )
 				self.sprintCount += 1
