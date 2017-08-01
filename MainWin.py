@@ -652,7 +652,7 @@ hr { clear: both; }
 		dlg = wx.FileDialog( self, message=u"Save a Race File",
 							defaultFile = '',
 							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',
-							style=wx.SAVE | wx.CHANGE_DIR )
+							style=wx.FD_SAVE | wx.FD_CHANGE_DIR )
 		while 1:
 			ret = dlg.ShowModal()
 			if ret != wx.ID_OK:
