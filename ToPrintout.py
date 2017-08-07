@@ -110,8 +110,8 @@ class GrowTable( object ):
 		return len(self.table)
 		
 	def getFonts( self, fontSize ):
-		font = wx.FontFromPixelSize( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
-		fontBold = wx.FontFromPixelSize( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD )
+		font = wx.Font( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
+		fontBold = wx.Font( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD )
 		return font, fontBold
 		
 	def getCellBorder( self, fontSize ):
@@ -355,7 +355,7 @@ def ToPrintout( dc, grid ):
 	
 	# Add a timestamp footer.
 	fontSize = heightPix//85
-	font = wx.FontFromPixelSize( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
+	font = wx.Font( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
 	dc.SetFont( font )
 	text = u'Generated {}'.format( datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S') )
 	footerTop = heightPix - borderPix + fontSize/2

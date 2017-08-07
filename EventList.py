@@ -17,7 +17,7 @@ class EventDialog( wx.Dialog ):
 	def __init__( self, parent, title="Edit Race Event" ):
 		super( EventDialog, self ).__init__( parent, wx.ID_ANY, title=title )
 		
-		fgs = wx.FlexGridSizer( 2, 2, 4, 4 )
+		fgs = wx.FlexGridSizer( 3, 2, 4, 4 )
 		fgs.AddGrowableCol( 1, 1 )
 		
 		label = wx.StaticText(self, label=u'Bibs:')
@@ -26,6 +26,10 @@ class EventDialog( wx.Dialog ):
 		self.bibs = wx.TextCtrl( self, size=(500,-1) )
 		self.bibs.SetFont( Utils.BigFont() )
 		fgs.Add( self.bibs, 1, wx.EXPAND )
+		
+		explain = wx.StaticText(self, label=u'(comma or space separated)' )
+		fgs.Add( wx.StaticText(self) )
+		fgs.Add( explain )
 		
 		label = wx.StaticText(self, label=u'Type:')
 		label.SetFont( Utils.BigFont() )
@@ -101,7 +105,7 @@ class EventList( wx.Panel ):
 		
 		self.newButton = wx.Button( self, label='New Race Event' )
 		self.newButton.Bind( wx.EVT_BUTTON, self.onNewEvent )
-		self.newButton.SetFont(wx.FontFromPixelSize( (0,20), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL ))
+		self.newButton.SetFont(wx.Font( (0,20), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL ))
 		self.hbs.Add( self.newButton, 0, wx.ALL, border=4 )
 
 		self.grid = EventListGrid( self )

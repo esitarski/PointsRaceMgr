@@ -1,6 +1,7 @@
 import wx
+import wx.adv
 import wx.lib.masked.numctrl as NC
-import  wx.lib.intctrl as IC
+import wx.lib.intctrl as IC
 import sys
 import os
 import re
@@ -41,8 +42,8 @@ class Configure( wx.Panel ):
 		hs = wx.BoxSizer( wx.HORIZONTAL )
 		label = wx.StaticText( self, label=u'Date:' )
 		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
-		ctrl = wx.DatePickerCtrl( self, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(132,-1) )
-		ctrl.Bind( wx.EVT_DATE_CHANGED, self.onChange )
+		ctrl = wx.adv.DatePickerCtrl( self, style = wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY, size=(132,-1) )
+		ctrl.Bind( wx.adv.EVT_DATE_CHANGED, self.onChange )
 		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=4 )
 		self.dateLabel = label
 		self.dateCtrl = ctrl
@@ -162,7 +163,7 @@ class Configure( wx.Panel ):
 		self.snowballLabel = label
 		self.snowballCtrl = ctrl
 
-		branding = wx.HyperlinkCtrl( self, id=wx.ID_ANY, label=u"Powered by CrossMgr", url=u"http://www.sites.google.com/site/crossmgrsoftware/" )
+		branding = wx.adv.HyperlinkCtrl( self, id=wx.ID_ANY, label=u"Powered by CrossMgr", url=u"http://www.sites.google.com/site/crossmgrsoftware/" )
 		branding.SetBackgroundColour( wx.WHITE )
 		self.gbs.Add( branding, pos=(3, 9), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 

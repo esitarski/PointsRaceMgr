@@ -107,7 +107,7 @@ class ExportGrid( object ):
 				self.leftJustifyCols[c] = True
 	
 	def _getFont( self, pixelSize = 28, bold = False ):
-		return wx.FontFromPixelSize( (0,pixelSize), wx.FONTFAMILY_SWISS, wx.NORMAL,
+		return wx.Font( (0,pixelSize), wx.FONTFAMILY_SWISS, wx.NORMAL,
 									 wx.FONTWEIGHT_BOLD if bold else wx.FONTWEIGHT_NORMAL, False )
 	
 	def _getColSizeTuple( self, dc, font, col ):
@@ -194,7 +194,7 @@ class ExportGrid( object ):
 		image, bitmap = None, None
 		
 		# Draw the title.
-		def getTitleSize( font )
+		def getTitleSize( font ):
 			dc.SetFont( font )
 			return dc.GetMultiLineTextExtent(self.title)
 		font = self._getFontToFit( widthFieldPix - graphicWidth - graphicBorder - qrWidth, graphicHeight, getTitleSize, True )

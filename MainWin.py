@@ -47,7 +47,7 @@ class MainWin( wx.Frame ):
 		self.filehistory = wx.FileHistory(8)
 		self.config = wx.Config(appName="PointsRaceMgr",
 								vendorName="Edward.Sitarski@gmail.com",
-								style=wx.CONFIG_USE_LOCAL_FILE)
+		)
 		self.filehistory.Load(self.config)
 		
 		self.fileName = None
@@ -136,7 +136,7 @@ class MainWin( wx.Frame ):
 		self.fileMenu.AppendSeparator()
 		
 		recent = wx.Menu()
-		self.fileMenu.AppendMenu(wx.ID_ANY, "&Recent Files", recent)
+		self.fileMenu.Append(wx.ID_ANY, "&Recent Files", recent)
 		self.filehistory.UseMenu( recent )
 		self.filehistory.AddFilesToMenu()
 		
