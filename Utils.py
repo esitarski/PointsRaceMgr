@@ -240,7 +240,13 @@ def writeLog( message ):
 	try:
 		dt = datetime.datetime.now()
 		dt = dt.replace( microsecond = 0 )
-		sys.stdout.write( '{} ({}) {}{}'.format(dt.isoformat(), PlatformName, message, '\n' if not message or message[-1] != '\n' else '' ) )
+		msg = u'{} ({}) {}{}'.format(
+			dt.isoformat(),
+			PlatformName,
+			message,
+			'\n' if not message or message[-1] != '\n' else ''
+		)
+		sys.stdout.write( removeDiacritic(msg) )
 		sys.stdout.flush()
 	except IOError:
 		pass
