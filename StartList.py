@@ -49,6 +49,7 @@ class StartList(wx.Panel):
 		sizer.Add(self.grid, 1, flag=wx.EXPAND|wx.ALL, border = 6)
 		self.SetSizer(sizer)
 		
+		self.SetDoubleBuffered( True )
 		wx.CallAfter( self.refresh )
 		
 	def getGrid( self ):
@@ -58,7 +59,6 @@ class StartList(wx.Panel):
 		race = Model.race
 		riderInfo = race.riderInfo if race else []
 		
-		self.grid.BeginBatch()
 		Utils.AdjustGridSize( self.grid, len(riderInfo), len(self.headerNames) )
 		
 		# Set specialized editors for appropriate columns.
@@ -72,11 +72,16 @@ class StartList(wx.Panel):
 			attr.SetFont( Utils.BigFont() )
 			self.grid.SetColAttr( col, attr )
 		
+		missingBib = 5000
 		for row, ri in enumerate(riderInfo):
 			for col, field in enumerate(self.fieldNames):
-				self.grid.SetCellValue( row, col, unicode(getattr(ri, field)) )
+				v = getattr(ri, field, None)
+				if v is None:
+					if field == 'bib':
+						v = ri.bib = missingBib
+						missingBib += 1
+				self.grid.SetCellValue( row, col, unicode(v) )
 		self.grid.AutoSize()
-		self.grid.EndBatch()
 		self.Layout()
 		
 	def onAddRows( self, event ):
@@ -121,7 +126,7 @@ class StartList(wx.Panel):
 		# Get the sheet in the excel file.
 		sheetName = excel.sheet_names()[0]
 
-		riderInfo = {}
+		riderInfo = []
 		bibHeader = set(v.lower() for v in ('Bib','BibNum','Bib Num', 'Bib #', 'Bib#'))
 		fm = None
 		for row in excel.iter_list(sheetName):
@@ -163,7 +168,7 @@ class StartList(wx.Panel):
 					info['existing_points'] = 0
 				
 				ri = Model.RiderInfo( **info )
-				riderInfo[ri.bib] = ri
+				riderInfo.append( ri )
 				
 			elif any( unicode(h).strip().lower() in bibHeader for h in row ):
 				fm = standard_field_map()
