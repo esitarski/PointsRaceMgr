@@ -48,6 +48,8 @@ class RankSummary( wx.Panel ):
 			attr.SetReadOnly()
 			attr.SetAlignment(wx.ALIGN_LEFT if iRiderInfoBegin <= c < iRiderInfoEnd else wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
 			attr.SetFont( Utils.BigFont() )
+			if headers[c] == 'Bib':
+				attr.SetBackgroundColour( wx.Colour(178, 236, 255) )
 			self.grid.SetColAttr( c, attr )
 		
 		gr = Model.GetRank()

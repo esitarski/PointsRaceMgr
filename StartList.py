@@ -69,6 +69,8 @@ class StartList(wx.Panel):
 				attr.SetRenderer( gridlib.GridCellNumberRenderer() )
 			elif col == 1:
 				attr.SetRenderer( gridlib.GridCellFloatRenderer(precision=1) )
+			if name == 'Bib':
+				attr.SetBackgroundColour( wx.Colour(178, 236, 255) )
 			attr.SetFont( Utils.BigFont() )
 			self.grid.SetColAttr( col, attr )
 		

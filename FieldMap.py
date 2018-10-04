@@ -81,11 +81,11 @@ class FieldMap( object ):
 
 standard_field_aliases = (
 	('last_name',
-		('LastName','Last Name','LName'),
+		('LastName','Last Name','LName','Last',),
 		"Participant's last name",
 	),
 	('first_name',
-		('FirstName','First Name','FName'),
+		('FirstName','First Name','FName','First',),
 		"Participant's first name",
 	),
 	('date_of_birth',

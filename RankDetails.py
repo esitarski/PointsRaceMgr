@@ -55,6 +55,8 @@ class RankDetails( wx.Panel ):
 			attr.SetReadOnly()
 			attr.SetAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
 			attr.SetFont( Utils.BigFont() )
+			if headers[c] == 'Bib':
+				attr.SetBackgroundColour( wx.Colour(178, 236, 255) )
 			self.grid.SetColAttr( c, attr )
 			
 		gr = Model.GetRank()
