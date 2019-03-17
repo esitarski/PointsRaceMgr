@@ -3,7 +3,6 @@ import cgi
 import sys
 import Model
 import Utils
-import StringIO
 
 class Commentary( wx.Panel ):
 	def __init__( self, parent, id = wx.ID_ANY ):
@@ -39,8 +38,8 @@ class Commentary( wx.Panel ):
 		
 		RaceEvent = Model.RaceEvent
 		
-		pointsForGainedLap = {p:race.pointsForLapping for p in xrange(1,201)}
-		pointsForLostLap   = {p:-race.pointsForLapping for p in xrange(1,201)}
+		pointsForGainedLap = {p:race.pointsForLapping for p in range(1,201)}
+		pointsForLostLap   = {p:-race.pointsForLapping for p in range(1,201)}
 		
 		lines = []
 		self.sprintCount = 0

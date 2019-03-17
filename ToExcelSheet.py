@@ -91,7 +91,7 @@ def ToExcelSheet( ws ):
 	
 	# Write the points for each placing.
 	rowCur = 7
-	for p in xrange(1, maxPlace):
+	for p in range(1, maxPlace):
 		ws.write( rowCur + p - 1, 2, race.pointsForPlace[p], style if p != 1 else styleTop )
 	styleTop = xlwt.easyxf(
 		"alignment: horizontal center;"
@@ -103,7 +103,7 @@ def ToExcelSheet( ws ):
 	)
 	
 	# Write the positions (1 .. maxPlace - 1).
-	for p in xrange(1, maxPlace):
+	for p in range(1, maxPlace):
 		ws.write( rowCur + p - 1, 3, p, style if p != 1 else styleTop )
 		
 	styleTop = xlwt.easyxf(
@@ -117,8 +117,8 @@ def ToExcelSheet( ws ):
 	for (sprint, place), num in race.sprintResults.iteritems():
 		if place < maxPlace:
 			ws.write( rowCur + place - 1, sprint + 3, num, style if place != 1 else styleTop )
-	for place in xrange(1, maxPlace):
-		for sprint in xrange(1, maxSprints+1):
+	for place in range(1, maxPlace):
+		for sprint in range(1, maxSprints+1):
 			if (sprint, place) not in race.sprintResults:
 				ws.write( rowCur + place - 1, sprint + 3, '', style if place != 1 else styleTop )
 		
@@ -153,7 +153,7 @@ def ToExcelSheet( ws ):
 		"alignment: horizontal center;"
 		"borders: top thin, bottom thin, left thin, right thin;"
     )
-	for s in xrange(0, maxSprints):
+	for s in range(0, maxSprints):
 		ws.write( rowCur, s + 4, 'Sp{}'.format(s + 1), style )
 	
 	colCur = maxSprints + 4
@@ -215,7 +215,7 @@ def ToExcelSheet( ws ):
 		if place < maxPlace and num in riderToRow:
 			sprintNumPoints[(sprint, num)] = race.getSprintPoints(sprint, place)
 
-	for sprint in xrange(1, maxSprints+1):
+	for sprint in range(1, maxSprints+1):
 		for r, rider in enumerate(riders):
 			ws.write( rowCur + r, sprint + 3, sprintNumPoints.get((sprint, rider.num), ''), styleRegular )
 			
@@ -228,11 +228,11 @@ class PrintSheet( object ):
 	def __init__( self ):
 		self.rows = []
 		
-	def write( row, col, value, style = None):
+	def write( self, row, col, value, style = None):
 		try:
 			r = self.rows[row]
 		except IndexError:
-			self.rows += [[] for i in xrange(row - len(self.rows) + 1)]
+			self.rows += [[] for i in range(row - len(self.rows) + 1)]
 			r = self.rows[row]
 			
 		try:
@@ -243,11 +243,11 @@ class PrintSheet( object ):
 		assert v is None
 		r[col] = value
 		
-	def write_merge( rowStart, rowEnd, colStart, colEnd, value, style = None ):
-		for row in xrange(rowStart, rowEnd+1):
-			for col in xrange(colStart, colEnd+1):
+	def write_merge( self, rowStart, rowEnd, colStart, colEnd, value, style = None ):
+		for row in range(rowStart, rowEnd+1):
+			for col in range(colStart, colEnd+1):
 				if row == rowStart and col == colStart:
-					self.write( row, col, unicode(value) )
+					self.write( row, col, u'{}'.format(value) )
 				else:
 					self.write( row, col, u'\t' )
 			

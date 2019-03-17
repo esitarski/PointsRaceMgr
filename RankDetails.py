@@ -39,7 +39,7 @@ class RankDetails( wx.Panel ):
 		pointsFmt = Utils.asInt if all(rr.pointsTotal == int(rr.pointsTotal) for rr in riders) else Utils.asFloat
 		existingPointsFmt = Utils.asInt if all(rr.existingPoints == int(rr.existingPoints) for rr in riders) else Utils.asFloat
 		
-		headers = ['Rank', 'Bib', 'Points',] + [race.getSprintLabel(s) for s in xrange(1, race.sprintCount+1)] + ['+/- Laps']
+		headers = ['Rank', 'Bib', 'Points',] + [race.getSprintLabel(s) for s in range(1, race.sprintCount+1)] + ['+/- Laps']
 		if hasNumWins:
 			headers.append('Num Wins')
 		if hasExistingPoints:
@@ -49,7 +49,7 @@ class RankDetails( wx.Panel ):
 		self.grid.BeginBatch()
 		Utils.AdjustGridSize( self.grid, len(riders), len(headers) )
 		
-		for c in xrange(self.grid.GetNumberCols()):
+		for c in range(self.grid.GetNumberCols()):
 			self.grid.SetColLabelValue( c, headers[c] )
 			attr = gridlib.GridCellAttr()
 			attr.SetReadOnly()
@@ -69,7 +69,7 @@ class RankDetails( wx.Panel ):
 			col += 1
 			
 			# Bib
-			self.grid.SetCellValue( row, col, unicode(rr.num) )
+			self.grid.SetCellValue( row, col, u'{}'.format(rr.num) )
 			col += 1
 	
 			# Points
@@ -77,18 +77,18 @@ class RankDetails( wx.Panel ):
 			col += 1
 			
 			# Sprints
-			for s in xrange(1, race.sprintCount+1):
+			for s in range(1, race.sprintCount+1):
 				place, points = rr.sprintPlacePoints.get(s, (-1, -1))
-				self.grid.SetCellValue( row, col, unicode(points) if points > 0 else u'')
+				self.grid.SetCellValue( row, col, u'{}'.format(points) if points > 0 else u'')
 				col += 1
 			
 			# +/- Laps
-			self.grid.SetCellValue( row, col, unicode(rr.lapsTotal) if rr.lapsTotal else u'' )
+			self.grid.SetCellValue( row, col, u'{}'.format(rr.lapsTotal) if rr.lapsTotal else u'' )
 			col += 1
 			
 			# Wins
 			if hasNumWins:
-				self.grid.SetCellValue( row, col, unicode(rr.numWins) if rr.numWins else u'' )
+				self.grid.SetCellValue( row, col, u'{}'.format(rr.numWins) if rr.numWins else u'' )
 				col += 1
 				
 			# Existing Points
@@ -97,7 +97,7 @@ class RankDetails( wx.Panel ):
 				col += 1
 				
 			# Finish order
-			self.grid.SetCellValue( row, col, unicode(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
+			self.grid.SetCellValue( row, col, u'{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
 			col += 1
 		
 		self.grid.EndBatch()

@@ -82,7 +82,7 @@ class StartList(wx.Panel):
 					if field == 'bib':
 						v = ri.bib = missingBib
 						missingBib += 1
-				self.grid.SetCellValue( row, col, unicode(v) )
+				self.grid.SetCellValue( row, col, u'{}'.format(v) )
 		self.grid.AutoSize()
 		self.Layout()
 		
@@ -136,21 +136,21 @@ class StartList(wx.Panel):
 				f = fm.finder( row )
 				info = {
 					'bib': 			f('bib',u''),
-					'first_name':	unicode(f('first_name',u'')).strip(),
-					'last_name':	unicode(f('last_name',u'')).strip(),
-					'license':		unicode(f('license_code',u'')).strip(),
-					'team':			unicode(f('team',u'')).strip(),
-					'uci_id':		unicode(f('uci_id',u'')).strip(),
-					'nation_code':		unicode(f('nation_code',u'')).strip(),
-					'existing_points':	unicode(f('existing_points',u'0')).strip(),
+					'first_name':	u'{}'.format(f('first_name',u'')).strip(),
+					'last_name':	u'{}'.format(f('last_name',u'')).strip(),
+					'license':		u'{}'.format(f('license_code',u'')).strip(),
+					'team':			u'{}'.format(f('team',u'')).strip(),
+					'uci_id':		u'{}'.format(f('uci_id',u'')).strip(),
+					'nation_code':		u'{}'.format(f('nation_code',u'')).strip(),
+					'existing_points':	u'{}'.format(f('existing_points',u'0')).strip(),
 				}
 				
-				info['bib'] = unicode(info['bib']).strip()
+				info['bib'] = u'{}'.format(info['bib']).strip()
 				if not info['bib']:	# If missing bib, assume end of input.
 					continue
 				
 				# Check for comma-separated name.
-				name = unicode(f('name', u'')).strip()
+				name = u'{}'.format(f('name', u'')).strip()
 				if name and not info['first_name'] and not info['last_name']:
 					try:
 						info['last_name'], info['first_name'] = name.split(',',1)
@@ -159,7 +159,7 @@ class StartList(wx.Panel):
 				
 				# If there is a bib it must be numeric.
 				try:
-					info['bib'] = int(unicode(info['bib']).strip())
+					info['bib'] = int(u'{}'.format(info['bib']).strip())
 				except ValueError:
 					continue
 				
@@ -172,7 +172,7 @@ class StartList(wx.Panel):
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )
 				
-			elif any( unicode(h).strip().lower() in bibHeader for h in row ):
+			elif any( u'{}'.format(h).strip().lower() in bibHeader for h in row ):
 				fm = standard_field_map()
 				fm.set_headers( row )
 				
@@ -185,7 +185,7 @@ class StartList(wx.Panel):
 	def commit( self ):
 		race = Model.race
 		riderInfo = []
-		for r in xrange(self.grid.GetNumberRows()):
+		for r in range(self.grid.GetNumberRows()):
 			info = {f:self.grid.GetCellValue(r, c).strip() for c, f in enumerate(self.fieldNames)}
 			if not info['bib']:
 				continue

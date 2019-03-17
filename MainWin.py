@@ -5,13 +5,14 @@ import wx.lib.agw.flatnotebook as fnb
 
 import sys
 import cgi
+import six
 import os
 import io
 import re
 import datetime
 import xlwt
 import webbrowser
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import subprocess
 import traceback
 from optparse import OptionParser
@@ -243,7 +244,7 @@ class MainWin( wx.Frame ):
 		
 		egrid = self.eventList.grid
 		egrid.ClearSelection()
-		for row in xrange(egrid.GetNumberRows()):
+		for row in range(egrid.GetNumberRows()):
 			v = egrid.GetCellValue(row, 0)
 			if any(v.startswith(lab) for lab in labels):
 				egrid.SelectRow( row, True )
@@ -279,7 +280,7 @@ class MainWin( wx.Frame ):
 		try:
 			with io.open( htmlFName, 'w', encoding='utf8' ) as html:
 				def write( v ):
-					html.write( unicode(v) )
+					html.write( u'{}'.format(v) )
 				
 				with tag(html, 'html'):
 					with tag(html, 'head'):
@@ -539,7 +540,7 @@ hr { clear: both; }
 		race = Model.race
 		if not race:
 			return
-		with open(self.fileName, 'wb') as f:
+		with io.open(self.fileName, 'wb') as f:
 			race.setChanged( False )
 			pickle.dump( race, f, 2 )
 		self.updateRecentFiles()
@@ -583,7 +584,7 @@ hr { clear: both; }
 				return
 		if self.fileName:
 			self.fileName = os.path.splitext(self.fileName)[0]
-			for i in xrange(1,100):
+			for i in range(1,100):
 				s = '-{}'.format(i)
 				if self.fileName.endswith(s):
 					self.fileName[:-len(s)] + '-{}'.format(i+1)
@@ -614,7 +615,10 @@ hr { clear: both; }
 				return
 
 		try:
-			race = pickle.load( open(fileName, 'rb') )
+			if six.PY2:
+				race = pickle.load( io.open(fileName, 'rb') )
+			else:
+				race = pickle.load( io.open(fileName, 'rb'), fix_imports=True, encoding="utf-8", )
 			# Check a few fields to confirm we have the right file.
 			a = race.sprintEvery
 			a = race.courseLengthUnit
@@ -687,7 +691,7 @@ hr { clear: both; }
 		self.onCloseWindow( event )
 		
 	def menuHelp(self, event):
-		message = unicode(
+		message = u'{}'.format(
 			"Manage a Points Race: Track or Criterium.\n\n"
 			"Click on ConfigureRace menu and choose a standard Race Format "
 			" (or customize your own format).\n"
@@ -736,26 +740,26 @@ hr { clear: both; }
 		info = wx.AboutDialogInfo()
 		info.Name = AppVerName
 		info.Version = ''
-		info.SetCopyright( "(C) 2011-{}".format( datetime.datetime.now().year ) )
-		info.Description = wordwrap( unicode(
-			"Manage a Points Race: Track or Criterium.\n\n"
-			"For details, see Help"
-			""),
+		info.SetCopyright( u"(C) 2011-{}".format( datetime.datetime.now().year ) )
+		info.Description = wordwrap( (
+			u"Manage a Points Race: Track or Criterium.\n\n"
+			u"For details, see Help"
+			u""),
 			600, wx.ClientDC(self))
 		info.WebSite = ("http://sites.google.com/site/crossmgrsoftware", "CrossMgr home page")
 		info.Developers = [
-			"Edward Sitarski (edward.sitarski@gmail.com)",
+			u"Edward Sitarski (edward.sitarski@gmail.com)",
 		]
 
-		licenseText = unicode("User Beware!\n\n"
-			"This program is experimental, under development and may have bugs.\n"
-			"Feedback is sincerely appreciated.\n\n"
-			"CRITICALLY IMPORTANT MESSAGE:\n"
-			"This program is not warrented for any use whatsoever.\n"
-			"It may not produce correct results, it might lose your data.\n"
-			"The authors of this program assume no reponsibility or liability for data loss or erronious results produced by this program.\n\n"
-			"Use entirely at your own risk."
-			"Always use a paper manual backup."
+		licenseText = ( u"User Beware!\n\n"
+			u"This program is experimental, under development and may have bugs.\n"
+			u"Feedback is sincerely appreciated.\n\n"
+			u"CRITICALLY IMPORTANT MESSAGE:\n"
+			u"This program is not warrented for any use whatsoever.\n"
+			u"It may not produce correct results, it might lose your data.\n"
+			u"The authors of this program assume no reponsibility or liability for data loss or erronious results produced by this program.\n\n"
+			u"Use entirely at your own risk."
+			u"Always use a paper manual backup."
 		)
 		info.License = wordwrap(licenseText, 600, wx.ClientDC(self))
 

@@ -42,7 +42,7 @@ class RankSummary( wx.Panel ):
 		self.grid.BeginBatch()
 		Utils.AdjustGridSize( self.grid, len(riders), len(headers) )
 		
-		for c in xrange(self.grid.GetNumberCols()):
+		for c in range(self.grid.GetNumberCols()):
 			self.grid.SetColLabelValue( c, headers[c] )
 			attr = gridlib.GridCellAttr()
 			attr.SetReadOnly()
@@ -66,22 +66,22 @@ class RankSummary( wx.Panel ):
 			col += 1
 			
 			# Bib
-			self.grid.SetCellValue( row, col, unicode(rr.num) )
+			self.grid.SetCellValue( row, col, u'{}'.format(rr.num) )
 			col += 1
 	
 			# Rider info.
 			ri = riderInfo.get(rr.num, None)
 			for f in fieldNames:
-				self.grid.SetCellValue( row, col, unicode(getattr(ri,f,u'')) )
+				self.grid.SetCellValue( row, col, u'{}'.format(getattr(ri,f,u'')) )
 				col += 1
 				
 			# Wins
 			if hasNumWins:
-				self.grid.SetCellValue( row, col, unicode(rr.numWins) if rr.numWins else u'' )
+				self.grid.SetCellValue( row, col, u'{}'.format(rr.numWins) if rr.numWins else u'' )
 				col += 1
 				
 			# Finish order
-			self.grid.SetCellValue( row, col, unicode(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
+			self.grid.SetCellValue( row, col, u'{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
 			col += 1
 
 		self.grid.EndBatch()

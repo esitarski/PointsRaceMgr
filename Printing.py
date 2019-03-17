@@ -1,5 +1,4 @@
-import  wx
-from  ToPrintout import ToPrintout
+import wx
 import Model
 import Utils
 
@@ -22,7 +21,5 @@ class PointsMgrPrintout(wx.Printout):
 		dc = self.GetDC()
 		if page == 1 and Model.race.riderInfo:
 			Utils.getMainWin().GetParent().GetParent().resultsList.toPrintout( dc )
-		else:
-			ToPrintout( dc )
 		return True
 

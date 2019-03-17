@@ -12,6 +12,9 @@ class EventListGrid( ReorderableGrid ):
 		if self._didCopy and Utils.getMainWin():
 			wx.CallAfter( Utils.getMainWin().eventList.commitReorder )
 		return super(EventListGrid, self).OnRearrangeEnd(evt)
+		self.SetSelectionMode( gridlib.SelectRows )
+		self.SetSelectionBackground( wx.Colour(0,0,0) )
+		self.SetSelectionForeground( wx.Colour(255,255,0) )
 
 class EventDialog( wx.Dialog ):
 	def __init__( self, parent, title="Edit Race Event" ):
@@ -192,7 +195,7 @@ class EventList( wx.Panel ):
 	def commitReorder( self ):
 		race = Model.race
 		events = []
-		for r in xrange(self.grid.GetNumberRows()):
+		for r in range(self.grid.GetNumberRows()):
 			events.append( Model.RaceEvent(self.grid.GetCellValue(r, 0), self.grid.GetCellValue(r, 1)) )
 		race.setEvents( events )
 		Utils.refresh()

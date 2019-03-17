@@ -3,12 +3,13 @@ import wx.adv
 import wx.lib.masked.numctrl as NC
 import wx.lib.intctrl as IC
 import sys
+import six
 import os
 import re
 import datetime
 import xlwt
 import webbrowser
-import cPickle as pickle
+pickle = six.moves.cPickle
 import subprocess
 from optparse import OptionParser
 
@@ -297,7 +298,7 @@ class Configure( wx.Panel ):
 			dt.Set(d.day, d.month - 1, d.year, 0, 0, 0, 0)	# Adjust to 0-based month
 			getattr(self, field + 'Ctrl').SetValue( dt )
 		
-		v = u','.join( unicode(points) for place, points in sorted( race.pointsForPlace.iteritems()) )
+		v = u','.join( u'{}'.format(points) for place, points in sorted( race.pointsForPlace.items()) )
 		self.pointsForPlaceCtrl.SetValue( v )
 		
 		self.updateDependentFields()

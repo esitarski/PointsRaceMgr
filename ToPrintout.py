@@ -9,7 +9,7 @@ from ExportGrid import ExportGrid
 import Model
 
 class GrowTable( object ):
-	bold, alignLeft, alignCentre, alignRight, alignTop, alignMiddle, alignBottom = [1<<i for i in xrange(7)]
+	bold, alignLeft, alignCentre, alignRight, alignTop, alignMiddle, alignBottom = [1<<i for i in range(7)]
 	alignCenter = alignCentre
 	attrDefault = alignRight|alignTop
 	
@@ -45,15 +45,15 @@ class GrowTable( object ):
 		if grid.GetRowLabelSize() > 0:
 			colLabel = 1
 		if grid.GetColLabelSize() > 0 and grid.GetNumberCols():
-			maxNewLines = max(grid.GetColLabelValue(c).count('\n') for c in xrange(grid.GetNumberCols()))
+			maxNewLines = max(grid.GetColLabelValue(c).count('\n') for c in range(grid.GetNumberCols()))
 			def fixNewLines( v ):
 				d = maxNewLines - v.count(u'\n')
 				return v if d == 0 else u'\n'*d + v
-			for c in xrange(grid.GetNumberCols()):
+			for c in range(grid.GetNumberCols()):
 				self.set( 0, c+colLabel, fixNewLines(grid.GetColLabelValue(c)), self.bold )
 			rowLabel = 1
 		if colLabel > 0:
-			for r in xrange(grid.GetNumberRows()):
+			for r in range(grid.GetNumberRows()):
 				self.set( r+rowLabel, 0, grid.GetRowLabelValue(r), self.bold )
 		
 		def isNumeric( v ):
@@ -65,9 +65,9 @@ class GrowTable( object ):
 			except:
 				return False
 		
-		numericCols = set( c for c in xrange(grid.GetNumberCols()) if all(isNumeric(grid.GetCellValue(r, c)) for r in xrange(grid.GetNumberRows())) )
-		for r in xrange(grid.GetNumberRows()):
-			for c in xrange(grid.GetNumberCols()):
+		numericCols = set( c for c in range(grid.GetNumberCols()) if all(isNumeric(grid.GetCellValue(r, c)) for r in range(grid.GetNumberRows())) )
+		for r in range(grid.GetNumberRows()):
+			for c in range(grid.GetNumberCols()):
 				v = grid.GetCellValue( r, c )
 				if not v:
 					continue
@@ -76,22 +76,22 @@ class GrowTable( object ):
 					aHoriz = wx.ALIGN_RIGHT
 				self.set( r+rowLabel, c+colLabel, v, mapHorizontal.get(aHoriz, self.alignLeft) | mapVertical.get(aVert, self.alignTop) )
 			
-		numCols, numRow = self.getNumberCols(), self.getNumberRows()
+		numCols, numRows = self.getNumberCols(), self.getNumberRows()
 		if horizontalGridlines:
 			if rowLabel > 0:
 				self.hLine( 1, 0, numCols, True )
-			for r in xrange(rowLabel, grid.GetNumberRows()+1):
+			for r in range(rowLabel, grid.GetNumberRows()+1):
 				self.hLine( r+rowLabel, 0, numCols )
 		if verticalGridlines:
 			self.vLine( 0, 0, numRows )
 			if colLabel > 0:
 				self.hLine( 1, 0, numRows, True )
-			for c in xrange(colLabel+1, grid.GetNumberCols()+1):
+			for c in range(colLabel+1, grid.GetNumberCols()+1):
 				self.hLine( c+colLabel, 0, numRows )
 		
 	def set( self, row, col, value, attr=attrDefault ):
-		self.table += [[] for i in xrange(max(0, row+1 - len(self.table)))]
-		self.table[row] += [(u'', self.attrDefault) for i in xrange(max(0, col+1 - len(self.table[row])))]
+		self.table += [[] for i in range(max(0, row+1 - len(self.table)))]
+		self.table[row] += [(u'', self.attrDefault) for i in range(max(0, col+1 - len(self.table[row])))]
 		self.table[row][col] = (value, attr)
 		return row, col
 		
@@ -172,7 +172,7 @@ class GrowTable( object ):
 		self.penThick = None
 		
 		fontSizeLeft, fontSizeRight = 2, 512
-		for i in xrange(20):
+		for i in range(20):
 			fontSize = (fontSizeLeft + fontSizeRight) // 2
 			tWidth, tHeight = self.getSize( dc, fontSize )
 			if tWidth < width and tHeight < height:
@@ -214,7 +214,7 @@ class GrowTable( object ):
 		rowHeightSum = [y]
 		for h in self.rowHeights:
 			rowHeightSum.append( rowHeightSum[-1] + h )
-		for i in xrange(50):
+		for i in range(50):
 			rowHeightSum.append( rowHeightSum[-1] + rowHeightSum[-1] - rowHeightSum[-2] )
 		
 		colWidthSum = [x]
@@ -254,27 +254,27 @@ class GrowTable( object ):
 		numberRows, numberCols = self.getNumberRows(), self.getNumberCols()
 		for row, colStart, colEnd, thick in self.hLines:
 			if row < numberRows:
-				for col in xrange(colStart, colEnd):
+				for col in range(colStart, colEnd):
 					topBorder.add( (row, col) )
 			else:
-				for col in xrange(colStart, colEnd):
+				for col in range(colStart, colEnd):
 					bottomBorder.add( (numberRows-1, col) )
 		
 		for col, rowStart, rowEnd, think in self.vLines:
 			if col < numberCols:
-				for row in xrange(rowStart, rowEnd):
+				for row in range(rowStart, rowEnd):
 					leftBorder.add( (row, col) )
 			else:
-				for row in xrange(rowStart, rowEnd):
+				for row in range(rowStart, rowEnd):
 					rightBorder.add( (row, numberCols-1) )
 		
 		with tag( html, 'table', attrs ):
 			with tag( html, 'tbody' ):
 				for row, r in enumerate(self.table):
 					with tag( html, 'tr' ):
-						for col in xrange(numberCols):
+						for col in range(numberCols):
 							value, attr = r[col] if col < len(r) else (u'', 0)
-							value = unicode(value)
+							value = u'{}'.format(value)
 							classDef = []
 							if (row, col) in topBorder:
 								classDef.append('topBorder')

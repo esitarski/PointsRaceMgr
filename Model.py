@@ -107,7 +107,7 @@ class Rider(object):
 			return (Rider.statusSortSeq[self.status], -self.updown, -self.pointsTotal, -self.numWins, self.finishOrder, self.num)
 
 	def tiedWith( s, r ):
-		return cmp( s.getKey()[:-1], r.getKey()[:-1] ) == 0
+		return s.getKey()[:-1] == r.getKey()[:-1]
 	
 	def __repr__( self ):
 		return u"Rider( {}, {}, {}, {}, {} )".format(
@@ -123,13 +123,13 @@ class GetRank( object ):
 		if rr.status != Rider.Finisher:
 			return Rider.statusNames[rr.status]
 		elif self.rrLast and self.rrLast.tiedWith(rr):
-			return unicode(self.rankLast)
+			return u'{}'.format(self.rankLast)
 		else:
 			self.rankLast, self.rrLast = rank, rr
-			return unicode(rank)
+			return u'{}'.format(rank)
 		
 class RaceEvent(object):
-	DNS, DNF, PUL, DSQ, LapUp, LapDown, Sprint, Finish = tuple( xrange(8) )
+	DNS, DNF, PUL, DSQ, LapUp, LapDown, Sprint, Finish = tuple( range(8) )
 	
 	Events = (
 		('Sp', Sprint),
@@ -329,7 +329,7 @@ class Race(object):
 	
 	def getRiders( self ):
 		self.processEvents()
-		return sorted( self.riders.itervalues(), key = operator.methodcaller('getKey') )
+		return sorted( self.riders.values(), key=operator.methodcaller('getKey') )
 		
 	def setRiderInfo( self, riderInfo ):
 		self.isChangedFlag = (
@@ -349,10 +349,10 @@ class Race(object):
 		self.reset()
 		self.events.append( RaceEvent(RaceEvent.DNS, [41,42]) )
 		random.seed( 0xed )
-		bibs = range(10,34)
+		bibs = list( range(10,34) )
 		self.events.append( RaceEvent(RaceEvent.LapUp, bibs=[13]) )
 		self.events.append( RaceEvent(RaceEvent.LapDown, bibs=[14]) )
-		for lap in xrange(50,-1,-10):
+		for lap in range(50,-1,-10):
 			random.shuffle( bibs )
 			self.events.append( RaceEvent(bibs=bibs[:5]) )
 		self.events.append( RaceEvent(RaceEvent.DNF, [51,52]) )

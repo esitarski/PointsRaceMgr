@@ -27,7 +27,7 @@ class FitSheetWrapper(object):
 		elif isinstance(label, datetime.time):
 			label = '00:00:00'
 		else:
-			label = Utils.removeDiacritic( unicode(label) )
+			label = Utils.removeDiacritic( u'{}'.format(label) )
 		if label.find( '\n' ) >= 0:
 			width, height = arial10.fitWidthHeight(label, isBold)
 			if height > self.heights.get(r, 0):

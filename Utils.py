@@ -10,7 +10,10 @@ initTranslationCalled = False
 def initTranslation():
 	global initTranslationCalled
 	if not initTranslationCalled:
-		gettext.install(AppVerName.split(None, 1), './locale', unicode=True)
+		try:
+			gettext.install(AppVerName.split(None, 1), './locale', unicode=True)
+		except:
+			gettext.install(AppVerName.split(None, 1), './locale')
 		initTranslationCalled = True
 		
 initTranslation()
@@ -26,8 +29,10 @@ except ImportError:
 import os
 import re
 import sys
+import six
 import math
 import wx.grid		as gridlib
+import traceback
 import unicodedata
 import platform
 import datetime
@@ -39,20 +44,19 @@ try:
 except ImportError:
 	pass
 	
-def removeDiacritic(input):
+def removeDiacritic( s ):
 	'''
-	Accept a unicode string, and return a normal string (bytes in Python 3)
+	Accept a unicode string, and return a normal string
 	without any diacritical marks.
 	'''
-	if type(input) == str:
-		return input
-	else:
-		return unicodedata.normalize('NFKD', input).encode('ASCII', 'ignore')
+	try:
+		return unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode()
+	except:
+		return s
 	
-validFilenameChars = set( c for c in ("-_.() %s%s" % (string.ascii_letters, string.digits)) )
+validFilenameChars = set( c for c in ("-_.() {}{}".format(string.ascii_letters, string.digits)) )
 def RemoveDisallowedFilenameChars( filename ):
-	cleanedFilename = unicodedata.normalize('NFKD', unicode(filename)).encode('ASCII', 'ignore')
-	cleanedFilename = cleanedFilename.replace( '/', '_' )
+	cleanedFilename = removeDiacritic(filename).replace( '/', '_' )
 	return ''.join(c for c in cleanedFilename if c in validFilenameChars)
 
 def ordinal( value ):
@@ -96,13 +100,13 @@ def SetLabel( st, label ):
 		st.SetLabel( label )
 
 def MakeGridReadOnly( grid ):
-	for c in xrange(grid.GetNumberCols()):
+	for c in range(grid.GetNumberCols()):
 		attr = gridlib.GridCellAttr()
 		attr.SetReadOnly()
 		grid.SetColAttr( c, attr )
 
 def SetRowBackgroundColour( grid, row, colour ):
-	for c in xrange(grid.GetNumberCols()):
+	for c in range(grid.GetNumberCols()):
 		grid.SetCellBackgroundColour( row, c, colour )
 		
 def DeleteAllGridRows( grid ):
@@ -111,7 +115,7 @@ def DeleteAllGridRows( grid ):
 		
 def SwapGridRows( grid, r, rTarget ):
 	if r != rTarget and 0 <= r < grid.GetNumberRows() and 0 <= rTarget < grid.GetNumberRows():
-		for c in xrange(grid.GetNumberCols()):
+		for c in range(grid.GetNumberCols()):
 			vSave = grid.GetCellValue( rTarget, c )
 			grid.SetCellValue( rTarget, c, grid.GetCellValue(r,c) )
 			grid.SetCellValue( r, c, vSave )
@@ -182,7 +186,7 @@ def disable_stdout_buffering():
 	sys.stdout.close()
 	os.dup2(temp_fd, fileno)
 	os.close(temp_fd)
-	sys.stdout = os.fdopen(fileno, "w", 0)
+	sys.stdout = os.fdopen(fileno, "w")
 		
 def getHomeDir():
 	try:
@@ -257,14 +261,14 @@ def disable_stdout_buffering():
 	sys.stdout.close()
 	os.dup2(temp_fd, fileno)
 	os.close(temp_fd)
-	sys.stdout = os.fdopen(fileno, "w", 0)
+	sys.stdout = os.fdopen(fileno, "w")
 		
 def logCall( f ):
 	def _getstr( x ):
 		return u'{}'.format(x) if not isinstance(x, wx.Object) else u'<<{}>>'.format(x.__class__.__name__)
 	
 	def new_f( *args, **kwargs ):
-		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.iteritems() ]
+		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
 		writeLog( 'call: {}({})'.format(f.__name__, removeDiacritic(u', '.join(parameters))) )
 		return f( *args, **kwargs)
 	return new_f

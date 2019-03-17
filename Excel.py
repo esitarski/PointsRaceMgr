@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-
 import xlrd
 import xml.etree.ElementTree
 import os
+import io
+import six
 import math
 import itertools
 import unicodedata
@@ -12,7 +11,7 @@ from mmap import mmap, ACCESS_READ
 def toAscii( s ):
 	if not s:
 		return ''
-	ret = unicodedata.normalize('NFKD', s).encode('ascii','ignore') if type(s) == unicode else str(s)
+	ret = unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ascii','ignore').decode()
 	if ret.endswith( '.0' ):
 		ret = ret[:-2]
 	return ret
@@ -22,8 +21,8 @@ def toAscii( s ):
 class ReadExcelXls( object ):
 	def __init__(self, filename):
 		if not os.path.isfile(filename):
-			raise ValueError, "%s is not a valid filename" % filename
-		with open(filename,'rb') as f:
+			raise ValueError("{} is not a valid filename".format(filename))
+		with io.open(filename,'rb') as f:
 			self.book = xlrd.open_workbook(
 				filename=filename,
 				file_contents=mmap(f.fileno(),0,access=ACCESS_READ),
@@ -32,7 +31,7 @@ class ReadExcelXls( object ):
 		
 	def is_nonempty_row(self, sheet, i):
 		values = sheet.row_values(i)
-		if isinstance(values[0], basestring) and values[0].startswith('#'):
+		if isinstance(values[0], six.string_types) and values[0].startswith('#'):
 			return False # ignorable comment row
 		return any( bool(v) for v in values )
 	
@@ -49,7 +48,7 @@ class ReadExcelXls( object ):
 		#  BOOLEAN 4 int; 1 means TRUE, 0 means FALSE
 		#  ERROR 5
 		values = []
-		for type, value in itertools.izip(sheet.row_types(row_index), sheet.row_values(row_index)):
+		for type, value in zip(sheet.row_types(row_index), sheet.row_values(row_index)):
 			if type == 2:
 				if value == int(value):
 					value = int(value)
@@ -94,7 +93,7 @@ class ReadExcelXls( object ):
 		
 	def iter_list(self, sname, date_as_tuple=False):
 		sheet = self.book.sheet_by_name(sname) # XLRDError
-		for i in xrange(sheet.nrows):
+		for i in range(sheet.nrows):
 			yield self._parse_row(sheet, i, date_as_tuple)
 
 #----------------------------------------------------------------------------
@@ -109,7 +108,7 @@ def GetExcelReader( filename ):
 	elif filename.endswith( '.xlsx' ) or filename.endswith( '.xlsm' ):
 		return ReadExcelXlsx( filename )
 	else:
-		raise ValueError, '%s is not a recognized Excel format' % filename
+		raise ValueError('"{}" is not a recognized Excel format'.format(filename))
 
 #----------------------------------------------------------------------------
 

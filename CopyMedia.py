@@ -47,11 +47,11 @@ def CopyMedia( src=u'.', dest=None ):
 				srcFName = os.path.join(path, f)
 				destFName = os.path.join( dest, srcFName[len(src)+1:] )
 				if NeedsUpdating( srcFName, destFName ):
-					print srcFName, destFName
+					print ( srcFName, destFName )
 					try:
 						shutil.copy( srcFName, destFName )
 					except Exception as e:
-						print e
+						print ( e )
 
 if __name__ == '__main__':
 	CopyMedia()

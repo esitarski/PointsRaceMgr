@@ -1,14 +1,12 @@
+import six
 import unicodedata
 
 def remove_diacritic(input):
 	'''
-	Accept a unicode string, and return a normal string (bytes in Python 3)
+	Accept a unicode string, and return a normal string
 	without any diacritical marks.
 	'''
-	if isinstance(input, unicode):
-		return unicodedata.normalize('NFKD', input).encode('ASCII', 'ignore')
-	else:
-		return input
+	return unicodedata.normalize('NFKD', u'{}'.format(input)).encode('ASCII', 'ignore').encode()
 
 def normalize( s ):
 	return remove_diacritic( s.replace('.','').replace('_',' ').strip().lower() )
@@ -240,6 +238,6 @@ if __name__ == '__main__':
 	
 	row = (133, 'Competitor', 'ABC123', 'CAN19900925', 'Awesome', '123456', '415-789-5432')
 	v = sfm.finder( row )
-	print v('bib'), v('role'), v('license'), v('uci_code'), v('note'), v('tag'), v('emergency_contact_phone')
+	print ( v('bib'), v('role'), v('license'), v('uci_code'), v('note'), v('tag'), v('emergency_contact_phone') )
 	assert v('bib', None) == 133
-	print sfm.get_aliases( 'license_code' )
+	print ( sfm.get_aliases( 'license_code' ) )
