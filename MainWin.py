@@ -607,9 +607,11 @@ hr { clear: both; }
 
 		try:
 			if six.PY2:
-				race = pickle.load( io.open(fileName, 'rb') )
+				with io.open(fileName, 'rb') as fp:
+					race = pickle.load( fp, encoding='latin1', errors='replace' )
 			else:
-				race = pickle.load( io.open(fileName, 'rb'), fix_imports=True, encoding="utf-8", )
+				with io.open(fileName, 'rb') as fp:
+					race = pickle.load( fp, fix_imports=True, encoding='latin1', errors='replace')
 			# Check a few fields to confirm we have the right file.
 			a = race.sprintEvery
 			a = race.courseLengthUnit
