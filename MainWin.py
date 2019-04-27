@@ -112,9 +112,8 @@ class MainWin( wx.Frame ):
 		self.fileMenu.Append( wx.ID_NEW , "&New...", "Create a new race" )
 		self.Bind(wx.EVT_MENU, self.menuNew, id=wx.ID_NEW )
 
-		idNewNext = idCur = wx.NewId()
-		self.fileMenu.Append( idCur , "&New Next...", "Create a new race from the Current Race" )
-		self.Bind(wx.EVT_MENU, self.menuNewNext, id=idCur )
+		item = self.fileMenu.Append( wx.ID_ANY, "&New Next...", "Create a new race from the Current Race" )
+		self.Bind(wx.EVT_MENU, self.menuNewNext, item )
 		
 		self.fileMenu.Append( wx.ID_OPEN , "&Open...", "Open a race" )
 		self.Bind(wx.EVT_MENU, self.menuOpen, id=wx.ID_OPEN )
@@ -127,18 +126,16 @@ class MainWin( wx.Frame ):
 
 		self.fileMenu.AppendSeparator()
 		
-		idExportToExcel = idCur = wx.NewId()
-		self.fileMenu.Append( idCur , "&Export to HTML...\tCtrl+H", "Export as an HTML Web Page" )
-		self.Bind(wx.EVT_MENU, self.menuExportToHtml, id=idCur )
+		item = self.fileMenu.Append( wx.ID_ANY, "&Export to HTML...\tCtrl+H", "Export as an HTML Web Page" )
+		self.Bind(wx.EVT_MENU, self.menuExportToHtml, item )
 
-		idExportToExcel = idCur = wx.NewId()
-		self.fileMenu.Append( idCur , "&Export to Excel...\tCtrl+E", "Export as an Excel Spreadsheet" )
-		self.Bind(wx.EVT_MENU, self.menuExportToExcel, id=idCur )
+		item = self.fileMenu.Append( wx.ID_ANY, "&Export to Excel...\tCtrl+E", "Export as an Excel Spreadsheet" )
+		self.Bind(wx.EVT_MENU, self.menuExportToExcel, item )
 
 		self.fileMenu.AppendSeparator()
 		
 		recent = wx.Menu()
-		self.fileMenu.Append(wx.ID_ANY, "&Recent Files", recent)
+		self.fileMenu.AppendSubMenu( recent, "&Recent Files" )
 		self.filehistory.UseMenu( recent )
 		self.filehistory.AddFilesToMenu()
 		
@@ -153,35 +150,29 @@ class MainWin( wx.Frame ):
 
 		self.configureMenu = wx.Menu()
 		
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Points Race", "Configure Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigurePointsRace(), id=idCur )
+		item = self.configureMenu.Append( wx.ID_ANY, u"&Points Race", "Configure Points Race" )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigurePointsRace(), item )
 		
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Madison", "Configure Madison" )
-		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureMadison(), id=idCur )
+		self.configureMenu.Append( wx.ID_ANY, u"&Madison", "Configure Madison" )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureMadison(), item )
 		
 		self.configureMenu.AppendSeparator()
 		
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Tempo", "Configure UCI Tempo Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoRace(), id=idCur )
+		item = self.configureMenu.Append( wx.ID_ANY, u"&Tempo", "Configure UCI Tempo Points Race" )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoRace(), item )
 
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Tempo Top 2", "Configure Tempo Points Race Top 2" )
-		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoTop2Race(), id=idCur )
+		item = self.configureMenu.Append( wx.ID_ANY, u"&Tempo Top 2", "Configure Tempo Points Race Top 2" )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoTop2Race(), item )
 
 		self.configureMenu.AppendSeparator()
 		
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Snowball", "Configure Snowball Points Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureSnowballRace(), id=idCur )
+		item = self.configureMenu.Append( wx.ID_ANY, u"&Snowball", "Configure Snowball Points Race" )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureSnowballRace(), item )
 		
 		self.configureMenu.AppendSeparator()
 		
-		idCur = wx.NewId()
-		self.configureMenu.Append( idCur, u"&Criterium", "Configure Criterium Race" )
-		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureCriteriumRace(), id=idCur )
+		item = self.configureMenu.Append( wx.ID_ANY, u"&Criterium", "Configure Criterium Race" )
+		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureCriteriumRace(), item )
 		
 		self.menuBar.Append( self.configureMenu, u"&ConfigureRace" )
 		#-----------------------------------------------------------------------
