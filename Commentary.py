@@ -58,7 +58,7 @@ class Commentary( wx.Panel ):
 				lines.append( u'Finish:' )
 				self.sprintCount += 1
 				if race.doublePointsForLastSprint:
-					pointsForPlace = {p:v*2 for p,v in race.pointsForPlace.iteritems()}
+					pointsForPlace = {p:v*2 for p,v in race.pointsForPlace.items()}
 				else:
 					pointsForPlace = race.pointsForPlace
 				lines.extend( infoLines(e.bibs, pointsForPlace) )

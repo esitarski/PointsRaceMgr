@@ -263,7 +263,7 @@ class Race(object):
 	
 	def getMaxPlace( self ):
 		maxPlace = 2
-		for place, points in self.pointsForPlace.iteritems():
+		for place, points in self.pointsForPlace.items():
 			if points >= 0:
 				maxPlace = max( maxPlace, place )
 		return maxPlace

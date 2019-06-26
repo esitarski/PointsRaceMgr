@@ -477,7 +477,7 @@ hr { clear: both; }
 			traceback.print_exc()
 			Utils.MessageOK(self,
 						u'Cannot write "{}"\n\n{}\n\nCheck if this file is open.\nIf so, close it, and try again.'.format(htmlFName,e),
-						'Excel File Error', iconMask=wx.ICON_ERROR )
+						'HTML File Error', iconMask=wx.ICON_ERROR )
 		
 		try:
 			webbrowser.open( htmlFName )
@@ -507,6 +507,7 @@ hr { clear: both; }
 				pass
 			#Utils.MessageOK(self, 'Excel file written to:\n\n   {}'.format(xlFName), 'Excel Write', iconMask=wx.ICON_INFORMATION)
 		except Exception as e:
+			traceback.print_exc()
 			Utils.MessageOK(self,
 						u'Cannot write "{}"\n\n{}\n\nCheck if this spreadsheet is open.\nIf so, close it, and try again.'.format(xlFName,e),
 						'Excel File Error', iconMask=wx.ICON_ERROR )

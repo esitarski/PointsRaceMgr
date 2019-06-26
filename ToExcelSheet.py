@@ -114,7 +114,7 @@ def ToExcelSheet( ws ):
 		"alignment: horizontal center;"
 		"borders: left thin, right thin;"
 	)
-	for (sprint, place), num in race.sprintResults.iteritems():
+	for (sprint, place), num in race.sprintResults.items():
 		if place < maxPlace:
 			ws.write( rowCur + place - 1, sprint + 3, num, style if place != 1 else styleTop )
 	for place in range(1, maxPlace):
@@ -211,7 +211,7 @@ def ToExcelSheet( ws ):
 		riderToRow[rider.num] = r
 
 	sprintNumPoints = {}
-	for (sprint, place), num in race.sprintResults.iteritems():
+	for (sprint, place), num in race.sprintResults.items():
 		if place < maxPlace and num in riderToRow:
 			sprintNumPoints[(sprint, num)] = race.getSprintPoints(sprint, place)
 

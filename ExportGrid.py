@@ -18,7 +18,7 @@ def tag( buf, name, attrs = {} ):
 	if isinstance(attrs, six.string_types) and attrs:
 		attrs = { 'class': attrs }
 	buf.write( u'<{}>'.format( u' '.join(
-			[name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.iteritems()]
+			[name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.items()]
 		) ) )
 	yield
 	buf.write( u'</{}>\n'.format(name) )
@@ -236,7 +236,7 @@ class ExportGrid( object ):
 		''' Write the contents of the grid to an xlwt excel sheet. '''
 		titleStyle = xlwt.XFStyle()
 		titleStyle.font.bold = True
-		titleStyle.font.height += titleStyle.font.height / 2
+		titleStyle.font.height += titleStyle.font.height // 2
 		
 		rowTop = 0
 		if self.title:

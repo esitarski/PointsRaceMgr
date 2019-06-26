@@ -207,7 +207,7 @@ def tag( buf, name, attrs = {} ):
 	if not isinstance(attrs, dict) and attrs:
 		attrs = { 'class': attrs }
 	buf.write(
-		u'<{}>'.format(u' '.join( [name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.iteritems()] ) )
+		u'<{}>'.format(u' '.join( [name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.items()] ) )
 	)
 	yield
 	if name not in ('meta', 'img'):
