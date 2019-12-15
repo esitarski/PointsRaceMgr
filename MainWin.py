@@ -630,7 +630,7 @@ hr { clear: both; }
 		dlg = wx.FileDialog( self, message=u"Choose a Race file",
 							defaultFile = '',
 							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',
-							style=wx.OPEN | wx.CHANGE_DIR )
+							style=wx.FD_OPEN | wx.FD_CHANGE_DIR )
 		if dlg.ShowModal() == wx.ID_OK:
 			self.openRace( dlg.GetPath() )
 		dlg.Destroy()
