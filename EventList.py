@@ -12,9 +12,6 @@ class EventListGrid( ReorderableGrid ):
 		if self._didCopy and Utils.getMainWin():
 			wx.CallAfter( Utils.getMainWin().eventList.commitReorder )
 		return super(EventListGrid, self).OnRearrangeEnd(evt)
-		self.SetSelectionMode( gridlib.SelectRows )
-		self.SetSelectionBackground( wx.Colour(0,0,0) )
-		self.SetSelectionForeground( wx.Colour(255,255,0) )
 
 class EventDialog( wx.Dialog ):
 	def __init__( self, parent, title="Edit Race Event" ):
@@ -108,7 +105,7 @@ class EventList( wx.Panel ):
 		
 		self.newButton = wx.Button( self, label='New Race Event' )
 		self.newButton.Bind( wx.EVT_BUTTON, self.onNewEvent )
-		self.newButton.SetFont(wx.Font( (0,20), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL ))
+		self.newButton.SetFont(wx.Font( (0,24), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL ))
 		self.hbs.Add( self.newButton, 0, wx.ALL, border=4 )
 
 		self.grid = EventListGrid( self )
@@ -116,6 +113,10 @@ class EventList( wx.Panel ):
 		self.grid.Bind( gridlib.EVT_GRID_CELL_RIGHT_CLICK, self.onRightClick )
 
 		self.grid.CreateGrid( 0, 5 )
+		self.grid.SetSelectionMode( gridlib.Grid.SelectRows )
+		self.grid.SetSelectionBackground( wx.Colour(255,255,0) )
+		self.grid.SetSelectionForeground( wx.Colour(80,80,80) )		
+	
 		self.hbs.Add( self.grid, 1, wx.EXPAND )
 		self.SetSizer(self.hbs)
 

@@ -221,8 +221,8 @@ except:
 
 if os.path.basename(dirName) == 'library.zip':
 	dirName = os.path.dirname(dirName)
-imageFolder = os.path.join(dirName, 'images')
-htmlFolder = os.path.join(dirName, 'html')
+imageFolder = os.path.join(dirName, 'PointsRaceMgrImages')
+htmlFolder = os.path.join(dirName, 'PointsRaceMgrHtml')
 
 def getDirName():		return dirName
 def getImageFolder():	return imageFolder
