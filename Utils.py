@@ -21,11 +21,6 @@ initTranslation()
 def BigFont():
 	return wx.Font( (0,16), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL )
 
-try:
-	from win32com.shell import shell, shellcon
-except ImportError:
-	pass
-	
 import os
 import re
 import sys
@@ -39,11 +34,7 @@ import datetime
 import string
 
 import Model
-try:
-	from win32com.shell import shell, shellcon
-except ImportError:
-	pass
-	
+
 def removeDiacritic( s ):
 	'''
 	Accept a unicode string, and return a normal string
@@ -54,10 +45,15 @@ def removeDiacritic( s ):
 	except:
 		return s
 	
-validFilenameChars = set( c for c in ("-_.() {}{}".format(string.ascii_letters, string.digits)) )
+invalidFilenameChars = re.compile( "[^-_.() " + string.ascii_letters + string.digits + "]" )
 def RemoveDisallowedFilenameChars( filename ):
-	cleanedFilename = removeDiacritic(filename).replace( '/', '_' )
-	return ''.join(c for c in cleanedFilename if c in validFilenameChars)
+	cleanedFilename = unicodedata.normalize('NFKD', u'{}'.format(filename).strip()).encode('ASCII', 'ignore').decode()
+	cleanedFilename = cleanedFilename.replace( '/', '_' ).replace( '\\', '_' )
+	return invalidFilenameChars.sub( '', cleanedFilename )
+
+def RemoveDisallowedSheetChars( sheetName ):
+	sheetName = unicodedata.normalize('NFKD', u'{}'.format(sheetName)).encode('ASCII', 'ignore').decode()
+	return re.sub('[+!#$%&+~`".:;|\\\\/?*\[\] ]+', ' ', sheetName)[:31]		# four backslashes required to match one backslash in re.
 
 def ordinal( value ):
 	try:
@@ -153,13 +149,13 @@ def formatTime( secs ):
 	if secs is None:
 		secs = 0
 	secs = int(secs + 0.5)
-	hours = int(secs / (60*60));
-	minutes = int( (secs / 60) % 60 )
+	hours = secs // (60*60);
+	minutes = (secs // 60) % 60
 	secs = secs % 60
 	if hours > 0:
-		return "%d:%02d:%02d" % (hours, minutes, secs)
+		return "{}:{:02d}:{:02d}".format(hours, minutes, secs)
 	else:
-		return "%02d:%02d" % (minutes, secs)
+		return "{:02d}:{:02d}".format(minutes, secs)
 
 def formatDate( date ):
 	y, m, d = date.split('-')
@@ -174,11 +170,11 @@ def StrToSeconds( str = '' ):
 	
 def SecondsToStr( secs = 0 ):
 	secs = int(secs+0.5)
-	return '%02d:%02d:%02d' % (secs / (60*60), (secs / 60)%60, secs % 60)
+	return '{:02d}:{:02d}:{:02d}'.format(secs // (60*60), (secs // 60)%60, secs % 60)
 
 def SecondsToMMSS( secs = 0 ):
 	secs = int(secs+0.5)
-	return '%02d:%02d' % ((secs / 60)%60, secs % 60)
+	return '{:02d}:{:02d}'.format((secs // 60)%60, secs % 60)
 	
 def disable_stdout_buffering():
 	fileno = sys.stdout.fileno()
@@ -189,14 +185,14 @@ def disable_stdout_buffering():
 	sys.stdout = os.fdopen(fileno, "w")
 		
 def getHomeDir():
-	try:
-		homedir = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
-		homedir = os.path.join( homedir, 'PointsRaceMgr' )
-		if not os.path.exists(homedir):
-			os.mkdir( homedir )
-	except:
-		homedir = os.path.expanduser('~')
-	return homedir
+	return os.path.expanduser("~")
+
+def getDocumentsDir():
+	sp = wx.StandardPaths.Get()
+	dd = sp.GetDocumentsDir()
+	if not os.path.exists(dd):
+		os.makedirs( dd )
+	return dd
 	
 #---------------------------------------------------------------------------
 
