@@ -1,0 +1,10 @@
+requests
+xlsxwriter
+xlrd
+xlwt
+fpdf
+wxWidgets
+markdown
+pyinstaller
+pybabel
+virustotal-api
