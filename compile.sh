@@ -179,21 +179,6 @@ copyAssets(){
 		echo "Copying Locale to $RESOURCEDIR"
 		cp -rv "${BUILDDIR}/${PROGRAM}Locale" $RESOURCEDIR
 	fi
-
-	if [ "$PROGRAM" == "PointsRaceMgr" ];then
-		if [ -d PointsRaceMgrHelpIndex ]
-		then
-			rm -rf PointsRaceMgrHelpIndex
-		fi
-		echo "Building Help for PointsRaceMgr ..."
-		python3 buildhelp.py
-		if [ $? -ne 0 ]; then
-			echo "Building help failed. Aborting..."
-			exit 1
-		fi
-		cp -rv PointsRaceMgrHelpIndex $RESOURCEDIR
-	fi
-
 }
 
 package() {
