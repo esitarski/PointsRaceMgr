@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment[en_CA]=
+Comment=
+Exec=PointsRaceMgr
+GenericName[en_CA]=PointsRaceManager
+GenericName=PointsRaceManager
+Icon=CrossMgr
+MimeType=
+Name[en_CAPointsRaceManagerPointsRaceManager
+Name=CrossManager
+Path=/
+StartupNotify=true
+Categories=Network;
+Terminal=false
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=
