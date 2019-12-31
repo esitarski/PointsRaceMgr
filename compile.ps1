@@ -481,7 +481,7 @@ if ($prmgr -eq $true)
 if ($all -eq $true)
 {
 	$programs = @(
-		'PointsRaceMgr',
+		'PointsRaceMgr'
 		)
 }
 if ($setupenv -eq $true)
