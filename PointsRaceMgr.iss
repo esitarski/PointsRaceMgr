@@ -3,16 +3,16 @@
 [Setup]
 #include "inno_setup.txt"
 ArchitecturesInstallIn64BitMode=x64
-DefaultDirName={pf}\PointsRaceMgr
+DefaultDirName={commonpf}\PointsRaceMgr
 DefaultGroupName=PointsRaceMgr
 UninstallDisplayIcon={app}\PointsRaceMgr.exe
-Compression=lzma
-SolidCompression=yes
 ChangesAssociations=yes
+Compression=lzma2/ultra64
+SolidCompression=yes
 
-SourceDir=dist\PointsRaceMgr
-OutputDir=..\..\install
-OutputBaseFilename=PointsRaceMgr_Setup
+; SourceDir=dist\PointsRaceMgr
+; OutputDir=..\..\install
+; OutputBaseFilename=PointsRaceMgr_Setup
 
 [Registry]
 ; Automatically configure PointsRaceMgr to launch .tp5 files.
