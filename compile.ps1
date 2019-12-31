@@ -220,60 +220,6 @@ function CopyAssets($program)
 		Write-Host "Copying Locale to $resourcedir"
 		Copy-Item -Recurse -Force -Path "$builddir/${program}Locale" -Destination "$resourcedir"
 	}
-	if ($program -eq "PointsRaceMgr")
-	{
-		Copy-Item -Force -Path 'PointsRaceMgrTutorial.pdf' -Destination "$resourcedir"
-		if (Test-Path "PointsRaceMgrHelpIndex")
-		{
-			Remove-Item -Recurse -Force -Path "PointsRaceMgrHelpIndex"
-		}
-		Write-Host 'Building Help for PointsRaceMgr...'
-		Start-Process -Wait -NoNewWindow -FilePath "python.exe" -ArgumentList "buildhelp.py"
-		if ($? -eq $false)
-		{
-			Write-Host "Help Build failed. Aborting..."
-			exit 1
-		}
-		Copy-Item -Recurse -Force -Path "PointsRaceMgrHelpIndex" -Destination "$resourcedir"
-	}
-	if ($program -eq "PointsRaceMgrVideo")
-	{
-		Set-Location -Path 'PointsRaceMgrVideo'
-		if (Test-Path "PointsRaceMgrHelpIndex")
-		{
-			Remove-Item -Recurse -Force -Path "PointsRaceMgrHelpIndex"
-		}
-		Write-Host 'Building Help for PointsRaceMgr...'
-		Copy-Item -Force -Path '..\HelpIndex.py' -Destination 'HelpIndex.py'
-		Start-Process -Wait -NoNewWindow -FilePath "python.exe" -ArgumentList "buildhelp.py"
-		if ($? -eq $false)
-		{
-			Write-Host "Help Build failed. Aborting..."
-			Set-Location -Path '..'
-			exit 1
-		}
-		Copy-Item -Force -Recurse -Path "PointsRaceMgrHelpIndex" -Destination "..\${resourcedir}"
-		Set-Location -Path '..'
-	}
-	if ($program -eq "SeriesMgr")
-	{
-		Set-Location -Path 'SeriesMgr'
-		if (Test-Path "PointsRaceMgrHelpIndex")
-		{
-			Remove-Item -Recurse -Force -Path "PointsRaceMgrHelpIndex"
-		}
-		Write-Host 'Building Help for SeriesMgr...'
-		Copy-Item -Force -Path '..\HelpIndex.py' -Destination 'HelpIndex.py'
-		Start-Process -Wait -NoNewWindow -FilePath "python.exe" -ArgumentList "buildhelp.py"
-		if ($? -eq $false)
-		{
-			Write-Host "Help Build failed. Aborting..."
-			Set-Location -Path '..'
-			exit 1
-		}
-		Copy-Item -Force -Recurse -Path "PointsRaceMgrHelpIndex" -Destination "..\${resourcedir}"
-		Set-Location -Path '..'
-	}
 }
 
 function Package($program)
