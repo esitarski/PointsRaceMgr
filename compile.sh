@@ -339,20 +339,19 @@ EOF
 }
 
 gotarg=0
-while getopts "hcitaviCdPBASkomzlTfywVZ" option
+while getopts "hcaviCdPBASkomzlTfywVZ" option
 do
 	gotarg=1
 	case ${option} in
 		h) doHelp
 		;;
-		a) 
- 		    PROGRAMS="PointsRaceMgr"
+		a) PROGRAMS="PointsRaceMgr"
 		;;
 		c) PROGRAMS="$PROGRAMS PointsRaceMgr"
 		;;
-		v) 	getVersion "PointsRaceMgr"
+		v) getVersion "PointsRaceMgr"
 		;;
-		C) 	cleanup
+		C) cleanup
 		;;
 		p) PYTHONVER=$OPTIONARG
 		   echo "Using Python: $PYTHONVER"

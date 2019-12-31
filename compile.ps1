@@ -363,38 +363,18 @@ function BuildAll($programs)
 	CheckEnvActive
 	if ($programs.Length -eq 0)
 	{
-		Write-Host "No programs selected. -prmgr, -prmgri, -prmgra, -trw, -smgr, or -all required"
+		Write-Host "No programs selected. -prmgr or -all required"
 		exit 1
 	}
 	Cleanup
 	foreach ($program in $programs)
 	{
-		if (($program -eq "SeriesMgr") -or ($program -eq "PointsRaceMgrVideo"))
-		{
-			FixSeriesMgrFiles($program)
-		}
 		CompileCode($program)
 		doPyInstaller($program)
 		CopyAssets($program)
 		Package($program)
 	}
 	
-}
-
-function FixSeriesMgrFiles($program)
-{
-	Write-Host "Fixing dependencies for $program"
-	$dependsfile = Get-Content "$program\Dependencies.py"
-	Set-Location -Path "$program"
-	foreach ($line in $dependsfile)
-	{
-		$file = $line.Split(' ')[1]
-		Write-Host "Linking ..\${file}.py to ${file}.py"
-		# We could do a symlink, but that requires developer mode. Ug
-		#New-Item -Path "..\${file}.py" -ItemType SymbolicLink -Value "${file}.py"
-		Copy-Item -Path "..\${file}.py" -Destination "${file}.py"
-	}
-	Set-Location -Path '..'
 }
 
 function TagRelease
@@ -415,12 +395,6 @@ function doHelp
 	-environ [env]     - Use Environment ($env:VIRTUAL_ENV)
 	-pythonexe [pythonexe]  - Python version (Default $pythonver)
 	-prmgr        - Build PointsRaceMgr
-	-prmgri       - Build PointsRaceMgrImpinj
-	-trw         - Build TagReadWrite
-	-smgr        - Build SeriesMgr
-	-prmgra       - Build PointsRaceMgrAlien
-	-video       - BUild PointsRaceMgrVideo
-	-cam         - BUild PointsRaceMgrCamera (NOT COMPLETE)
 	-all         - Build all programs
 	
 	-checkver     - check python version

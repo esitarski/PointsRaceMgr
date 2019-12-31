@@ -8,10 +8,11 @@ DefaultGroupName=PointsRaceMgr
 UninstallDisplayIcon={app}\PointsRaceMgr.exe
 Compression=lzma
 SolidCompression=yes
+ChangesAssociations=yes
+
 SourceDir=dist\PointsRaceMgr
 OutputDir=..\..\install
 OutputBaseFilename=PointsRaceMgr_Setup
-ChangesAssociations=yes
 
 [Registry]
 ; Automatically configure PointsRaceMgr to launch .tp5 files.
