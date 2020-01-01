@@ -46,9 +46,13 @@ class MainWin( wx.Frame ):
 		self.SetBackgroundColour( wx.WHITE )
 		
 		# Add code to configure file history.
-		self.filehistory = wx.FileHistory(8)
+		self.filehistory = wx.FileHistory(8)		
+		
+		dataDir = Utils.getHomeDir()
+		configFileName = os.path.join(dataDir, 'PointsRaceMgr.cfg')
 		self.config = wx.Config(appName="PointsRaceMgr",
 								vendorName="Edward.Sitarski@gmail.com",
+								localFilename=configFileName
 		)
 		self.filehistory.Load(self.config)
 		
