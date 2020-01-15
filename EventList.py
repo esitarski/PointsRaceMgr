@@ -7,6 +7,15 @@ import re
 import copy
 import operator
 
+def getIDFromBibText( bibText ):
+	bibText = bibText.strip().upper()
+	idEvent = Model.RaceEvent.Events[0][1]
+	for name, idEventCur in Model.RaceEvent.Events:
+		code = name[0] if name[0] in '+-' else name.upper()
+		if bibText.endswith(code):
+			return idEventCur
+	return idEvent
+
 class EventListGrid( ReorderableGrid ):
 	def OnRearrangeEnd(self, evt):
 		if self._didCopy and Utils.getMainWin():
@@ -15,61 +24,90 @@ class EventListGrid( ReorderableGrid ):
 
 class EventDialog( wx.Dialog ):
 	def __init__( self, parent, title="Edit Race Event" ):
-		super( EventDialog, self ).__init__( parent, wx.ID_ANY, title=title )
+		super( EventDialog, self ).__init__( parent, wx.ID_ANY, title=title, style=wx.RESIZE_BORDER )
 		
-		fgs = wx.FlexGridSizer( 3, 2, 4, 4 )
-		fgs.AddGrowableCol( 1, 1 )
+		bigFont = wx.Font( (0,20), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL )
+
+		self.hbs = wx.BoxSizer(wx.VERTICAL)
+
+		hs = wx.BoxSizer(wx.HORIZONTAL)
+		bibTextLabel = wx.StaticText(self, label="Bibs:")
+		bibTextLabel.SetFont( bigFont )
 		
-		label = wx.StaticText(self, label=u'Bibs:')
-		label.SetFont( Utils.BigFont() )
-		fgs.Add( label, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT )
-		self.bibs = wx.TextCtrl( self, size=(500,-1) )
-		self.bibs.SetFont( Utils.BigFont() )
-		fgs.Add( self.bibs, 1, wx.EXPAND )
+		self.bibText = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
+		self.bibText.SetFont( bigFont )
+		self.bibText.Bind( wx.EVT_TEXT_ENTER, self.onEnter )
 		
-		explain = wx.StaticText(self, label=u'(comma or space separated)' )
-		fgs.Add( wx.StaticText(self) )
-		fgs.Add( explain )
+		hs.Add( bibTextLabel, flag=wx.ALIGN_CENTER_VERTICAL )
+		hs.Add( self.bibText, 1, flag=wx.EXPAND|wx.LEFT, border=2 )
+
+		self.hbs.Add( hs, flag=wx.EXPAND|wx.ALL, border=4 )
+		ws = wx.BoxSizer( wx.HORIZONTAL )
+		self.choiceButtons = []
+		self.idToButton = {}
+		for name, idEvent in Model.RaceEvent.Events:
+			if 'Sp' in name:
+				name = 'Sprint'
+			elif 'Finish' in name:
+				continue
+			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
+			self.idToButton[idEvent] = self.choiceButtons[-1]
+			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
+		self.hbs.Add( ws, flag=wx.ALL, border=4 )
+				
+		ws = wx.BoxSizer( wx.HORIZONTAL )
+		for name, idEvent in Model.RaceEvent.States:
+			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
+			self.idToButton[idEvent] = self.choiceButtons[-1]
+			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
 		
-		label = wx.StaticText(self, label=u'Type:')
-		label.SetFont( Utils.BigFont() )
-		fgs.Add( label, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT )
-		choices = [('Sprint' if n == 'Sp' else n) for n, v in Model.RaceEvent.Events]
-		self.eventType = wx.Choice( self, choices=choices )
-		self.eventType.SetFont( Utils.BigFont() )
-		fgs.Add( self.eventType, 0 )
+		self.hbs.Add( ws, flag=wx.ALL|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=4 )
 		
-		vs = wx.BoxSizer( wx.VERTICAL )
-		
-		borderSizer = wx.BoxSizer( wx.HORIZONTAL )
-		borderSizer.Add( fgs, 1, wx.EXPAND|wx.ALL, border=8)
-		vs.Add( borderSizer, 1, wx.EXPAND )
-		
-		hs = wx.BoxSizer( wx.HORIZONTAL )
+		hs = wx.StdDialogButtonSizer()
 		self.ok = wx.Button( self, wx.ID_OK )
 		self.ok.SetDefault()
 		self.cancel = wx.Button( self, wx.ID_CANCEL )
 		hs.Add( self.ok, flag=wx.ALL, border=16 )
 		hs.Add( self.cancel, flag=wx.ALL, border=16 )
 		
-		vs.Add( hs )
-		self.SetSizerAndFit( vs )
+		self.hbs.Add( hs )
+		self.SetSizerAndFit( self.hbs )
 	
 	def refresh( self, event=None ):
 		self.e = event or self.e
-		self.eventType.SetSelection( next(j for j, (n,v) in enumerate(Model.RaceEvent.Events) if v == self.e.eventType) )
-		self.bibs.SetValue( value=u','.join(u'{}'.format(b) for b in event.bibs) )
-		self.bibs.SetFocus()
+		for id, btn in self.idToButton.items():
+			if id == self.e.eventType:
+				btn.SetBackgroundColour( wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHIGHLIGHT) )
+			else:
+				btn.SetBackgroundColour( wx.NullColour )
+		self.bibText.SetValue( value=u','.join(u'{}'.format(b) for b in event.bibs) )
+		self.bibText.SetFocus()
+		
+	def onEnter( self, event ):
+		self.onVerb( event, getIDFromBibText(self.bibText.GetValue()) )
+	
+	def onVerb( self, event, idEvent ):
+		for id, btn in self.idToButton.items():
+			if id == idEvent:
+				btn.SetBackgroundColour( wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHIGHLIGHT) )
+			else:
+				btn.SetBackgroundColour( wx.NullColour )
+		self.EndModal( wx.ID_OK )
 		
 	def commit( self ):
 		changed = False
+
+		highlightColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHIGHLIGHT).GetAsString(wx.C2S_CSS_SYNTAX)
+		for id, btn in self.idToButton.items():
+			if btn.GetBackgroundColour().GetAsString(wx.C2S_CSS_SYNTAX) == highlightColour:
+				if id != self.e.eventType:
+					self.e.eventType = id
+					changed = True
+				break
 		
-		eventType = Model.RaceEvent.Events[self.eventType.GetSelection()][1]
-		if eventType != self.e.eventType:
-			self.e.eventType = eventType
-			changed = True
-		
-		bibs = Model.RaceEvent.getCleanBibs( self.bibs.GetValue() )
+		bibs = Model.RaceEvent.getCleanBibs( self.bibText.GetValue() )
 		if bibs != self.e.bibs:
 			self.e.bibs = bibs
 			changed = True
@@ -82,7 +120,7 @@ class EventPopupMenu( wx.Menu ):
 		super(EventPopupMenu, self).__init__()
 		
 		mmi = wx.MenuItem(self, wx.ID_DELETE)
-		self.AppendItem(mmi)
+		self.Append( mmi )
 		self.Bind(wx.EVT_MENU, self.OnDelete, mmi)
 
 	def OnDelete(self, event):
@@ -100,13 +138,41 @@ class EventList( wx.Panel ):
 		
 		self.SetDoubleBuffered(True)
 		self.SetBackgroundColour( wx.WHITE )
+		
+		bigFont = wx.Font( (0,20), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL )
 
 		self.hbs = wx.BoxSizer(wx.VERTICAL)
+
+		hs = wx.BoxSizer(wx.HORIZONTAL)
+		bibTextLabel = wx.StaticText(self, label="Bibs:")
+		bibTextLabel.SetFont( bigFont )
 		
-		self.newButton = wx.Button( self, label='New Race Event' )
-		self.newButton.Bind( wx.EVT_BUTTON, self.onNewEvent )
-		self.newButton.SetFont(wx.Font( (0,24), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL ))
-		self.hbs.Add( self.newButton, 0, wx.ALL, border=4 )
+		self.bibText = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
+		self.bibText.SetFont( bigFont )
+		self.bibText.Bind( wx.EVT_TEXT_ENTER, self.onEnter )
+		
+		hs.Add( bibTextLabel, flag=wx.ALIGN_CENTER_VERTICAL )
+		hs.Add( self.bibText, 1, flag=wx.EXPAND|wx.LEFT, border=2 )
+
+		self.hbs.Add( hs, flag=wx.EXPAND|wx.ALL, border=4 )
+		ws = wx.BoxSizer( wx.HORIZONTAL )
+		self.choiceButtons = []
+		for name, idEvent in Model.RaceEvent.Events:
+			if 'Sp' in name:
+				name = 'Sprint'
+			elif 'Finish' in name:
+				continue
+			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
+			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
+		self.hbs.Add( ws, flag=wx.ALL|wx.EXPAND, border=4 )
+
+		ws = wx.BoxSizer( wx.HORIZONTAL )
+		for name, idEvent in Model.RaceEvent.States:
+			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
+			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
+		self.hbs.Add( ws, flag=wx.ALL|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=4 )
 
 		self.grid = EventListGrid( self )
 		self.grid.Bind( gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onLeftClick )
@@ -120,34 +186,53 @@ class EventList( wx.Panel ):
 		self.hbs.Add( self.grid, 1, wx.EXPAND )
 		self.SetSizer(self.hbs)
 
-	def onNewEvent( self, event ):
+	def addNewEvent( self, e ):
 		race = Model.race
-		e = Model.RaceEvent()
-		if race.getSprintCount() == race.getNumSprints() - 1:
-			e.eventType = Model.RaceEvent.Finish
-		
-		self.eventDialog.refresh( e )
-		self.eventDialog.CentreOnScreen()
-		if self.eventDialog.ShowModal() == wx.ID_OK:
-			self.eventDialog.commit()
-			race.setEvents( race.events + [self.eventDialog.e] )
-			(Utils.getMainWin() if Utils.getMainWin() else self).refresh()
-			self.grid.MakeCellVisible( len(race.events)-1, 0 )
-			self.grid.ClearSelection()
-			self.grid.SelectRow( len(race.events)-1 )
+		race.setEvents( race.events + [e] )
+		(Utils.getMainWin() if Utils.getMainWin() else self).refresh()
+		self.grid.MakeCellVisible( len(race.events)-1, 0 )
+		self.grid.ClearSelection()
+		self.grid.SelectRow( len(race.events)-1 )		
 	
+	def onEnter( self, event ):
+		self.onVerb( event, getIDFromBibText(self.bibText.GetValue()) )
+	
+	def onVerb( self, event, idEvent ):
+		bibText = self.bibText.GetValue().strip()
+		if bibText:
+			self.addNewEvent( Model.RaceEvent(idEvent, bibText) )
+		self.bibText.SetValue( '' )
+		wx.CallAfter( self.bibText.SetFocus )
+		
 	def onLeftClick( self, event ):
 		race = Model.race
 		self.grid.ClearSelection()
-		self.grid.SelectRow( event.GetRow() )
-		self.eventDialog.refresh( copy.deepcopy(race.events[event.GetRow()]) )
+		
+		rowCur = event.GetRow()
+		self.grid.SelectRow( rowCur )
+		eventCur = copy.deepcopy( race.events[rowCur] )
+		wasState = eventCur.isState()
+		
+		self.eventDialog.refresh( eventCur )
 		self.eventDialog.CentreOnScreen()
-		if self.eventDialog.ShowModal() == wx.ID_OK and self.eventDialog.commit():
-			race.events[event.GetRow()] = self.eventDialog.e
+		
+		if self.eventDialog.ShowModal() == wx.ID_OK:
+			changed = self.eventDialog.commit()
+			isState = self.eventDialog.e.isState()
+			if wasState or isState:
+				# Move the state to the end to show most recent state.
+				# del race.events[rowCur]
+				race.events.append( self.eventDialog.e )
+				rowCur = len(race.events) - 1
+			else:
+				if not changed:
+					return
+				race.events[rowCur] = self.eventDialog.e
+				
 			race.setEvents( race.events )
-			(Utils.getMainWin() if Utils.getMainWin() else self).refresh()
-			self.grid.MakeCellVisible( event.GetRow(), 0 )
-			self.grid.SelectRow( event.GetRow() )
+			(Utils.getMainWin() or self).refresh()
+			self.grid.MakeCellVisible( rowCur, 0 )
+			self.grid.SelectRow( rowCur )
 	
 	def onRightClick( self, event ):
 		self.PopupMenu(EventPopupMenu(event.GetRow()), event.GetPosition())

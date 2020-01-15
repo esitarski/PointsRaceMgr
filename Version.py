@@ -1,1 +1,1 @@
-AppVerName="PointsRaceMgr 3.3.2"
+AppVerName="PointsRaceMgr 3.3.3"

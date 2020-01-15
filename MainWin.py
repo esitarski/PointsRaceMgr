@@ -199,7 +199,7 @@ class MainWin( wx.Frame ):
 		self.SetSizer( self.vbs )
 		
 		self.splitter.SplitVertically( self.eventList, mainPanel )
-		wx.CallAfter( self.splitter.SetSashPosition, 300 )
+		wx.CallAfter( self.splitter.SetSashPosition, 350 )
 		
 		Utils.setMainWin( self )
 		Model.newRace()
@@ -207,7 +207,7 @@ class MainWin( wx.Frame ):
 		self.configure.ConfigurePointsRace()
 		Model.race.setChanged( False )		
 		
-		wx.CallAfter( self.eventList.newButton.SetFocus )
+		wx.CallAfter( self.eventList.bibText.SetFocus )
 	
 	def callPageRefresh( self, i ):
 		try:
@@ -695,10 +695,20 @@ hr { clear: both; }
 			" (or customize your own format).\n"
 			"Configure all other race information at the top.\n"
 			"\n"
-			"While the race is underway, press the 'New Race Event' button.\n"
-			"When the screen pops up, enter the Bibs involved in the Race Event (space or comma separated)."
-			"Then, set the Event Type which can be a Sprint (default), +/- Laps, DNF, Finish, DNS or DSQ.\n"
-			"Use 'Finish' to enter the finish order.  This will automatically count as the last Sprint.\n"
+			"While the race is underway, enter Bibs at the top (space or comma separated).\n"
+			"Then, hit the Event Type button that applies to those Bibs.  This can be a Sprint (default), +/- Laps, DNF, DNS or DSQ.\n"
+			"\n"
+			"Use keyboard shortcuts to avoid pressing a button (much faster).\n"
+			"To use keyboard shorcuts, enter the bib numbers, then the following character(s) for the Event Type, then press Enter:\n"
+			"(nothing): means Sprint\n"
+			"+ : means + Lap\n"
+			"- : means - Lap\n"
+			"DNF : means DNF\n"
+			"DNS : means DNS\n"
+			"DSQ,DQ : means DSQ\n"
+			"\n"
+			"Upper/Lower case is not important.  For example, '10 11 13+' is the shortcut for '+ Lap'.  '14 15 18-' is shorcut for '- Lap'.\n"
+			"'19 20 21dnf' is short cut for pressing 'DNF'\n"
 			"\n"
 			"You can rearrange the sequence of Race Events by dragging-and-dropping rows in Column 1.\n"
 			"Delete unwanted Race Events by right-clicking on the Event Type in the list.\n"

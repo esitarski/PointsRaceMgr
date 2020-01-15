@@ -22,6 +22,13 @@ def setRace( r ):
 	global race
 	race = r
 
+def fixBibsNML( bibs, bibsNML, isFinish=False ):
+	bibsNMLSet = set( bibsNML )
+	bibsNew = [b for b in bibs if b not in bibsNMLSet]
+	if isFinish:
+		bibsNew.extend( bibsNML )
+	return bibsNew
+	
 #------------------------------------------------------------------------------------------------------------------
 class RiderInfo(object):
 	FieldNames  = ('bib', 'existing_points', 'last_name', 'first_name', 'team', 'team_code', 'license', 'nation_code', 'uci_id')
@@ -129,7 +136,7 @@ class GetRank( object ):
 			return u'{}'.format(rank)
 		
 class RaceEvent(object):
-	DNS, DNF, PUL, DSQ, LapUp, LapDown, Sprint, Finish = tuple( range(8) )
+	DNS, DNF, PUL, DSQ, LapUp, LapDown, Sprint, Finish, Break, Chase, OTB, NML = tuple( range(12) )
 	
 	Events = (
 		('Sp', Sprint),
@@ -141,7 +148,15 @@ class RaceEvent(object):
 		('DNS', DNS),
 		('DSQ', DSQ),
 	)
+
+	States = (
+		('Break', Break),
+		('Chase', Chase),
+		('OTB', OTB),
+		('NML', NML),
+	)
 	EventName = {v:n for n,v in Events}
+	EventName.update( {v:n for n,v in States} )
 	
 	@staticmethod
 	def getCleanBibs( bibs ):
@@ -172,6 +187,9 @@ class RaceEvent(object):
 		self.eventType = eventType		
 		self.bibs = RaceEvent.getCleanBibs( bibs )
 
+	def isState( self ):
+		return self.eventType >= self.Break
+	
 	@property
 	def eventTypeName( self ):
 		return self.EventName[self.eventType]
@@ -289,8 +307,16 @@ class Race(object):
 		for info in self.riderInfo:
 			self.getRider(info.bib).addExistingPoints( info.existing_points )
 		
+		numSprints = self.getNumSprints()
 		self.sprintCount = 0
-		for e in self.events:
+		iEventLen = len(self.events)
+		for iEvent, e in enumerate(self.events):
+			# Ensure the eventType matches the number of sprints.
+			if e.eventType == RaceEvent.Finish and self.sprintCount != numSprints-1:
+				e.eventType = RaceEvent.Sprint
+			elif e.eventType == RaceEvent.Sprint and self.sprintCount == numSprints-1:
+				e.eventType = RaceEvent.Finish
+				
 			if e.eventType == RaceEvent.Sprint:
 				self.sprintCount += 1
 				for place, b in enumerate(e.bibs, 1):
@@ -303,7 +329,11 @@ class Race(object):
 					self.getRider(b).addUpDown(-1)
 			elif e.eventType == RaceEvent.Finish:
 				self.sprintCount += 1
-				for place, b in enumerate(e.bibs, 1):
+				if iEvent != iEventLen and self.events[iEvent+1].eventType == RaceEvent.NML:
+					bibs = fixBibsNML( e.bibs, self.events[iEvent+1].bibs, True )
+				else:
+					bibs = e.bibs
+				for place, b in enumerate(bibs, 1):
 					r = self.getRider(b)
 					r.addSprintResult(self.sprintCount, place)
 					r.addFinishOrder(place)
