@@ -309,7 +309,6 @@ class Race(object):
 		
 		numSprints = self.getNumSprints()
 		self.sprintCount = 0
-		iEventLen = len(self.events)
 		for iEvent, e in enumerate(self.events):
 			# Ensure the eventType matches the number of sprints.
 			if e.eventType == RaceEvent.Finish and self.sprintCount != numSprints-1:
@@ -329,7 +328,7 @@ class Race(object):
 					self.getRider(b).addUpDown(-1)
 			elif e.eventType == RaceEvent.Finish:
 				self.sprintCount += 1
-				if iEvent != iEventLen and self.events[iEvent+1].eventType == RaceEvent.NML:
+				if iEvent != len(self.events)-1 and self.events[iEvent+1].eventType == RaceEvent.NML:
 					bibs = fixBibsNML( e.bibs, self.events[iEvent+1].bibs, True )
 				else:
 					bibs = e.bibs

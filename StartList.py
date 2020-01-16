@@ -1,7 +1,9 @@
 import wx
 import wx.grid as gridlib
 import wx.lib.mixins.grid as gae
+from bs4 import BeautifulSoup
 
+import re
 import os
 import sys
 import operator
@@ -15,6 +17,19 @@ class AutoEditGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 		gridlib.Grid.__init__( self, parent, id=id, style=style )
 		gae.GridAutoEditMixin.__init__(self)
 
+def listFromHtml( html ):
+	# Convert th cells to td for easier parsing.
+	html = re.sub( r'<\s*th[^>]*>','<td>', html)
+	html = re.sub( r'<\s*/\sth[^>]*>','</td>', html)
+	table = BeautifulSoup( re.sub( '<\s*th[^>]>','',html), 'lxml' )
+	result = []
+	for row in table.find_all('tr'):
+		result.append([])
+		for col in row.find_all('td'):
+			thestrings = ['{}'.format(s) for s in col.find_all(text=True)]
+			result[-1].append(''.join(thestrings))
+	return result
+	
 #--------------------------------------------------------------------------------
 class StartList(wx.Panel):
 
@@ -29,10 +44,14 @@ class StartList(wx.Panel):
 		self.importFromExcel = wx.Button( self, label=u'Import from Excel' )
 		self.importFromExcel.Bind( wx.EVT_BUTTON, self.onImportFromExcel )
 		
+		self.pasteFromClickboard = wx.Button( self, label=u'Paste from Clipboard \U0001F4CB' )
+		self.pasteFromClickboard.Bind( wx.EVT_BUTTON, self.onPaste )
+		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
 		hs.Add( explanation, flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=4 )
 		hs.Add( self.addRows, flag=wx.ALL, border=4 )
-		hs.Add( self.importFromExcel, flag=wx.ALL|wx.ALIGN_RIGHT, border=4 )
+		hs.Add( self.importFromExcel, flag=wx.ALL, border=4 )
+		hs.Add( self.pasteFromClickboard, flag=wx.ALL, border=4 )
  
 		self.fieldNames  = Model.RiderInfo.FieldNames
 		self.headerNames = Model.RiderInfo.HeaderNames
@@ -91,6 +110,89 @@ class StartList(wx.Panel):
 		Utils.AdjustGridSize( self.grid, rowsRequired = self.grid.GetNumberRows()+growSize )
 		self.Layout()
 		self.grid.MakeCellVisible( self.grid.GetNumberRows()-growSize, 0 )
+	
+	bibHeader = set(v.lower() for v in ('Bib','BibNum','Bib Num', 'Bib #', 'Bib#'))
+	
+	def onPaste( self, event ):
+		success = False
+		table = None
+		
+		# Try to get html format.
+		html_data = wx.HTMLDataObject()
+		if wx.TheClipboard.Open():
+			success = wx.TheClipboard.GetData(html_data)
+			wx.TheClipboard.Close()
+		if success:
+			table = listFromHtml( html_data.GetHTML() )
+			if not table:
+				success = False
+				
+		print( table )
+		
+		# If no success, try tab delimited.
+		if not success:
+			text_data = wx.TextDataObject()
+			if wx.TheClipboard.Open():
+				success = wx.TheClipboard.GetData(text_data)
+				wx.TheClipboard.Close()
+			if success:
+				table = []
+				for line in text_data.GetText().split('\n'):
+					table.append( line.split('\t') )
+				if not table:
+					success = False
+		if not success:
+			return
+
+		riderInfo = []
+		fm = None
+		for row in table:
+			if fm:
+				f = fm.finder( row )
+				info = {
+					'bib': 			f('bib',u''),
+					'first_name':	u'{}'.format(f('first_name',u'')).strip(),
+					'last_name':	u'{}'.format(f('last_name',u'')).strip(),
+					'license':		u'{}'.format(f('license_code',u'')).strip(),
+					'team':			u'{}'.format(f('team',u'')).strip(),
+					'uci_id':		u'{}'.format(f('uci_id',u'')).strip(),
+					'nation_code':		u'{}'.format(f('nation_code',u'')).strip(),
+					'existing_points':	u'{}'.format(f('existing_points',u'0')).strip(),
+				}
+				
+				info['bib'] = u'{}'.format(info['bib']).strip()
+				if not info['bib']:	# If missing bib, assume end of input.
+					continue
+				
+				# Check for comma-separated name.
+				name = u'{}'.format(f('name', u'')).strip()
+				if name and not info['first_name'] and not info['last_name']:
+					try:
+						info['last_name'], info['first_name'] = name.split(',',1)
+					except:
+						pass
+				
+				# If there is a bib it must be numeric.
+				try:
+					info['bib'] = int(u'{}'.format(info['bib']).strip())
+				except ValueError:
+					continue
+				
+				# If there are existing points they must be numeric.
+				try:
+					info['existing_points'] = float(info['existing_points'])
+				except ValueError:
+					info['existing_points'] = 0
+				
+				ri = Model.RiderInfo( **info )
+				riderInfo.append( ri )
+				
+			elif any( u'{}'.format(h).strip().lower() in self.bibHeader for h in row ):
+				fm = standard_field_map()
+				fm.set_headers( row )
+				
+			Model.race.setRiderInfo( riderInfo )
+			self.updateGrid()
 		
 	def onImportFromExcel( self, event ):
 		dlg = wx.MessageBox(
@@ -129,7 +231,6 @@ class StartList(wx.Panel):
 		sheetName = excel.sheet_names()[0]
 
 		riderInfo = []
-		bibHeader = set(v.lower() for v in ('Bib','BibNum','Bib Num', 'Bib #', 'Bib#'))
 		fm = None
 		for row in excel.iter_list(sheetName):
 			if fm:
@@ -165,14 +266,14 @@ class StartList(wx.Panel):
 				
 				# If there are existing points they must be numeric.
 				try:
-					info['existing_points'] = int(info['existing_points'])
+					info['existing_points'] = float(info['existing_points'])
 				except ValueError:
 					info['existing_points'] = 0
 				
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )
 				
-			elif any( u'{}'.format(h).strip().lower() in bibHeader for h in row ):
+			elif any( u'{}'.format(h).strip().lower() in self.bibHeader for h in row ):
 				fm = standard_field_map()
 				fm.set_headers( row )
 				
