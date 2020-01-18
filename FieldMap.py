@@ -221,7 +221,7 @@ standard_field_aliases = (
 		"Waiver",
 	),
 	('existing_points',
-		('Existing Points','ExistingPoints','Points','Existing'),
+		('Existing Points','ExistingPoints','Points', 'Existing', 'Sub Total', 'SubTotal', 'Total Points', 'TotalPoints', 'Total', ),
 		"Existing Points",
 	),
 )

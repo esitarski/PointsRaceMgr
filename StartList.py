@@ -22,6 +22,7 @@ class TableHTMLParser( HTMLParser ):
 		super(TableHTMLParser, self).__init__( *args, **kwargs )
 		self.result = []
 		self.in_cell = False
+		self.colspan = 1
 		self.data = []
 
 	def handle_starttag(self, tag, attrs):
@@ -29,12 +30,14 @@ class TableHTMLParser( HTMLParser ):
 			self.result.append( [] )
 		elif tag in ('td', 'th'):
 			self.in_cell = True
+			self.colspan = int( dict(attrs).get('colspan',1) )
 
 	def handle_endtag(self, tag):
 		if tag in ('td', 'th'):
 			self.in_cell = False
 			self.result[-1].append( ''.join(self.data) )
 			del self.data[:]
+			self.result[-1].extend( [''] * (self.colspan-1) )
 
 	def handle_data(self, data):
 		if self.in_cell:
@@ -199,12 +202,13 @@ class StartList(wx.Panel):
 					info['bib'] = int(u'{}'.format(info['bib']).strip())
 				except ValueError:
 					continue
-				
+
 				# If there are existing points they must be numeric.
 				try:
 					info['existing_points'] = float(info['existing_points'])
 				except ValueError:
-					info['existing_points'] = 0
+					if info['existing_points'] not in Model.Rider.statusNames:
+						info['existing_points'] = 0.0
 				
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )

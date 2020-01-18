@@ -30,27 +30,6 @@ def fixBibsNML( bibs, bibsNML, isFinish=False ):
 	return bibsNew
 	
 #------------------------------------------------------------------------------------------------------------------
-class RiderInfo(object):
-	FieldNames  = ('bib', 'existing_points', 'last_name', 'first_name', 'team', 'team_code', 'license', 'nation_code', 'uci_id')
-	HeaderNames = ('Bib', 'Existing\nPoints', 'Last Name', 'First Name', 'Team', 'Team Code', 'License', 'Nat Code', 'UCI ID')
-
-	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', team_code=u'', license=u'', uci_id=u'', nation_code=u'', existing_points=0.0 ):
-		self.bib = int(bib)
-		self.last_name = last_name
-		self.first_name = first_name
-		self.team = team
-		self.team_code = team_code
-		self.license = license
-		self.uci_id = uci_id
-		self.nation_code = nation_code
-		self.existing_points = float(existing_points or '0.0')
-
-	def __eq__( self, ri ):
-		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
-		
-	def __repr__( self ):
-		return 'RiderInfo({})'.format(u','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
-
 class Rider(object):
 	Finisher  = 0
 	DNF       = 1
@@ -122,6 +101,37 @@ class Rider(object):
 			self.statusNames[self.status]
 		)
 		
+class RiderInfo(object):
+	FieldNames  = ('bib', 'existing_points', 'last_name', 'first_name', 'team', 'team_code', 'license', 'nation_code', 'uci_id')
+	HeaderNames = ('Bib', 'Existing\nPoints', 'Last Name', 'First Name', 'Team', 'Team Code', 'License', 'Nat Code', 'UCI ID')
+
+	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', team_code=u'', license=u'', uci_id=u'', nation_code=u'', existing_points=0.0, status=Rider.Finisher ):
+		self.bib = int(bib)
+		self.last_name = last_name
+		self.first_name = first_name
+		self.team = team
+		self.team_code = team_code
+		self.license = license
+		self.uci_id = uci_id
+		self.nation_code = nation_code
+		try:
+			self.existing_points = float(existing_points)
+		except:
+			self.existing_points = 0.0
+		
+		self.status = status
+		if isinstance(existing_points, str):
+			for s, statusName in enumerate(Rider.statusNames):
+				if existing_points == statusName:
+					self.status = s
+					break
+
+	def __eq__( self, ri ):
+		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
+		
+	def __repr__( self ):
+		return 'RiderInfo({})'.format(u','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
+
 class GetRank( object ):
 	def __init__( self ):
 		self.rankLast, self.rrLast = None, None
@@ -305,7 +315,9 @@ class Race(object):
 		self.riders = {}
 		
 		for info in self.riderInfo:
-			self.getRider(info.bib).addExistingPoints( info.existing_points )
+			r = self.getRider(info.bib)
+			r.addExistingPoints( info.existing_points )
+			r.status = info.status
 		
 		numSprints = self.getNumSprints()
 		self.sprintCount = 0
