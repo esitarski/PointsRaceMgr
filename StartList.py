@@ -1,12 +1,12 @@
 import wx
 import wx.grid as gridlib
 import wx.lib.mixins.grid as gae
-from bs4 import BeautifulSoup
 
-import re
 import os
 import sys
 import operator
+from html.parser import HTMLParser
+
 import Utils
 import Model
 from FieldMap import standard_field_map
@@ -17,18 +17,34 @@ class AutoEditGrid( gridlib.Grid, gae.GridAutoEditMixin ):
 		gridlib.Grid.__init__( self, parent, id=id, style=style )
 		gae.GridAutoEditMixin.__init__(self)
 
+class TableHTMLParser( HTMLParser ):
+	def __init__( self, *args, **kwargs ):
+		super(TableHTMLParser, self).__init__( *args, **kwargs )
+		self.result = []
+		self.in_cell = False
+		self.data = []
+
+	def handle_starttag(self, tag, attrs):
+		if tag == 'tr':
+			self.result.append( [] )
+		elif tag in ('td', 'th'):
+			self.in_cell = True
+
+	def handle_endtag(self, tag):
+		if tag in ('td', 'th'):
+			self.in_cell = False
+			self.result[-1].append( ''.join(self.data) )
+			del self.data[:]
+
+	def handle_data(self, data):
+		if self.in_cell:
+			self.data.append( data )
+		
 def listFromHtml( html ):
-	# Convert th cells to td for easier parsing.
-	html = re.sub( r'<\s*th[^>]*>','<td>', html)
-	html = re.sub( r'<\s*/\sth[^>]*>','</td>', html)
-	table = BeautifulSoup( re.sub( '<\s*th[^>]>','',html), 'lxml' )
-	result = []
-	for row in table.find_all('tr'):
-		result.append([])
-		for col in row.find_all('td'):
-			thestrings = ['{}'.format(s) for s in col.find_all(text=True)]
-			result[-1].append(''.join(thestrings))
-	return result
+	parser = TableHTMLParser()
+	parser.feed( html )
+	parser.close()
+	return parser.result
 	
 #--------------------------------------------------------------------------------
 class StartList(wx.Panel):
@@ -44,14 +60,14 @@ class StartList(wx.Panel):
 		self.importFromExcel = wx.Button( self, label=u'Import from Excel' )
 		self.importFromExcel.Bind( wx.EVT_BUTTON, self.onImportFromExcel )
 		
-		self.pasteFromClickboard = wx.Button( self, label=u'Paste from Clipboard \U0001F4CB' )
-		self.pasteFromClickboard.Bind( wx.EVT_BUTTON, self.onPaste )
+		self.pasteFromClipboard = wx.Button( self, id=wx.ID_PASTE, label=u'Paste \U0001F4CB' )
+		self.pasteFromClipboard.Bind( wx.EVT_BUTTON, self.onPaste )
 		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
 		hs.Add( explanation, flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=4 )
 		hs.Add( self.addRows, flag=wx.ALL, border=4 )
 		hs.Add( self.importFromExcel, flag=wx.ALL, border=4 )
-		hs.Add( self.pasteFromClickboard, flag=wx.ALL, border=4 )
+		hs.Add( self.pasteFromClipboard, flag=wx.ALL, border=4 )
  
 		self.fieldNames  = Model.RiderInfo.FieldNames
 		self.headerNames = Model.RiderInfo.HeaderNames
@@ -68,6 +84,14 @@ class StartList(wx.Panel):
 		sizer.Add(self.grid, 1, flag=wx.EXPAND|wx.ALL, border = 6)
 		self.SetSizer(sizer)
 		
+		'''
+		self.Bind(wx.EVT_MENU, lambda event: self.onPaste)		# Required to process accelerator.
+		entries = [wx.AcceleratorEntry()] 
+		entries[0].Set(wx.ACCEL_CTRL, ord('V'), wx.ID_PASTE)
+		accel = wx.AcceleratorTable(entries)
+		self.SetAcceleratorTable(accel)
+		'''
+				
 		self.SetDoubleBuffered( True )
 		wx.CallAfter( self.refresh )
 		
@@ -127,8 +151,6 @@ class StartList(wx.Panel):
 			if not table:
 				success = False
 				
-		print( table )
-		
 		# If no success, try tab delimited.
 		if not success:
 			text_data = wx.TextDataObject()
