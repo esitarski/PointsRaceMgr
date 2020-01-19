@@ -207,13 +207,6 @@ class StartList(wx.Panel):
 				except ValueError:
 					continue
 
-				# If there are existing points they must be numeric.
-				try:
-					info['existing_points'] = float(info['existing_points'])
-				except ValueError:
-					if info['existing_points'] not in Model.Rider.statusNames:
-						info['existing_points'] = 0.0
-				
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )
 				
@@ -293,12 +286,6 @@ class StartList(wx.Panel):
 					info['bib'] = int(u'{}'.format(info['bib']).strip())
 				except ValueError:
 					continue
-				
-				# If there are existing points they must be numeric.
-				try:
-					info['existing_points'] = float(info['existing_points'])
-				except ValueError:
-					info['existing_points'] = 0
 				
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )
