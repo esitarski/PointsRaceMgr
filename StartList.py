@@ -55,7 +55,10 @@ class StartList(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
 		
-		explanation = wx.StaticText( self, label=u'To delete a row, set Bib to blank and switch screens.' )
+		explanation = wx.StaticText( self, label=u'To delete a row, set Bib to blank and press Commit.' )
+		
+		self.commitButton = wx.Button( self, label=u'Commit' )
+		self.commitButton.Bind( wx.EVT_BUTTON, self.onCommit )
 		
 		self.addRows = wx.Button( self, label=u'Add Rows' )
 		self.addRows.Bind( wx.EVT_BUTTON, self.onAddRows )
@@ -68,6 +71,7 @@ class StartList(wx.Panel):
 		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
 		hs.Add( explanation, flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=4 )
+		hs.Add( self.commitButton, flag=wx.ALL, border=4 )
 		hs.Add( self.addRows, flag=wx.ALL, border=4 )
 		hs.Add( self.importFromExcel, flag=wx.ALL, border=4 )
 		hs.Add( self.pasteFromClipboard, flag=wx.ALL, border=4 )
@@ -309,7 +313,7 @@ class StartList(wx.Panel):
 	def refresh( self ):
 		self.updateGrid()
 		
-	def commit( self ):
+	def commit( self, local=False ):
 		self.grid.SaveEditControlValue()
 		self.grid.DisableCellEditControl()
 		race = Model.race
@@ -320,8 +324,13 @@ class StartList(wx.Panel):
 				continue
 			riderInfo.append( Model.RiderInfo(**info) )
 		race.setRiderInfo( riderInfo )
-		Utils.refresh()
+		if not local:
+			Utils.refresh()
 
+	def onCommit( self, event ):
+		self.commit( True )
+		self.refresh()
+		
 ########################################################################
 
 class StartListFrame(wx.Frame):
