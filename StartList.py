@@ -310,6 +310,8 @@ class StartList(wx.Panel):
 		self.updateGrid()
 		
 	def commit( self ):
+		self.grid.SaveEditControlValue()
+		self.grid.DisableCellEditControl()
 		race = Model.race
 		riderInfo = []
 		for r in range(self.grid.GetNumberRows()):

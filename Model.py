@@ -31,12 +31,8 @@ def fixBibsNML( bibs, bibsNML, isFinish=False ):
 	
 #------------------------------------------------------------------------------------------------------------------
 class Rider(object):
-	Finisher  = 0
-	DNF       = 1
-	PUL   	  = 2
-	DNS       = 3
-	DSQ 	  = 4
-	statusNames = ['Finisher', 'DNF', 'PUL', 'DNS', 'DSQ']
+	Finisher, DNF, PUL, DNS, DSQ = tuple( range(5) )
+	statusNames = ('Finisher', 'DNF', 'PUL', 'DNS', 'DSQ')
 	statusSortSeq = { 'Finisher':1,	Finisher:1,
 					  'PUL':2,		PUL:2,
 					  'DNF':3,		DNF:3,
@@ -122,9 +118,11 @@ class RiderInfo(object):
 		self.status = status
 		if isinstance(existing_points, str):
 			for s, statusName in enumerate(Rider.statusNames):
-				if existing_points == statusName:
+				if existing_points.lower() == statusName.lower():
 					self.status = s
 					break
+			if existing_points.lower() == 'DQ'.lower():
+				self.status = Rider.DSQ
 
 	def __eq__( self, ri ):
 		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
