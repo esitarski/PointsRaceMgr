@@ -42,7 +42,7 @@ class EventDialog( wx.Dialog ):
 		hs.Add( self.bibText, 1, flag=wx.EXPAND|wx.LEFT, border=2 )
 
 		self.hbs.Add( hs, flag=wx.EXPAND|wx.ALL, border=4 )
-		ws = wx.BoxSizer( wx.HORIZONTAL )
+		ws = wx.GridSizer(2, 4, 2, 2)
 		self.choiceButtons = []
 		self.idToButton = {}
 		for name, idEvent in Model.RaceEvent.Events:
@@ -50,15 +50,15 @@ class EventDialog( wx.Dialog ):
 				name = 'Sprint'
 			elif 'Finish' in name:
 				continue
-			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons.append( wx.Button(self, label=name) )
 			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
 			self.idToButton[idEvent] = self.choiceButtons[-1]
 			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
 		self.hbs.Add( ws, flag=wx.ALL, border=4 )
 				
-		ws = wx.BoxSizer( wx.HORIZONTAL )
+		ws = wx.GridSizer(1, 4, 2, 2)
 		for name, idEvent in Model.RaceEvent.States:
-			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons.append( wx.Button(self, label=name) )
 			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
 			self.idToButton[idEvent] = self.choiceButtons[-1]
 			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
@@ -155,24 +155,24 @@ class EventList( wx.Panel ):
 		hs.Add( self.bibText, 1, flag=wx.EXPAND|wx.LEFT, border=2 )
 
 		self.hbs.Add( hs, flag=wx.EXPAND|wx.ALL, border=4 )
-		ws = wx.BoxSizer( wx.HORIZONTAL )
+		ws = wx.GridSizer(2, 4, 2, 2)
 		self.choiceButtons = []
 		for name, idEvent in Model.RaceEvent.Events:
 			if 'Sp' in name:
 				name = 'Sprint'
 			elif 'Finish' in name:
 				continue
-			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons.append( wx.Button(self, label=name) )
 			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
-			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
-		self.hbs.Add( ws, flag=wx.ALL|wx.EXPAND, border=4 )
+			ws.Add( self.choiceButtons[-1] )
+		self.hbs.Add( ws, flag=wx.ALL, border=4 )
 
-		ws = wx.BoxSizer( wx.HORIZONTAL )
+		ws = wx.GridSizer(1, 4, 2, 2)
 		for name, idEvent in Model.RaceEvent.States:
-			self.choiceButtons.append( wx.Button(self, label=name, style=wx.BU_EXACTFIT) )
+			self.choiceButtons.append( wx.Button(self, label=name) )
 			self.choiceButtons[-1].Bind( wx.EVT_BUTTON, lambda event, idEvent=idEvent: self.onVerb(event, idEvent) )
 			ws.Add( self.choiceButtons[-1], flag=wx.LEFT, border=2 )
-		self.hbs.Add( ws, flag=wx.ALL|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=4 )
+		self.hbs.Add( ws, flag=wx.ALL, border=4 )
 
 		self.grid = EventListGrid( self )
 		self.grid.Bind( gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onLeftClick )
