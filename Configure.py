@@ -42,7 +42,7 @@ class Configure( wx.Panel ):
 		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
 		label = wx.StaticText( self, label=u'Date:' )
-		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
+		hs.Add( label, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.adv.DatePickerCtrl( self, style = wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY, size=(132,-1) )
 		ctrl.Bind( wx.adv.EVT_DATE_CHANGED, self.onChange )
 		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=4 )
@@ -50,7 +50,7 @@ class Configure( wx.Panel ):
 		self.dateCtrl = ctrl
 		
 		label = wx.StaticText( self, label=u'Communiqu\u00E9:' )
-		hs.Add( label, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
+		hs.Add( label, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
 		ctrl.Bind(wx.EVT_TEXT, self.onChange)
 		hs.Add( ctrl, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=4 )
