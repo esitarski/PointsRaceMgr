@@ -59,17 +59,17 @@ class RankDetails( wx.Panel ):
 				attr.SetBackgroundColour( wx.Colour(178, 236, 255) )
 			self.grid.SetColAttr( c, attr )
 			
-		gr = Model.GetRank()
+		getRank = Model.GetRank()
 		for rank, rr in enumerate(riders, 1):
 			row = rank-1
 			col = 0
 			
 			# Rank
-			self.grid.SetCellValue( row, col, gr(rank, rr) )
+			self.grid.SetCellValue( row, col, getRank(rank, rr) )
 			col += 1
 			
 			# Bib
-			self.grid.SetCellValue( row, col, u'{}'.format(rr.num) )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.num) )
 			col += 1
 	
 			# Points
@@ -78,17 +78,17 @@ class RankDetails( wx.Panel ):
 			
 			# Sprints
 			for s in range(1, race.sprintCount+1):
-				place, points = rr.sprintPlacePoints.get(s, (-1, -1))
-				self.grid.SetCellValue( row, col, u'{}'.format(points) if points > 0 else u'')
+				place, points, tie = rr.sprintPlacePoints.get(s, (-1, -1, False))
+				self.grid.SetCellValue( row, col, '{}'.format(points) if points > 0 else u'')
 				col += 1
 			
 			# +/- Laps
-			self.grid.SetCellValue( row, col, u'{}'.format(rr.lapsTotal) if rr.lapsTotal else u'' )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.lapsTotal) if rr.lapsTotal else u'' )
 			col += 1
 			
 			# Wins
 			if hasNumWins:
-				self.grid.SetCellValue( row, col, u'{}'.format(rr.numWins) if rr.numWins else u'' )
+				self.grid.SetCellValue( row, col, '{}'.format(rr.numWins) if rr.numWins else u'' )
 				col += 1
 				
 			# Existing Points
@@ -97,7 +97,7 @@ class RankDetails( wx.Panel ):
 				col += 1
 				
 			# Finish order
-			self.grid.SetCellValue( row, col, u'{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
 			col += 1
 		
 		self.grid.EndBatch()

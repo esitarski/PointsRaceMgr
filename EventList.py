@@ -82,7 +82,7 @@ class EventDialog( wx.Dialog ):
 				btn.SetBackgroundColour( wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHIGHLIGHT) )
 			else:
 				btn.SetBackgroundColour( wx.NullColour )
-		self.bibText.SetValue( value=u','.join(u'{}'.format(b) for b in event.bibs) )
+		self.bibText.SetValue( value=event.bibStr() )
 		self.bibText.SetFocus()
 		
 	def onEnter( self, event ):
@@ -107,9 +107,8 @@ class EventDialog( wx.Dialog ):
 					changed = True
 				break
 		
-		bibs = Model.RaceEvent.getCleanBibs( self.bibText.GetValue() )
-		if bibs != self.e.bibs:
-			self.e.bibs = bibs
+		if self.e.bibStr() != self.bibText.GetValue():
+			self.e.setBibs( self.bibText.GetValue() )
 			changed = True
 		
 		return changed
@@ -268,7 +267,7 @@ class EventList( wx.Panel ):
 					name += u' ({})'.format( race.getSprintLabel(sprintCount) )
 					
 			self.grid.SetCellValue( row, 0, name )
-			self.grid.SetCellValue( row, 1, u','.join(u'{}'.format(b) for b in e.bibs) )
+			self.grid.SetCellValue( row, 1, e.bibStr() )
 		
 		self.grid.AutoSize()
 		self.grid.EndBatch()

@@ -15,19 +15,36 @@ class Commentary( wx.Panel ):
 
 		self.text = wx.TextCtrl( self, style=wx.TE_MULTILINE|wx.TE_READONLY )
 		self.hbs.Add( self.text, 1, wx.EXPAND )
-		self.SetSizer(self.hbs)
+		self.SetSizer( self.hbs )
 		
 	def getText( self ):
 		race = Model.race
 		riderInfo = {info.bib:info for info in race.riderInfo} if race else {}
 
+		def infoLinesSprint( sprint, bibs ):
+			lines = []
+			pfpText = u''
+			for place_in, bib in enumerate(bibs,1):
+				ri = riderInfo.get( bib, None )
+				points, place, tie = race.getSprintPoints( sprint, place_in, bibs )
+				if points:
+					pfpText = ' ({:+d} pts)'.format(points)
+				else:
+					pfpText = u''
+				if ri is not None:
+					lines.append( u'    {}.{}  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
+				else:
+					lines.append( u'    {}.{}  {}'.format(place, pfpText, bib) )
+			return lines
+		
 		def infoLines( bibs, pointsForPlace=None ):
 			lines = []
 			pfpText = u''
-			for place, bib in enumerate(bibs,1):
+			for place_in, bib in enumerate(bibs,1):
 				ri = riderInfo.get( bib, None )
-				if pointsForPlace and pointsForPlace.get(place, 0):
-					pfpText = ' ({:+d} pts)'.format(pointsForPlace.get(place, 0))
+				points = pointsForPlace
+				if points:
+					pfpText = ' ({:+d} pts)'.format(points)
 				else:
 					pfpText = u''
 				if ri is not None:
@@ -38,30 +55,24 @@ class Commentary( wx.Panel ):
 		
 		RaceEvent = Model.RaceEvent
 		
-		pointsForGainedLap = {p:race.pointsForLapping for p in range(1,201)}
-		pointsForLostLap   = {p:-race.pointsForLapping for p in range(1,201)}
-		
 		lines = []
 		self.sprintCount = 0
 		for e in race.events:
-			if e.eventType == RaceEvent.Sprint:
+			if   e.eventType == RaceEvent.Sprint:
 				self.sprintCount += 1
 				lines.append( u'Sprint {} Result:'.format(self.sprintCount) )
-				lines.extend( infoLines(e.bibs[:len(race.pointsForPlace)], race.pointsForPlace) )
+				lines.extend( infoLinesSprint(sprint, e.bibs[:len(race.pointsForPlace)]) )
+			
 			elif e.eventType == RaceEvent.LapUp:
 				lines.append( u'Gained a Lap:' )
-				lines.extend( infoLines(e.bibs, pointsForGainedLap) )
+				lines.extend( infoLines(e.bibs, race.pointsForLapping) )
 			elif e.eventType == RaceEvent.LapDown:
 				lines.append( u'Lost a Lap:' )
-				lines.extend( infoLines(e.bibs, pointsForLostLap) )
+				lines.extend( infoLines(e.bibs, -race.pointsForLapping) )
 			elif e.eventType == RaceEvent.Finish:
 				lines.append( u'Finish:' )
 				self.sprintCount += 1
-				if race.doublePointsForLastSprint:
-					pointsForPlace = {p:v*2 for p,v in race.pointsForPlace.items()}
-				else:
-					pointsForPlace = race.pointsForPlace
-				lines.extend( infoLines(e.bibs, pointsForPlace) )
+				lines.extend( infoLinesSprint(sprint, e.bibs) )
 			elif e.eventType == RaceEvent.DNF:
 				lines.append( u'DNF (Did Not Finish):' )
 				lines.extend( infoLines(e.bibs) )
@@ -105,7 +116,8 @@ class Commentary( wx.Panel ):
 		html.write(u'</dl>\n')
 		
 	def refresh( self ):
-		self.text.SetValue( self.getText() )
+		self.text.Clear()
+		self.text.AppendText( self.getText() )
 
 	def commit( self ):
 		pass

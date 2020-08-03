@@ -177,12 +177,8 @@ def SecondsToMMSS( secs = 0 ):
 	return '{:02d}:{:02d}'.format((secs // 60)%60, secs % 60)
 	
 def disable_stdout_buffering():
-	fileno = sys.stdout.fileno()
-	temp_fd = os.dup(fileno)
-	sys.stdout.close()
-	os.dup2(temp_fd, fileno)
-	os.close(temp_fd)
-	sys.stdout = os.fdopen(fileno, "w")
+	''' No longer necessary as all output to a tty will be flushed after newline. '''
+	return None
 		
 def getHomeDir():
 	return os.path.expanduser("~")

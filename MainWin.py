@@ -712,6 +712,8 @@ hr { clear: both; }
 			"\n"
 			"You can rearrange the sequence of Race Events by dragging-and-dropping rows in Column 1.\n"
 			"Delete unwanted Race Events by right-clicking on the Event Type in the list.\n"
+			"\n",
+			"Ties are entered with an equals sign (=) between bib numbers (eg. 10=20, 30 40) means 10, 20 tied for first, 30 in 3rd, 40 in 4th\n",
 			"\n"
 			"Up-to-date results are always shown on the Details and Summary screens.\n"
 			"\n"

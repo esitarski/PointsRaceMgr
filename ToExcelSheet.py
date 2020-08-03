@@ -183,7 +183,7 @@ def ToExcelSheet( ws ):
 		else:
 			if r > 0:
 				if not riders[r-1].tiedWith(rider):
-					position += 1
+					position = r + 1
 			ws.write(	rowCur + r, 0,
 						position if rider.status == Model.Rider.Finisher else Model.Rider.statusNames[rider.status],
 						styleRegular )
@@ -217,10 +217,10 @@ def ToExcelSheet( ws ):
 
 	for sprint in range(1, maxSprints+1):
 		for r, rider in enumerate(riders):
-			ws.write( rowCur + r, sprint + 3, sprintNumPoints.get((sprint, rider.num), ''), styleRegular )
+			ws.write( rowCur + r, sprint + 3, sprintNumPoints.get((sprint, rider.num)[0], ''), styleRegular )
 			
 	rowCur += len(riders) + 2
-	for line in race.notes.split(u'\n'):
+	for line in race.notes.split('\n'):
 		ws.write( rowCur, 0, line, styleRegular )
 		rowCur += 1
 

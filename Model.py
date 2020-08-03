@@ -30,7 +30,7 @@ def fixBibsNML( bibs, bibsNML, isFinish=False ):
 	return bibsNew
 	
 #------------------------------------------------------------------------------------------------------------------
-class Rider(object):
+class Rider:
 	Finisher, DNF, PUL, DNS, DSQ = tuple( range(5) )
 	statusNames = ('Finisher', 'DNF', 'PUL', 'DNS', 'DSQ')
 	statusSortSeq = { 'Finisher':1,	Finisher:1,
@@ -55,18 +55,18 @@ class Rider(object):
 		self.finishOrder = 1000
 		self.status = Rider.Finisher
 		
-	def addSprintResult( self, sprint, place ):
-		points = race.getSprintPoints(sprint, place)
+	def addSprintResult( self, sprint, place, bibs ):
+		points, place, tie = race.getSprintPoints(sprint, place, bibs)
 		if points > 0:
 			self.pointsTotal += points
 			self.sprintsTotal += points
-			self.sprintPlacePoints[sprint] = (place, points)
+			self.sprintPlacePoints[sprint] = (place, points, tie)
 		
 		if place == 1:
 			self.numWins += 1
 	
-	def addFinishOrder( self, finishOrder ):
-		self.finishOrder = finishOrder
+	def addFinishOrder( self, finishOrder, tie ):
+		self.finishOrder = (finishOrder, tie)
 	
 	def addUpDown( self, updown ):
 		assert updown == -1 or updown == 1
@@ -97,11 +97,11 @@ class Rider(object):
 			self.statusNames[self.status]
 		)
 		
-class RiderInfo(object):
+class RiderInfo:
 	FieldNames  = ('bib', 'existing_points', 'last_name', 'first_name', 'team', 'team_code', 'license', 'nation_code', 'uci_id')
 	HeaderNames = ('Bib', 'Existing\nPoints', 'Last Name', 'First Name', 'Team', 'Team Code', 'License', 'Nat Code', 'UCI ID')
 
-	def __init__( self, bib, last_name=u'', first_name=u'', team=u'', team_code=u'', license=u'', uci_id=u'', nation_code=u'', existing_points=0.0, status=Rider.Finisher ):
+	def __init__( self, bib, last_name='', first_name='', team='', team_code='', license='', uci_id='', nation_code='', existing_points=0.0, status=Rider.Finisher ):
 		self.bib = int(bib)
 		self.last_name = last_name
 		self.first_name = first_name
@@ -130,7 +130,7 @@ class RiderInfo(object):
 	def __repr__( self ):
 		return 'RiderInfo({})'.format(u','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
 
-class GetRank( object ):
+class GetRank:
 	def __init__( self ):
 		self.rankLast, self.rrLast = None, None
 	
@@ -138,12 +138,12 @@ class GetRank( object ):
 		if rr.status != Rider.Finisher:
 			return Rider.statusNames[rr.status]
 		elif self.rrLast and self.rrLast.tiedWith(rr):
-			return u'{}'.format(self.rankLast)
+			return '{}'.format(self.rankLast)
 		else:
 			self.rankLast, self.rrLast = rank, rr
-			return u'{}'.format(rank)
+			return '{}'.format(rank)
 		
-class RaceEvent(object):
+class RaceEvent:
 	DNS, DNF, PUL, DSQ, LapUp, LapDown, Sprint, Finish, Break, Chase, OTB, NML = tuple( range(12) )
 	
 	Events = (
@@ -168,19 +168,29 @@ class RaceEvent(object):
 	
 	@staticmethod
 	def getCleanBibs( bibs ):
-		if not isinstance(bibs, list):
-			try:
-				bibs = [int(f) for f in re.sub(r'[^\d]', ' ', bibs).split()]
-			except:
-				bibs = []
+		if isinstance( bibs, str ):
+			bibs = bibs.replace( '-', '=' )			# accept the minus char for the equal char as those keys are next to each other on the keyboard.
+			bibs = re.sub( r'[^\d=]', ' ', bibs)	# replace all non-digit/equals with space.
+			bibs = bibs.replace('=', ' - ')			# replace all equal signs with dashes separated by spaces.
+			bibs = re.sub( r'- +(\d)' , lambda m: '-' + m.group(1), bibs )		# remove spaces between dashes and numbers to form negative numbers.
+			biblist = []
+			for v in bibs.split():
+				try:
+					biblist.append( int(v) )
+				except:
+					continue
+			bibs = biblist
 				
 		seen = set()
 		nonDupBibs = []
 		for b in bibs:
-			if b > 0 and b not in seen:
-				seen.add( b )
+			if abs(b) not in seen:
+				seen.add( abs(b) )
 				nonDupBibs.append( b )
 
+		# Negative bibs indicate a tie with the preceeding position.  eg. 10 -20 30 40 means 1st place: 10, 20; 3rd place 30, 4th place 40.
+		if nonDupBibs:
+			nonDupBibs[0] = abs(nonDupBibs[0])
 		return nonDupBibs
 	
 	def __init__( self, eventType=Sprint, bibs=[] ):
@@ -192,8 +202,16 @@ class RaceEvent(object):
 			else:
 				eventType = self.Sprint
 		
-		self.eventType = eventType		
+		self.eventType = eventType
+		self.setBibs( bibs )
+
+	def setBibs( self, bibs ):
 		self.bibs = RaceEvent.getCleanBibs( bibs )
+		if self.eventType not in (self.Sprint, self.Finish):
+			self.bibs = [abs(bib) for bib in self.bibs]
+
+	def bibStr( self ):
+		return ','.join( '{}'.format(b) for b in self.bibs).replace(',-', '=')
 
 	def isState( self ):
 		return self.eventType >= self.Break
@@ -206,9 +224,9 @@ class RaceEvent(object):
 		return s.eventType == t.eventType and s.bibs == t.bibs
 		
 	def __repr__( self ):
-		return 'RaceEvent( eventType={}, bibs=[{}] )'.format(self.eventType, ','.join('{}'.format(b) for b in self.bibs))
+		return 'RaceEvent( eventType={}, bibs=[{}] )'.format( self.eventType, self.bibStr() )
 		
-class Race(object):
+class Race:
 	RankByPoints = 0
 	RankByLapsPoints = 1
 	RankByLapsPointsNumWins = 2
@@ -295,19 +313,37 @@ class Race(object):
 		return maxPlace
 	
 	def getRider( self, bib ):
+		bib = abs(bib)
 		try:
 			return self.riders[bib]
 		except KeyError:
 			self.riders[bib] = Rider( bib )
 			return self.riders[bib]
 			
-	def getSprintPoints( self, sprint, place ):
+	def getSprintPoints( self, sprint, place, bibs=None ):
+		# Find the correct place if a tie.
+		while place > 1:
+			try:
+				bib = bibs[place-1]
+			except:
+				break
+			if bib < 0:		# If the bib number is negative, tie with the previous position.
+				place -= 1
+			else:
+				break
+		
+		# If this is a tie, the following bib will be negative.
+		try:
+			tie = (bibs[place] < 0)
+		except:
+			tie = False
+		
 		points = self.pointsForPlace.get(place,0)
 		if self.snowball:
 			points *= sprint
 		if self.doublePointsForLastSprint and sprint == self.getNumSprints():
 			points *= 2
-		return points
+		return points, place, tie
 	
 	def processEvents( self ):
 		self.riders = {}
@@ -329,7 +365,7 @@ class Race(object):
 			if e.eventType == RaceEvent.Sprint:
 				self.sprintCount += 1
 				for place, b in enumerate(e.bibs, 1):
-					self.getRider(b).addSprintResult(self.sprintCount, place)
+					self.getRider(b).addSprintResult(self.sprintCount, place, e.bibs)
 			elif e.eventType == RaceEvent.LapUp:
 				for b in e.bibs:
 					self.getRider(b).addUpDown(1)
@@ -344,7 +380,7 @@ class Race(object):
 					bibs = e.bibs
 				for place, b in enumerate(bibs, 1):
 					r = self.getRider(b)
-					r.addSprintResult(self.sprintCount, place)
+					r.addSprintResult(self.sprintCount, place, bibs)
 					r.addFinishOrder(place)
 			elif e.eventType == RaceEvent.DNF:
 				for b in e.bibs:
@@ -389,15 +425,20 @@ class Race(object):
 		self.events.append( RaceEvent(RaceEvent.DNS, [41,42]) )
 		random.seed( 0xed )
 		bibs = list( range(10,34) )
-		self.events.append( RaceEvent(RaceEvent.LapUp, bibs=[13]) )
-		self.events.append( RaceEvent(RaceEvent.LapDown, bibs=[14]) )
+		self.events.append( RaceEvent(RaceEvent.LapUp, bibs=[13,14]) )
+		self.events.append( RaceEvent(RaceEvent.LapDown, bibs=[14,15]) )
+		
+		def addTies( bibList ):
+			bibList = ','.join( '{}'.format(b*random.choice([-1,1,1,1])) for b in bibList )	# 0.2 probability of ties.
+			return bibList.replace( '-,', '=')
+		
 		for lap in range(50,-1,-10):
 			random.shuffle( bibs )
-			self.events.append( RaceEvent(bibs=bibs[:5]) )
+			self.events.append( RaceEvent(bibs=addTies(bibs[:5])) )
 		self.events.append( RaceEvent(RaceEvent.DNF, [51,52]) )
 		self.events.append( RaceEvent(RaceEvent.DSQ, [61,62]) )
 		random.shuffle( bibs )
-		self.events.append( RaceEvent(RaceEvent.Finish, bibs) )
+		self.events.append( RaceEvent(RaceEvent.Finish, addTies(bibs)) )
 		self.setChanged()
 
 if __name__ == '__main__':
