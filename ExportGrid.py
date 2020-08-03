@@ -56,7 +56,7 @@ def writeHtmlHeader( buf, title ):
 	with tag(buf, 'span', {'id': 'idRaceName'}):
 		buf.write( u'{}'.format(cgi.escape(title).replace('\n', '<br/>\n')) )
 
-class ExportGrid( object ):
+class ExportGrid:
 	PDFLineFactor = 1.10
 
 	def __init__( self, title, grid ):

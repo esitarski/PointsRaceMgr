@@ -79,25 +79,25 @@ class RankDetails( wx.Panel ):
 			# Sprints
 			for s in range(1, race.sprintCount+1):
 				place, points, tie = rr.sprintPlacePoints.get(s, (-1, -1, False))
-				self.grid.SetCellValue( row, col, '{}'.format(points) if points > 0 else u'')
+				self.grid.SetCellValue( row, col, '{}'.format(points) if points > 0 else '')
 				col += 1
 			
 			# +/- Laps
-			self.grid.SetCellValue( row, col, '{}'.format(rr.lapsTotal) if rr.lapsTotal else u'' )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.lapsTotal) if rr.lapsTotal else '' )
 			col += 1
 			
 			# Wins
 			if hasNumWins:
-				self.grid.SetCellValue( row, col, '{}'.format(rr.numWins) if rr.numWins else u'' )
+				self.grid.SetCellValue( row, col, '{}'.format(rr.numWins) if rr.numWins else '' )
 				col += 1
 				
 			# Existing Points
 			if hasExistingPoints:
-				self.grid.SetCellValue( row, col, existingPointsFmt(rr.existingPoints) if rr.existingPoints else u'' )
+				self.grid.SetCellValue( row, col, existingPointsFmt(rr.existingPoints) if rr.existingPoints else '' )
 				col += 1
 				
 			# Finish order
-			self.grid.SetCellValue( row, col, '{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else '' )
 			col += 1
 		
 		self.grid.EndBatch()

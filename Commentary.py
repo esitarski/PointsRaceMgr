@@ -60,60 +60,60 @@ class Commentary( wx.Panel ):
 		for e in race.events:
 			if   e.eventType == RaceEvent.Sprint:
 				self.sprintCount += 1
-				lines.append( u'Sprint {} Result:'.format(self.sprintCount) )
+				lines.append( 'Sprint {} Result:'.format(self.sprintCount) )
 				lines.extend( infoLinesSprint(sprint, e.bibs[:len(race.pointsForPlace)]) )
 			
 			elif e.eventType == RaceEvent.LapUp:
-				lines.append( u'Gained a Lap:' )
+				lines.append( 'Gained a Lap:' )
 				lines.extend( infoLines(e.bibs, race.pointsForLapping) )
 			elif e.eventType == RaceEvent.LapDown:
-				lines.append( u'Lost a Lap:' )
+				lines.append( 'Lost a Lap:' )
 				lines.extend( infoLines(e.bibs, -race.pointsForLapping) )
 			elif e.eventType == RaceEvent.Finish:
-				lines.append( u'Finish:' )
+				lines.append( 'Finish:' )
 				self.sprintCount += 1
 				lines.extend( infoLinesSprint(sprint, e.bibs) )
 			elif e.eventType == RaceEvent.DNF:
-				lines.append( u'DNF (Did Not Finish):' )
+				lines.append( 'DNF (Did Not Finish):' )
 				lines.extend( infoLines(e.bibs) )
 			elif e.eventType == RaceEvent.DNS:
-				lines.append( u'DNS (Did Not Start):' )
+				lines.append( 'DNS (Did Not Start):' )
 				lines.extend( infoLines(e.bibs) )
 			elif e.eventType == RaceEvent.PUL:
-				lines.append( u'PUL (Pulled by Race Officials):' )
+				lines.append( 'PUL (Pulled by Race Officials):' )
 				lines.extend( infoLines(e.bibs) )
 			elif e.eventType == RaceEvent.DSQ:
-				lines.append( u'DSQ (Disqualified)' )
+				lines.append( 'DSQ (Disqualified)' )
 				lines.extend( infoLines(e.bibs) )
-			lines.append( u'' )
+			lines.append( '' )
 		
-		return u'\n'.join(lines)
+		return '\n'.join(lines)
 
 	def toHtml( self, html ):
-		text = self.getText().replace(u'.', u'')
+		text = self.getText().replace('.', '')
 		if not text:
-			return u''
+			return ''
 		lines = []
 		inList = False
-		html.write( u'<dl>' )
-		for line in text.split(u'\n'):
+		html.write( '<dl>' )
+		for line in text.split('\n'):
 			if not line:
 				continue
-			if line[:1] != u' ':
+			if line[:1] != ' ':
 				if inList:
-					html.write(u'</ol>\n')
-					html.write(u'</dd>\n')
+					html.write('</ol>\n')
+					html.write('</dd>\n')
 					inList = False
-				html.write( u'<dd>\n' )
+				html.write( '<dd>\n' )
 				html.write( cgi.escape(line) )
-				html.write( u'<ol>' )
+				html.write( '<ol>' )
 				inList = True
 				continue
 			line = line.strip()
-			html.write( u'<li>{}</li>\n'.format(line.split(' ',1)[1].strip()) )
-		html.write(u'</ol>\n')
-		html.write(u'</dd>\n')
-		html.write(u'</dl>\n')
+			html.write( '<li>{}</li>\n'.format(line.split(' ',1)[1].strip()) )
+		html.write('</ol>\n')
+		html.write('</dd>\n')
+		html.write('</dl>\n')
 		
 	def refresh( self ):
 		self.text.Clear()
