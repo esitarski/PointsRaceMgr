@@ -47,8 +47,8 @@ class GrowTable( object ):
 		if grid.GetColLabelSize() > 0 and grid.GetNumberCols():
 			maxNewLines = max(grid.GetColLabelValue(c).count('\n') for c in range(grid.GetNumberCols()))
 			def fixNewLines( v ):
-				d = maxNewLines - v.count(u'\n')
-				return v if d == 0 else u'\n'*d + v
+				d = maxNewLines - v.count('\n')
+				return v if d == 0 else '\n'*d + v
 			for c in range(grid.GetNumberCols()):
 				self.set( 0, c+colLabel, fixNewLines(grid.GetColLabelValue(c)), self.bold )
 			rowLabel = 1
@@ -91,7 +91,7 @@ class GrowTable( object ):
 		
 	def set( self, row, col, value, attr=attrDefault ):
 		self.table += [[] for i in range(max(0, row+1 - len(self.table)))]
-		self.table[row] += [(u'', self.attrDefault) for i in range(max(0, col+1 - len(self.table[row])))]
+		self.table[row] += [('', self.attrDefault) for i in range(max(0, col+1 - len(self.table[row])))]
 		self.table[row][col] = (value, attr)
 		return row, col
 		
@@ -273,8 +273,8 @@ class GrowTable( object ):
 				for row, r in enumerate(self.table):
 					with tag( html, 'tr' ):
 						for col in range(numberCols):
-							value, attr = r[col] if col < len(r) else (u'', 0)
-							value = u'{}'.format(value)
+							value, attr = r[col] if col < len(r) else ('', 0)
+							value = '{}'.format(value)
 							classDef = []
 							if (row, col) in topBorder:
 								classDef.append('topBorder')
@@ -302,13 +302,13 @@ def getTitleGrowTable( includeApprovedBy = True ):
 	rowCur = 0
 	rowCur = gt.set( rowCur, 0, race.name, titleAttr )[0] + 1
 	rowCur = gt.set( rowCur, 0, race.category, titleAttr )[0] + 1
-	rowCur = gt.set( rowCur, 0, u'{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), titleAttr )[0] + 1
+	rowCur = gt.set( rowCur, 0, '{} Laps, {} Sprints, {} km'.format(race.laps, race.getNumSprints(), race.getDistance()), titleAttr )[0] + 1
 	rowCur = gt.set( rowCur, 0, race.date.strftime('%Y-%m-%d'), titleAttr )[0] + 1
 	
 	if race.communique:
-		rowCur = gt.set( rowCur, 0, u'Communiqu\u00E9: {}'.format(race.communique), GrowTable.alignRight )[0] + 1
+		rowCur = gt.set( rowCur, 0, 'Communiqu\u00E9: {}'.format(race.communique), GrowTable.alignRight )[0] + 1
 	if includeApprovedBy:
-		rowCur = gt.set( rowCur, 0, u'Approved by:________', GrowTable.alignRight )[0] + 1
+		rowCur = gt.set( rowCur, 0, 'Approved by:________', GrowTable.alignRight )[0] + 1
 	return gt
 
 def ToPrintout( dc, grid ):
@@ -357,26 +357,29 @@ def ToPrintout( dc, grid ):
 	fontSize = heightPix//85
 	font = wx.Font( wx.Size(0,fontSize), wx.FONTFAMILY_SWISS, wx.NORMAL, wx.FONTWEIGHT_NORMAL )
 	dc.SetFont( font )
-	text = u'Generated {}'.format( datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S') )
+	text = 'Generated {}'.format( datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S') )
 	footerTop = heightPix - borderPix + fontSize/2
 	dc.DrawText( text, widthPix - borderPix - dc.GetTextExtent(text)[0], footerTop )
 	
 	# Add branding
-	text = u'Powered by PointsRaceMgr'
+	text = 'Powered by PointsRaceMgr'
 	dc.DrawText( text, borderPix, footerTop )
 
 def ToHtml( html ):
-	for title, report in (('Results', Utils.getMainWin().rankSummary), ('Details', Utils.getMainWin().rankDetails), ):
+	for i, (title, report) in enumerate((('Results', Utils.getMainWin().rankSummary), ('Details', Utils.getMainWin().rankDetails), )):
+		if i:
+			html.write( '<br/><hr/><br/>' )
 		report.refresh()
-		ExportGrid( title, report.grid).toHtml( html )
-		html.write( u'<br/><hr/><br/>' )
-	Utils.getMainWin().commentary.refresh()
-	html.write(u'<span id="idRaceName">Commentary</span>')
-	Utils.getMainWin().commentary.toHtml(html)
+		ExportGrid(title, report.grid).toHtml( html )
+	
+	# html.write( '<br/><hr/><br/>' )
+	# Utils.getMainWin().commentary.refresh()
+	# html.write('<span id="idRaceName">Commentary</span>')
+	# Utils.getMainWin().commentary.toHtml(html)
 	
 def ToExcel( wb ):
 	for title, report in (('Results', Utils.getMainWin().rankSummary), ('Details', Utils.getMainWin().rankDetails), ):
 		sheetCur = wb.add_sheet( title )
 		report.refresh()
-		ExportGrid( title, report.grid).toExcelSheet( sheetCur )
+		ExportGrid(title, report.grid).toExcelSheet( sheetCur )
 

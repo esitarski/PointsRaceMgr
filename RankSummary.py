@@ -66,22 +66,22 @@ class RankSummary( wx.Panel ):
 			col += 1
 			
 			# Bib
-			self.grid.SetCellValue( row, col, u'{}'.format(rr.num) )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.num) )
 			col += 1
 	
 			# Rider info.
 			ri = riderInfo.get(rr.num, None)
 			for f in fieldNames:
-				self.grid.SetCellValue( row, col, u'{}'.format(getattr(ri,f,u'')) )
+				self.grid.SetCellValue( row, col, '{}'.format(getattr(ri,f,'')) )
 				col += 1
 				
 			# Wins
 			if hasNumWins:
-				self.grid.SetCellValue( row, col, u'{}'.format(rr.numWins) if rr.numWins else u'' )
+				self.grid.SetCellValue( row, col, '{}'.format(rr.numWins) if rr.numWins else '' )
 				col += 1
 				
 			# Finish order
-			self.grid.SetCellValue( row, col, u'{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else u'' )
+			self.grid.SetCellValue( row, col, '{}'.format(rr.finishOrder) if rr.finishOrder not in (0,1000) else '' )
 			col += 1
 
 		self.grid.EndBatch()

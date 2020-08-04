@@ -17,13 +17,13 @@ from contextlib import contextmanager
 def tag( buf, name, attrs = {} ):
 	if isinstance(attrs, six.string_types) and attrs:
 		attrs = { 'class': attrs }
-	buf.write( u'<{}>'.format( u' '.join(
-			[name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.items()]
+	buf.write( '<{}>'.format( ' '.join(
+			[name] + ['{}="{}"'.format(attr, value) for attr, value in attrs.items()]
 		) ) )
 	yield
-	buf.write( u'</{}>\n'.format(name) )
+	buf.write( '</{}>\n'.format(name) )
 
-brandText = u'Powered by PointsRaceMgr (sites.google.com/site/crossmgrsoftware)'
+brandText = 'Powered by PointsRaceMgr (sites.google.com/site/crossmgrsoftware)'
 
 def getHeaderFName():
 	''' Get the header bitmap if specified and exists, or use a default.  '''
@@ -54,7 +54,7 @@ def getHeaderBitmap():
 
 def writeHtmlHeader( buf, title ):
 	with tag(buf, 'span', {'id': 'idRaceName'}):
-		buf.write( u'{}'.format(cgi.escape(title).replace('\n', '<br/>\n')) )
+		buf.write( '{}'.format(cgi.escape(title).replace('\n', '<br/>\n')) )
 
 class ExportGrid:
 	PDFLineFactor = 1.10
@@ -95,7 +95,7 @@ class ExportGrid:
 		dc.SetFont( font )
 		wSpace, hSpace = dc.GetTextExtent( '    ' )
 		extents = [ dc.GetMultiLineTextExtent(self.colnames[col]) ]
-		extents.extend( dc.GetMultiLineTextExtent(u'{}'.format(v), font) for v in self.data[col] )
+		extents.extend( dc.GetMultiLineTextExtent('{}'.format(v), font) for v in self.data[col] )
 		return max( e[0] for e in extents ), sum( e[1] for e in extents ) + hSpace/4
 	
 	def _getDataSizeTuple( self, dc, font ):
@@ -188,7 +188,7 @@ class ExportGrid:
 		# Draw the table.
 		font = self._getFontToFit( widthFieldPix, heightFieldPix, lambda font: self._getDataSizeTuple(dc, font) )
 		dc.SetFont( font )
-		wSpace, hSpace  = dc.GetTextExtent( u'    ' )
+		wSpace, hSpace  = dc.GetTextExtent( '    ' )
 		textHeight = hSpace
 		
 		# Get the max height per row.
@@ -203,9 +203,9 @@ class ExportGrid:
 			yPix = yPixTop
 			w, h = dc.GetMultiLineTextExtent( c )
 			if col in self.leftJustifyCols:
-				self._drawMultiLineText( dc, u'{}'.format(c), xPix, yPix )					# left justify
+				self._drawMultiLineText( dc, '{}'.format(c), xPix, yPix )					# left justify
 			else:
-				self._drawMultiLineText( dc, u'{}'.format(c), xPix + colWidth - w, yPix )	# right justify
+				self._drawMultiLineText( dc, '{}'.format(c), xPix + colWidth - w, yPix )	# right justify
 			yPix += h + hSpace/4
 			if col == 0:
 				yLine = yPix - hSpace/8
@@ -215,7 +215,7 @@ class ExportGrid:
 					dc.DrawLine( borderPix, yLine, widthPix - borderPix, yLine )
 					
 			for r, v in enumerate(self.data[col]):
-				vStr = u'{}'.format(v)
+				vStr = '{}'.format(v)
 				if vStr:
 					w, h = dc.GetMultiLineTextExtent( vStr )
 					if col in self.leftJustifyCols:
@@ -303,7 +303,7 @@ class ExportGrid:
 								try:
 									buf.write( cgi.escape(self.data[col][row]).replace('\n', '<br/>\n') )
 								except IndexError:
-									buf.write( u'&nbsp;' )									
+									buf.write( '&nbsp;' )									
 		return buf
 			
 if __name__ == '__main__':

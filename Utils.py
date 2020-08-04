@@ -41,18 +41,18 @@ def removeDiacritic( s ):
 	without any diacritical marks.
 	'''
 	try:
-		return unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode()
+		return unicodedata.normalize('NFKD', '{}'.format(s)).encode('ASCII', 'ignore').decode()
 	except:
 		return s
 	
 invalidFilenameChars = re.compile( "[^-_.() " + string.ascii_letters + string.digits + "]" )
 def RemoveDisallowedFilenameChars( filename ):
-	cleanedFilename = unicodedata.normalize('NFKD', u'{}'.format(filename).strip()).encode('ASCII', 'ignore').decode()
+	cleanedFilename = unicodedata.normalize('NFKD', '{}'.format(filename).strip()).encode('ASCII', 'ignore').decode()
 	cleanedFilename = cleanedFilename.replace( '/', '_' ).replace( '\\', '_' )
 	return invalidFilenameChars.sub( '', cleanedFilename )
 
 def RemoveDisallowedSheetChars( sheetName ):
-	sheetName = unicodedata.normalize('NFKD', u'{}'.format(sheetName)).encode('ASCII', 'ignore').decode()
+	sheetName = unicodedata.normalize('NFKD', '{}'.format(sheetName)).encode('ASCII', 'ignore').decode()
 	return re.sub('[+!#$%&+~`".:;|\\\\/?*\[\] ]+', ' ', sheetName)[:31]		# four backslashes required to match one backslash in re.
 
 def ordinal( value ):
@@ -199,11 +199,11 @@ def tag( buf, name, attrs = {} ):
 	if not isinstance(attrs, dict) and attrs:
 		attrs = { 'class': attrs }
 	buf.write(
-		u'<{}>'.format(u' '.join( [name] + [u'{}="{}"'.format(attr, value) for attr, value in attrs.items()] ) )
+		'<{}>'.format(' '.join( [name] + ['{}="{}"'.format(attr, value) for attr, value in attrs.items()] ) )
 	)
 	yield
 	if name not in ('meta', 'img'):
-		buf.write( u'</{}>\n'.format(name) )
+		buf.write( '</{}>\n'.format(name) )
 
 #------------------------------------------------------------------------
 try:
@@ -236,7 +236,7 @@ def writeLog( message ):
 	try:
 		dt = datetime.datetime.now()
 		dt = dt.replace( microsecond = 0 )
-		msg = u'{} ({}) {}{}'.format(
+		msg = '{} ({}) {}{}'.format(
 			dt.isoformat(),
 			PlatformName,
 			message,
@@ -257,11 +257,11 @@ def disable_stdout_buffering():
 		
 def logCall( f ):
 	def _getstr( x ):
-		return u'{}'.format(x) if not isinstance(x, wx.Object) else u'<<{}>>'.format(x.__class__.__name__)
+		return '{}'.format(x) if not isinstance(x, wx.Object) else '<<{}>>'.format(x.__class__.__name__)
 	
 	def new_f( *args, **kwargs ):
-		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
-		writeLog( 'call: {}({})'.format(f.__name__, removeDiacritic(u', '.join(parameters))) )
+		parameters = [_getstr(a) for a in args] + [ '{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
+		writeLog( 'call: {}({})'.format(f.__name__, removeDiacritic(', '.join(parameters))) )
 		return f( *args, **kwargs)
 	return new_f
 	
@@ -275,9 +275,9 @@ def logException( e, exc_info ):
 	writeLog( '**** End Exception ****' )
 
 def asInt( v ):
-	return u'{}'.format(int(v))
+	return '{}'.format(int(v))
 def asFloat( v ):
-	return u'{:.1f}'.format(float(v))
+	return '{:.1f}'.format(float(v))
 
 #------------------------------------------------------------------------
 

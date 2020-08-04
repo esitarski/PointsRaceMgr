@@ -55,18 +55,18 @@ class StartList(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
 		
-		explanation = wx.StaticText( self, label=u'To delete a row, set Bib to blank and press Commit.' )
+		explanation = wx.StaticText( self, label='To delete a row, set Bib to blank and press Commit.' )
 		
-		self.commitButton = wx.Button( self, label=u'Commit' )
+		self.commitButton = wx.Button( self, label='Commit' )
 		self.commitButton.Bind( wx.EVT_BUTTON, self.onCommit )
 		
-		self.addRows = wx.Button( self, label=u'Add Rows' )
+		self.addRows = wx.Button( self, label='Add Rows' )
 		self.addRows.Bind( wx.EVT_BUTTON, self.onAddRows )
 		
-		self.importFromExcel = wx.Button( self, label=u'Import from Excel' )
+		self.importFromExcel = wx.Button( self, label='Import from Excel' )
 		self.importFromExcel.Bind( wx.EVT_BUTTON, self.onImportFromExcel )
 		
-		self.pasteFromClipboard = wx.Button( self, id=wx.ID_PASTE, label=u'Paste \U0001F4CB' )
+		self.pasteFromClipboard = wx.Button( self, id=wx.ID_PASTE, label='Paste \U0001F4CB' )
 		self.pasteFromClipboard.Bind( wx.EVT_BUTTON, self.onPaste )
 		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
@@ -132,7 +132,7 @@ class StartList(wx.Panel):
 					if field == 'bib':
 						v = ri.bib = missingBib
 						missingBib += 1
-				self.grid.SetCellValue( row, col, u'{}'.format(v) )
+				self.grid.SetCellValue( row, col, '{}'.format(v) )
 		self.grid.AutoSize()
 		self.Layout()
 		
@@ -179,22 +179,22 @@ class StartList(wx.Panel):
 			if fm:
 				f = fm.finder( row )
 				info = {
-					'bib': 			f('bib',u''),
-					'first_name':	u'{}'.format(f('first_name',u'')).strip(),
-					'last_name':	u'{}'.format(f('last_name',u'')).strip(),
-					'license':		u'{}'.format(f('license_code',u'')).strip(),
-					'team':			u'{}'.format(f('team',u'')).strip(),
-					'uci_id':		u'{}'.format(f('uci_id',u'')).strip(),
-					'nation_code':		u'{}'.format(f('nation_code',u'')).strip(),
-					'existing_points':	u'{}'.format(f('existing_points',u'0')).strip(),
+					'bib': 			f('bib',''),
+					'first_name':	'{}'.format(f('first_name','')).strip(),
+					'last_name':	'{}'.format(f('last_name','')).strip(),
+					'license':		'{}'.format(f('license_code','')).strip(),
+					'team':			'{}'.format(f('team','')).strip(),
+					'uci_id':		'{}'.format(f('uci_id','')).strip(),
+					'nation_code':		'{}'.format(f('nation_code','')).strip(),
+					'existing_points':	'{}'.format(f('existing_points','0')).strip(),
 				}
 				
-				info['bib'] = u'{}'.format(info['bib']).strip()
+				info['bib'] = '{}'.format(info['bib']).strip()
 				if not info['bib']:	# If missing bib, assume end of input.
 					continue
 				
 				# Check for comma-separated name.
-				name = u'{}'.format(f('name', u'')).strip()
+				name = '{}'.format(f('name', '')).strip()
 				if name and not info['first_name'] and not info['last_name']:
 					try:
 						info['last_name'], info['first_name'] = name.split(',',1)
@@ -203,14 +203,14 @@ class StartList(wx.Panel):
 				
 				# If there is a bib it must be numeric.
 				try:
-					info['bib'] = int(u'{}'.format(info['bib']).strip())
+					info['bib'] = int('{}'.format(info['bib']).strip())
 				except ValueError:
 					continue
 
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )
 				
-			elif any( u'{}'.format(h).strip().lower() in self.bibHeader for h in row ):
+			elif any( '{}'.format(h).strip().lower() in self.bibHeader for h in row ):
 				fm = standard_field_map()
 				fm.set_headers( row )
 				
@@ -219,21 +219,21 @@ class StartList(wx.Panel):
 		
 	def onImportFromExcel( self, event ):
 		dlg = wx.MessageBox(
-			u'Import from Excel\n\n'
-			u'Reads the first sheet in the file.\n'
-			u'Looks for the first row starting with "Bib","BibNum","Bib Num", "Bib #" or "Bib#".\n\n'
-			u'Recognizes the following header fields (in any order, case insensitive):\n'
-			u'\u2022 Bib|BibNum|Bib Num|Bib #|Bib#: Bib Number\n'
-			u'\u2022 Points|Existing Points: Existing points at the start of the race.\n'
-			u'\u2022 LastName|Last Name|LName: Last Name\n'
-			u'\u2022 FirstName|First Name|FName: First Name\n'
-			u'\u2022 Name: in the form "LastName, FirstName".  Used only if no Last Name or First Name\n'
-			u'\u2022 Team|Team Name|TeamName|Rider Team|Club|Club Name|ClubName|Rider Club: Team\n'
-			u'\u2022 License|Licence: Regional License (not uci code)\n'
-			u'\u2022 UCI ID|UCIID: UCI ID.\n'
-			u'\u2022 Nat Code|NatCode|NationCode: 3 letter nation code.\n'
+			'Import from Excel\n\n'
+			'Reads the first sheet in the file.\n'
+			'Looks for the first row starting with "Bib","BibNum","Bib Num", "Bib #" or "Bib#".\n\n'
+			'Recognizes the following header fields (in any order, case insensitive):\n'
+			'\u2022 Bib|BibNum|Bib Num|Bib #|Bib#: Bib Number\n'
+			'\u2022 Points|Existing Points: Existing points at the start of the race.\n'
+			'\u2022 LastName|Last Name|LName: Last Name\n'
+			'\u2022 FirstName|First Name|FName: First Name\n'
+			'\u2022 Name: in the form "LastName, FirstName".  Used only if no Last Name or First Name\n'
+			'\u2022 Team|Team Name|TeamName|Rider Team|Club|Club Name|ClubName|Rider Club: Team\n'
+			'\u2022 License|Licence: Regional License (not uci code)\n'
+			'\u2022 UCI ID|UCIID: UCI ID.\n'
+			'\u2022 Nat Code|NatCode|NationCode: 3 letter nation code.\n'
 			,
-			u'Import from Excel',
+			'Import from Excel',
 			wx.OK|wx.CANCEL | wx.ICON_INFORMATION,
 		)
 		
@@ -259,22 +259,22 @@ class StartList(wx.Panel):
 			if fm:
 				f = fm.finder( row )
 				info = {
-					'bib': 			f('bib',u''),
-					'first_name':	u'{}'.format(f('first_name',u'')).strip(),
-					'last_name':	u'{}'.format(f('last_name',u'')).strip(),
-					'license':		u'{}'.format(f('license_code',u'')).strip(),
-					'team':			u'{}'.format(f('team',u'')).strip(),
-					'uci_id':		u'{}'.format(f('uci_id',u'')).strip(),
-					'nation_code':		u'{}'.format(f('nation_code',u'')).strip(),
-					'existing_points':	u'{}'.format(f('existing_points',u'0')).strip(),
+					'bib': 			f('bib',''),
+					'first_name':	'{}'.format(f('first_name','')).strip(),
+					'last_name':	'{}'.format(f('last_name','')).strip(),
+					'license':		'{}'.format(f('license_code','')).strip(),
+					'team':			'{}'.format(f('team','')).strip(),
+					'uci_id':		'{}'.format(f('uci_id','')).strip(),
+					'nation_code':		'{}'.format(f('nation_code','')).strip(),
+					'existing_points':	'{}'.format(f('existing_points','0')).strip(),
 				}
 				
-				info['bib'] = u'{}'.format(info['bib']).strip()
+				info['bib'] = '{}'.format(info['bib']).strip()
 				if not info['bib']:	# If missing bib, assume end of input.
 					continue
 				
 				# Check for comma-separated name.
-				name = u'{}'.format(f('name', u'')).strip()
+				name = '{}'.format(f('name', '')).strip()
 				if name and not info['first_name'] and not info['last_name']:
 					try:
 						info['last_name'], info['first_name'] = name.split(',',1)
@@ -283,14 +283,14 @@ class StartList(wx.Panel):
 				
 				# If there is a bib it must be numeric.
 				try:
-					info['bib'] = int(u'{}'.format(info['bib']).strip())
+					info['bib'] = int('{}'.format(info['bib']).strip())
 				except ValueError:
 					continue
 				
 				ri = Model.RiderInfo( **info )
 				riderInfo.append( ri )
 				
-			elif any( u'{}'.format(h).strip().lower() in self.bibHeader for h in row ):
+			elif any( '{}'.format(h).strip().lower() in self.bibHeader for h in row ):
 				fm = standard_field_map()
 				fm.set_headers( row )
 				

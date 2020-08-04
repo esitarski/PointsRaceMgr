@@ -32,7 +32,7 @@ class Configure( wx.Panel ):
 		self.gbs = wx.GridBagSizer( 4, 4 )
 		
 		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Race Name:' )
+		label = wx.StaticText( self, label='Race Name:' )
 		self.gbs.Add( label, pos=(0, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
 		ctrl.Bind(wx.EVT_TEXT, self.onChange)
@@ -41,7 +41,7 @@ class Configure( wx.Panel ):
 		self.nameCtrl = ctrl
 		
 		hs = wx.BoxSizer( wx.HORIZONTAL )
-		label = wx.StaticText( self, label=u'Date:' )
+		label = wx.StaticText( self, label='Date:' )
 		hs.Add( label, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.adv.DatePickerCtrl( self, style = wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY, size=(132,-1) )
 		ctrl.Bind( wx.adv.EVT_DATE_CHANGED, self.onChange )
@@ -49,7 +49,7 @@ class Configure( wx.Panel ):
 		self.dateLabel = label
 		self.dateCtrl = ctrl
 		
-		label = wx.StaticText( self, label=u'Communiqu\u00E9:' )
+		label = wx.StaticText( self, label='Communiqu\u00E9:' )
 		hs.Add( label, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
 		ctrl.Bind(wx.EVT_TEXT, self.onChange)
@@ -60,7 +60,7 @@ class Configure( wx.Panel ):
 		self.gbs.Add( hs, pos=(0, 6), span=(1, 3) )
 		
 		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Category:' )
+		label = wx.StaticText( self, label='Category:' )
 		self.gbs.Add( label, pos=(1, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.TextCtrl( self, style=wx.TE_PROCESS_ENTER )
 		ctrl.Bind(wx.EVT_TEXT, self.onChange)
@@ -68,12 +68,12 @@ class Configure( wx.Panel ):
 		self.categoryLabel = label
 		self.categoryCtrl = ctrl
 		
-		label = wx.StaticText( self, label=u'Rank By:', style = wx.ALIGN_RIGHT )
+		label = wx.StaticText( self, label='Rank By:', style = wx.ALIGN_RIGHT )
 		self.gbs.Add( label, pos=(1, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.Choice( self, choices=[
-				u'Points then Finish Order',
-				u'Laps Completed, Points then Finish Order',
-				u'Laps Completed, Points, Num Wins then Finish Order'
+				'Points then Finish Order',
+				'Laps Completed, Points then Finish Order',
+				'Laps Completed, Points, Num Wins then Finish Order'
 			]
 		)
 		ctrl.SetSelection( 0 )
@@ -83,7 +83,7 @@ class Configure( wx.Panel ):
 		self.rankByCtrl = ctrl
 
 		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Total:' )
+		label = wx.StaticText( self, label='Total:' )
 		self.gbs.Add( label, pos=(2, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = IC.IntCtrl( self, min=1, max=300, value=1, limited=True, style=wx.ALIGN_RIGHT, size=(40,-1) )
 		ctrl.Bind(IC.EVT_INT, self.onChange)
@@ -95,7 +95,7 @@ class Configure( wx.Panel ):
 		self.lapsCtrl = ctrl
 		
 		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Start Laps:' )
+		label = wx.StaticText( self, label='Start Laps:' )
 		self.gbs.Add( label, pos=(2, 3), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = IC.IntCtrl( self, min=0, max=300, value=0, limited=True, style=wx.ALIGN_RIGHT, size=(40,-1) )
 		ctrl.Bind(IC.EVT_INT, self.onChange)
@@ -103,18 +103,18 @@ class Configure( wx.Panel ):
 		self.startLapsLabel = label
 		self.startLapsCtrl = ctrl
 		
-		ctrl = wx.StaticText( self, -1, u'Distance: 10.0m' )
+		ctrl = wx.StaticText( self, -1, 'Distance: 10.0m' )
 		self.gbs.Add( ctrl, pos=(2, 5), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
 		self.distanceCtrl = ctrl
 
-		label = wx.StaticText( self, label=u'Points for Place:', style = wx.ALIGN_RIGHT )
+		label = wx.StaticText( self, label='Points for Place:', style = wx.ALIGN_RIGHT )
 		self.gbs.Add( label, pos=(2, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = wx.TextCtrl( self )
 		self.gbs.Add( ctrl, pos=(2, 7), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 		self.pointsForPlaceLabel = label
 		self.pointsForPlaceCtrl = ctrl
 
-		label = wx.CheckBox( self, label=u'Double Points on Last Sprint' )
+		label = wx.CheckBox( self, label='Double Points on Last Sprint' )
 		self.gbs.Add( label, pos=(2, 8), flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = label
 		ctrl.Bind( wx.EVT_CHECKBOX, self.onChange )
@@ -122,7 +122,7 @@ class Configure( wx.Panel ):
 		self.doublePointsForLastSprintCtrl = ctrl
 		
 		#--------------------------------------------------------------------------------------------------------------
-		label = wx.StaticText( self, label=u'Sprint Every:' )
+		label = wx.StaticText( self, label='Sprint Every:' )
 		self.gbs.Add( label, pos=(3, 0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = IC.IntCtrl( self, min=1, max=300, value=1, limited=True, style=wx.ALIGN_RIGHT, size=(40,-1) )
 		ctrl.Bind(IC.EVT_INT, self.onChange)
@@ -133,7 +133,7 @@ class Configure( wx.Panel ):
 		self.sprintEveryCtrl = ctrl
 		self.sprintEveryUnitsLabel = unitsLabel
 		
-		label = wx.StaticText( self, label=u'Course Len:' )
+		label = wx.StaticText( self, label='Course Len:' )
 		self.gbs.Add( label, pos=(3, 3), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		
 		ctrl = NC.NumCtrl( self, min = 0, integerWidth=3, fractionWidth=2, style=wx.ALIGN_RIGHT, size=(24,-1), useFixedWidthFont=False )
@@ -141,7 +141,7 @@ class Configure( wx.Panel ):
 		ctrl.Bind(wx.EVT_TEXT, self.onChange)
 		self.gbs.Add( ctrl, pos=(3, 4), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
 		
-		unitCtrl = wx.Choice( self, choices=[u'm', u'km'] )
+		unitCtrl = wx.Choice( self, choices=['m', 'km'] )
 		unitCtrl.SetSelection( 0 )
 		unitCtrl.Bind(wx.EVT_CHOICE, self.onChange)
 		self.gbs.Add( unitCtrl, pos=(3, 5), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL )
@@ -149,7 +149,7 @@ class Configure( wx.Panel ):
 		self.courseLengthCtrl = ctrl
 		self.courseLengthUnitCtrl = unitCtrl
 
-		label = wx.StaticText( self, label=u'+/- Lap Points:' )
+		label = wx.StaticText( self, label='+/- Lap Points:' )
 		self.gbs.Add( label, pos=(3, 6), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = IC.IntCtrl( self, min=0, max=100, value=0, limited=True, style=wx.ALIGN_RIGHT, size=(32,-1) )
 		ctrl.Bind(IC.EVT_INT, self.onChange)
@@ -157,7 +157,7 @@ class Configure( wx.Panel ):
 		self.pointsForLappingLabel = label
 		self.pointsForLappingCtrl = ctrl
 
-		label = wx.CheckBox( self, label=u'Snowball' )
+		label = wx.CheckBox( self, label='Snowball' )
 		self.gbs.Add( label, pos=(3, 8), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=16 )
 		ctrl = label
 		ctrl.Bind( wx.EVT_CHECKBOX, self.onChange )
@@ -250,7 +250,7 @@ class Configure( wx.Panel ):
 		if not race:
 			return
 
-		self.distanceCtrl.SetLabel( u'{}, {} Sprints'.format(race.getDistanceStr(), race.getNumSprints()) )
+		self.distanceCtrl.SetLabel( '{}, {} Sprints'.format(race.getDistanceStr(), race.getNumSprints()) )
 		self.gbs.Layout()
 
 	def commit( self ):
@@ -298,7 +298,7 @@ class Configure( wx.Panel ):
 			dt.Set(d.day, d.month - 1, d.year, 0, 0, 0, 0)	# Adjust to 0-based month
 			getattr(self, field + 'Ctrl').SetValue( dt )
 		
-		v = u','.join( u'{}'.format(points) for place, points in sorted( race.pointsForPlace.items()) )
+		v = ','.join( '{}'.format(points) for place, points in sorted( race.pointsForPlace.items()) )
 		self.pointsForPlaceCtrl.SetValue( v )
 		
 		self.updateDependentFields()

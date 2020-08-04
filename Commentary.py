@@ -23,34 +23,34 @@ class Commentary( wx.Panel ):
 
 		def infoLinesSprint( sprint, bibs ):
 			lines = []
-			pfpText = u''
+			pfpText = ''
 			for place_in, bib in enumerate(bibs,1):
 				ri = riderInfo.get( bib, None )
 				points, place, tie = race.getSprintPoints( sprint, place_in, bibs )
 				if points:
 					pfpText = ' ({:+d} pts)'.format(points)
 				else:
-					pfpText = u''
+					pfpText = ''
 				if ri is not None:
-					lines.append( u'    {}.{}  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
+					lines.append( '    {}.{}  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
 				else:
-					lines.append( u'    {}.{}  {}'.format(place, pfpText, bib) )
+					lines.append( '    {}.{}  {}'.format(place, pfpText, bib) )
 			return lines
 		
 		def infoLines( bibs, pointsForPlace=None ):
 			lines = []
-			pfpText = u''
+			pfpText = ''
 			for place_in, bib in enumerate(bibs,1):
 				ri = riderInfo.get( bib, None )
 				points = pointsForPlace
 				if points:
 					pfpText = ' ({:+d} pts)'.format(points)
 				else:
-					pfpText = u''
+					pfpText = ''
 				if ri is not None:
-					lines.append( u'    {}.{}  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
+					lines.append( '    {}.{}  {}: {} {}, {}'.format( place, pfpText, bib, ri.first_name, ri.last_name, ri.team ) )
 				else:
-					lines.append( u'    {}.{}  {}'.format(place, pfpText, bib) )
+					lines.append( '    {}.{}  {}'.format(place, pfpText, bib) )
 			return lines
 		
 		RaceEvent = Model.RaceEvent
@@ -61,7 +61,7 @@ class Commentary( wx.Panel ):
 			if   e.eventType == RaceEvent.Sprint:
 				self.sprintCount += 1
 				lines.append( 'Sprint {} Result:'.format(self.sprintCount) )
-				lines.extend( infoLinesSprint(sprint, e.bibs[:len(race.pointsForPlace)]) )
+				lines.extend( infoLinesSprint(self.sprintCount, e.bibs[:len(race.pointsForPlace)]) )
 			
 			elif e.eventType == RaceEvent.LapUp:
 				lines.append( 'Gained a Lap:' )

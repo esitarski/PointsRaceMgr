@@ -264,7 +264,7 @@ class EventList( wx.Panel ):
 				name = e.eventTypeName
 				if e.eventType == Finish:
 					sprintCount += 1
-					name += u' ({})'.format( race.getSprintLabel(sprintCount) )
+					name += ' ({})'.format( race.getSprintLabel(sprintCount) )
 					
 			self.grid.SetCellValue( row, 0, name )
 			self.grid.SetCellValue( row, 1, e.bibStr() )

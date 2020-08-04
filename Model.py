@@ -128,7 +128,7 @@ class RiderInfo:
 		return all(getattr(self,a) == getattr(ri,a) for a in self.FieldNames)
 		
 	def __repr__( self ):
-		return 'RiderInfo({})'.format(u','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
+		return 'RiderInfo({})'.format(','.join('{}="{}"'.format(a,getattr(self,a)) for a in self.FieldNames))
 
 class GetRank:
 	def __init__( self ):
@@ -244,9 +244,9 @@ class Race:
 
 	def reset( self ):
 		self.name = '<RaceName>'
-		self.communique = u''
+		self.communique = ''
 		self.category = '<Category>'
-		self.notes = u''
+		self.notes = ''
 		self.sprintEvery = 10
 		self.courseLength = 250.0
 		self.courseLengthUnit = 0	# 0 = Meters, 1 = Km
@@ -302,8 +302,8 @@ class Race:
 	
 	def getSprintLabel( self, sprint ):
 		if self.doublePointsForLastSprint and sprint == self.getNumSprints():
-			return u'Sp{} \u00D72'.format(sprint)
-		return u'Sp{}'.format(sprint)
+			return 'Sp{} \u00D72'.format(sprint)
+		return 'Sp{}'.format(sprint)
 	
 	def getMaxPlace( self ):
 		maxPlace = 2

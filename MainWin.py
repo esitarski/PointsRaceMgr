@@ -154,41 +154,41 @@ class MainWin( wx.Frame ):
 
 		self.configureMenu = wx.Menu()
 		
-		item = self.configureMenu.Append( wx.ID_ANY, u"&Points Race", "Configure Points Race" )
+		item = self.configureMenu.Append( wx.ID_ANY, "&Points Race", "Configure Points Race" )
 		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigurePointsRace(), item )
 		
-		self.configureMenu.Append( wx.ID_ANY, u"&Madison", "Configure Madison" )
+		self.configureMenu.Append( wx.ID_ANY, "&Madison", "Configure Madison" )
 		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureMadison(), item )
 		
 		self.configureMenu.AppendSeparator()
 		
-		item = self.configureMenu.Append( wx.ID_ANY, u"&Tempo", "Configure UCI Tempo Points Race" )
+		item = self.configureMenu.Append( wx.ID_ANY, "&Tempo", "Configure UCI Tempo Points Race" )
 		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoRace(), item )
 
-		item = self.configureMenu.Append( wx.ID_ANY, u"&Tempo Top 2", "Configure Tempo Points Race Top 2" )
+		item = self.configureMenu.Append( wx.ID_ANY, "&Tempo Top 2", "Configure Tempo Points Race Top 2" )
 		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureTempoTop2Race(), item )
 
 		self.configureMenu.AppendSeparator()
 		
-		item = self.configureMenu.Append( wx.ID_ANY, u"&Snowball", "Configure Snowball Points Race" )
+		item = self.configureMenu.Append( wx.ID_ANY, "&Snowball", "Configure Snowball Points Race" )
 		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureSnowballRace(), item )
 		
 		self.configureMenu.AppendSeparator()
 		
-		item = self.configureMenu.Append( wx.ID_ANY, u"&Criterium", "Configure Criterium Race" )
+		item = self.configureMenu.Append( wx.ID_ANY, "&Criterium", "Configure Criterium Race" )
 		self.Bind(wx.EVT_MENU, lambda e: self.configure.ConfigureCriteriumRace(), item )
 		
-		self.menuBar.Append( self.configureMenu, u"&ConfigureRace" )
+		self.menuBar.Append( self.configureMenu, "&ConfigureRace" )
 		#-----------------------------------------------------------------------
 		self.helpMenu = wx.Menu()
 
-		self.helpMenu.Append( wx.ID_HELP , u"&Help...", "Help..." )
+		self.helpMenu.Append( wx.ID_HELP , "&Help...", "Help..." )
 		self.Bind(wx.EVT_MENU, self.menuHelp, id=wx.ID_HELP )
 
-		self.helpMenu.Append( wx.ID_ABOUT , u"&About...", "About PointsRaceMgr..." )
+		self.helpMenu.Append( wx.ID_ABOUT , "&About...", "About PointsRaceMgr..." )
 		self.Bind(wx.EVT_MENU, self.menuAbout, id=wx.ID_ABOUT )
 
-		self.menuBar.Append( self.helpMenu, u"&Help" )
+		self.menuBar.Append( self.helpMenu, "&Help" )
 
 		self.SetMenuBar( self.menuBar )
 		#------------------------------------------------------------------------------
@@ -218,9 +218,9 @@ class MainWin( wx.Frame ):
 	def setTitle( self ):
 		race = Model.race
 		if self.fileName:
-			title = u'{}: {}{} - {}'.format(race.category, '*' if race.isChanged() else '', self.fileName, Version.AppVerName)
+			title = '{}: {}{} - {}'.format(race.category, '*' if race.isChanged() else '', self.fileName, Version.AppVerName)
 		else:
-			title = u'{}: {}'.format( race.category, Version.AppVerName )
+			title = '{}: {}'.format( race.category, Version.AppVerName )
 		self.SetTitle( title )
 	
 	def callPageCommit( self, i ):
@@ -235,7 +235,7 @@ class MainWin( wx.Frame ):
 		label = grid.GetColLabelValue(col)
 		labels = [label]
 		if label == race.getSprintLabel(race.getNumSprints()):
-			labels.append( u'Finish' )
+			labels.append( 'Finish' )
 		
 		egrid = self.eventList.grid
 		egrid.ClearSelection()
@@ -249,7 +249,7 @@ class MainWin( wx.Frame ):
 		self.callPageCommit( event.GetOldSelection() )
 		self.callPageRefresh( event.GetSelection() )
 		try:
-			Utils.writeLog( u'page: {}\n'.format(notebook.GetPage(event.GetSelection()).__class__.__name__) )
+			Utils.writeLog( 'page: {}\n'.format(notebook.GetPage(event.GetSelection()).__class__.__name__) )
 		except IndexError:
 			pass
 		event.Skip()	# Required to properly repaint the screen.
@@ -263,7 +263,7 @@ class MainWin( wx.Frame ):
 		self.commit()
 		self.refresh()
 		if not self.fileName:
-			if not Utils.MessageOKCancel( self, u'You must save first.\n\nSave now?', u'Save Now'):
+			if not Utils.MessageOKCancel( self, 'You must save first.\n\nSave now?', 'Save Now'):
 				return
 			if not self.menuSaveAs( event ):
 				return
@@ -275,7 +275,7 @@ class MainWin( wx.Frame ):
 		try:
 			with io.open( htmlFName, 'w', encoding='utf8' ) as html:
 				def write( v ):
-					html.write( u'{}'.format(v) )
+					html.write( '{}'.format(v) )
 				
 				with tag(html, 'html'):
 					with tag(html, 'head'):
@@ -290,7 +290,7 @@ class MainWin( wx.Frame ):
 						with tag(html, 'meta', dict(name='generator', content="PointsRaceMgr")):
 							pass
 						with tag(html, 'style', dict( type="text/css")):
-							write( u'''
+							write( '''
 body{ font-family: sans-serif; }
 
 h1{ font-size: 250%; }
@@ -437,11 +437,11 @@ hr { clear: both; }
 ''')
 					with tag(html, 'body'):
 						with tag(html, 'h1'):
-							write( u'{}: {}'.format(cgi.escape(race.name), race.date.strftime('%Y-%m-%d')) )
+							write( '{}: {}'.format(cgi.escape(race.name), race.date.strftime('%Y-%m-%d')) )
 							if race.communique:
-								write( u': Communiqu\u00E9 {}'.format(cgi.escape(race.communique)) )
+								write( ': Communiqu\u00E9 {}'.format(cgi.escape(race.communique)) )
 						with tag(html, 'h2'):
-							write( u'Category: {}'.format(cgi.escape(race.category)) )
+							write( 'Category: {}'.format(cgi.escape(race.category)) )
 						
 						d = race.courseLength*race.laps
 						if d == int(d):
@@ -451,11 +451,11 @@ hr { clear: both; }
 						
 						with tag(html, 'h3'):
 							s =  [
-								u'Laps: {}'.format(race.laps),
-								u'Sprint Every: {} laps'.format(race.sprintEvery),
-								u'Distance: {}{}'.format( d, ['m','km'][race.courseLengthUnit] ),
+								'Laps: {}'.format(race.laps),
+								'Sprint Every: {} laps'.format(race.sprintEvery),
+								'Distance: {}{}'.format( d, ['m','km'][race.courseLengthUnit] ),
 							]
-							write( u',  '.join(s) )
+							write( ',  '.join(s) )
 						write( '<br/>' )
 						write( '<hr/>' )
 						write( '<br/>' )
@@ -471,7 +471,7 @@ hr { clear: both; }
 		except Exception as e:
 			traceback.print_exc()
 			Utils.MessageOK(self,
-						u'Cannot write "{}"\n\n{}\n\nCheck if this file is open.\nIf so, close it, and try again.'.format(htmlFName,e),
+						'Cannot write "{}"\n\n{}\n\nCheck if this file is open.\nIf so, close it, and try again.'.format(htmlFName,e),
 						'HTML File Error', iconMask=wx.ICON_ERROR )
 		
 		try:
@@ -484,7 +484,7 @@ hr { clear: both; }
 		self.commit()
 		self.refresh()
 		if not self.fileName:
-			if not Utils.MessageOKCancel( self, u'You must save first.\n\nSave now?', u'Save Now'):
+			if not Utils.MessageOKCancel( self, 'You must save first.\n\nSave now?', 'Save Now'):
 				return
 			if not self.menuSaveAs( event ):
 				return
@@ -504,7 +504,7 @@ hr { clear: both; }
 		except Exception as e:
 			traceback.print_exc()
 			Utils.MessageOK(self,
-						u'Cannot write "{}"\n\n{}\n\nCheck if this spreadsheet is open.\nIf so, close it, and try again.'.format(xlFName,e),
+						'Cannot write "{}"\n\n{}\n\nCheck if this spreadsheet is open.\nIf so, close it, and try again.'.format(xlFName,e),
 						'Excel File Error', iconMask=wx.ICON_ERROR )
 
 	#--------------------------------------------------------------------------------------------
@@ -515,7 +515,7 @@ hr { clear: both; }
 		race = Model.race
 		if race.isChanged():
 			if not self.fileName:
-				ret = Utils.MessageYesNoCancel(self, u'Close:\n\nUnsaved changes!\nSave to a file?', u'Missing filename')
+				ret = Utils.MessageYesNoCancel(self, 'Close:\n\nUnsaved changes!\nSave to a file?', 'Missing filename')
 				if ret == wx.ID_YES:
 					if not self.menuSaveAs():
 						event.StopPropagation()
@@ -524,7 +524,7 @@ hr { clear: both; }
 					event.StopPropagation()
 					return
 			else:
-				ret = Utils.MessageYesNoCancel(self, u'Close:\n\nUnsaved changes!\nSave changes before Exit?', u'Unsaved Changes')
+				ret = Utils.MessageYesNoCancel(self, 'Close:\n\nUnsaved changes!\nSave changes before Exit?', 'Unsaved Changes')
 				if ret == wx.ID_YES:
 					self.writeRace()
 				elif ret == wx.ID_CANCEL:
@@ -547,18 +547,18 @@ hr { clear: both; }
 		if not race:
 			return
 		if not self.fileName:
-			if Utils.MessageOKCancel(self, u'WriteRace:\n\nMissing filename.\nSave to a file?', u'Missing filename'): 
+			if Utils.MessageOKCancel(self, 'WriteRace:\n\nMissing filename.\nSave to a file?', 'Missing filename'): 
 				wx.CallAfter( self.menuSaveAs )
 			return
 			
 		try:
 			self.writeRaceValidFileName()
 		except Exception as e:
-			Utils.MessageOK( self, u'WriteRace:\n\n{}\n\nError writing to file.\n\nRace NOT saved.\n\nTry "File|Save As..." again.'.format(e), iconMask = wx.ICON_ERROR )
+			Utils.MessageOK( self, 'WriteRace:\n\n{}\n\nError writing to file.\n\nRace NOT saved.\n\nTry "File|Save As..." again.'.format(e), iconMask = wx.ICON_ERROR )
 
 	def menuNew( self, event ):
 		if Model.race.isChanged():
-			ret = Utils.MessageYesNoCancel( self, u'NewRace:\n\nYou have unsaved changes.\n\nSave now?', u'Unsaved changes')
+			ret = Utils.MessageYesNoCancel( self, 'NewRace:\n\nYou have unsaved changes.\n\nSave now?', 'Unsaved changes')
 			if ret == wx.ID_YES:
 				self.menuSave()
 			elif ret == wx.ID_NO:
@@ -571,7 +571,7 @@ hr { clear: both; }
 	
 	def menuNewNext( self, event ):
 		if Model.race.isChanged():
-			ret = Utils.MessageYesNoCancel( self, u'NewRace:\n\nYou have unsaved changes.\n\nSave now?', u'Unsaved changes')
+			ret = Utils.MessageYesNoCancel( self, 'NewRace:\n\nYou have unsaved changes.\n\nSave now?', 'Unsaved changes')
 			if ret == wx.ID_YES:
 				self.menuSave()
 			elif ret == wx.ID_NO:
@@ -602,7 +602,7 @@ hr { clear: both; }
 		if not fileName:
 			return
 		if Model.race.isChanged():
-			ret = Utils.MessageYesNoCancel( self, u'OpenRace:\n\nYou have unsaved changes.\n\nSave now?', u'Unsaved changes')
+			ret = Utils.MessageYesNoCancel( self, 'OpenRace:\n\nYou have unsaved changes.\n\nSave now?', 'Unsaved changes')
 			if ret == wx.ID_YES:
 				self.menuSave()
 			elif ret == wx.ID_NO:
@@ -626,14 +626,14 @@ hr { clear: both; }
 			self.refresh()
 
 		except IOError:
-			Utils.MessageOK(self, u'Cannot open file "{}".'.format(fileName), 'Cannot Open File', iconMask=wx.ICON_ERROR )
+			Utils.MessageOK(self, 'Cannot open file "{}".'.format(fileName), 'Cannot Open File', iconMask=wx.ICON_ERROR )
 		except AttributeError:
-			Utils.MessageOK(self, u'Bad race file "{}".'.format(fileName), u'Cannot Open File', iconMask=wx.ICON_ERROR )
+			Utils.MessageOK(self, 'Bad race file "{}".'.format(fileName), 'Cannot Open File', iconMask=wx.ICON_ERROR )
 
 	def menuOpen( self, event ):
-		dlg = wx.FileDialog( self, message=u"Choose a Race file",
+		dlg = wx.FileDialog( self, message="Choose a Race file",
 							defaultFile = '',
-							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',
+							wildcard = 'PointsRaceMgr files (*.tp5)|*.tp5',
 							style=wx.FD_OPEN | wx.FD_CHANGE_DIR )
 		if dlg.ShowModal() == wx.ID_OK:
 			self.openRace( dlg.GetPath() )
@@ -652,9 +652,9 @@ hr { clear: both; }
 			return False
 			
 		self.commit()
-		dlg = wx.FileDialog( self, message=u"Save a Race File",
+		dlg = wx.FileDialog( self, message="Save a Race File",
 							defaultFile = '',
-							wildcard = u'PointsRaceMgr files (*.tp5)|*.tp5',
+							wildcard = 'PointsRaceMgr files (*.tp5)|*.tp5',
 							style=wx.FD_SAVE | wx.FD_CHANGE_DIR )
 		while 1:
 			ret = dlg.ShowModal()
@@ -665,7 +665,7 @@ hr { clear: both; }
 			fileName = os.path.splitext(dlg.GetPath())[0] + '.tp5'
 			
 			if os.path.exists(fileName):
-				if Utils.MessageOKCancel( self, u'File Exists.\n\nOverwrite?', iconMask=wx.ICON_WARNING ):
+				if Utils.MessageOKCancel( self, 'File Exists.\n\nOverwrite?', iconMask=wx.ICON_WARNING ):
 					break
 			else:
 				break	
@@ -676,7 +676,7 @@ hr { clear: both; }
 			self.writeRaceValidFileName()
 			return True
 		except:
-			Utils.MessageOK( self, u'WriteRace:\n\nError writing to file.\n\nRace NOT saved.\n\nTry "File|Save As..." again.', iconMask = wx.ICON_ERROR )
+			Utils.MessageOK( self, 'WriteRace:\n\nError writing to file.\n\nRace NOT saved.\n\nTry "File|Save As..." again.', iconMask = wx.ICON_ERROR )
 			return False
 
 	def menuFileHistory( self, event ):
@@ -689,7 +689,7 @@ hr { clear: both; }
 		self.onCloseWindow( event )
 		
 	def menuHelp(self, event):
-		message = u'{}'.format(
+		message = '{}'.format(
 			"Manage a Points Race: Track or Criterium.\n\n"
 			"Click on ConfigureRace menu and choose a standard Race Format "
 			" (or customize your own format).\n"
@@ -750,26 +750,26 @@ hr { clear: both; }
 		info = wx.AboutDialogInfo()
 		info.Name = AppVerName
 		info.Version = ''
-		info.SetCopyright( u"(C) 2011-{}".format( datetime.datetime.now().year ) )
+		info.SetCopyright( "(C) 2011-{}".format( datetime.datetime.now().year ) )
 		info.Description = wordwrap( (
-			u"Manage a Points Race: Track or Criterium.\n\n"
-			u"For details, see Help"
-			u""),
+			"Manage a Points Race: Track or Criterium.\n\n"
+			"For details, see Help"
+			""),
 			600, wx.ClientDC(self))
 		info.WebSite = ("http://sites.google.com/site/crossmgrsoftware", "CrossMgr home page")
 		info.Developers = [
-			u"Edward Sitarski (edward.sitarski@gmail.com)",
+			"Edward Sitarski (edward.sitarski@gmail.com)",
 		]
 
-		licenseText = ( u"User Beware!\n\n"
-			u"This program is experimental, under development and may have bugs.\n"
-			u"Feedback is sincerely appreciated.\n\n"
-			u"CRITICALLY IMPORTANT MESSAGE:\n"
-			u"This program is not warrented for any use whatsoever.\n"
-			u"It may not produce correct results, it might lose your data.\n"
-			u"The authors of this program assume no reponsibility or liability for data loss or erronious results produced by this program.\n\n"
-			u"Use entirely at your own risk."
-			u"Always use a paper manual backup."
+		licenseText = ( "User Beware!\n\n"
+			"This program is experimental, under development and may have bugs.\n"
+			"Feedback is sincerely appreciated.\n\n"
+			"CRITICALLY IMPORTANT MESSAGE:\n"
+			"This program is not warrented for any use whatsoever.\n"
+			"It may not produce correct results, it might lose your data.\n"
+			"The authors of this program assume no reponsibility or liability for data loss or erronious results produced by this program.\n\n"
+			"Use entirely at your own risk."
+			"Always use a paper manual backup."
 		)
 		info.License = wordwrap(licenseText, 600, wx.ClientDC(self))
 
