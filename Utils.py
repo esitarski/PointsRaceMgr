@@ -24,7 +24,6 @@ def BigFont():
 import os
 import re
 import sys
-import six
 import math
 import wx.grid		as gridlib
 import traceback

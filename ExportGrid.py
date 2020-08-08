@@ -1,7 +1,6 @@
 import wx
 import io
 import os
-import six
 import xlwt
 import Utils
 import Model
@@ -15,7 +14,7 @@ from contextlib import contextmanager
 
 @contextmanager
 def tag( buf, name, attrs = {} ):
-	if isinstance(attrs, six.string_types) and attrs:
+	if isinstance(attrs, str) and attrs:
 		attrs = { 'class': attrs }
 	buf.write( '<{}>'.format( ' '.join(
 			[name] + ['{}="{}"'.format(attr, value) for attr, value in attrs.items()]

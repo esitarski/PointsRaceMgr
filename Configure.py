@@ -3,13 +3,11 @@ import wx.adv
 import wx.lib.masked.numctrl as NC
 import wx.lib.intctrl as IC
 import sys
-import six
 import os
 import re
 import datetime
 import xlwt
 import webbrowser
-pickle = six.moves.cPickle
 import subprocess
 from optparse import OptionParser
 

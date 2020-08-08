@@ -5,14 +5,13 @@ import wx.lib.agw.flatnotebook as fnb
 
 import sys
 import cgi
-import six
 import os
 import io
 import re
 import datetime
 import xlwt
 import webbrowser
-import six.moves.cPickle as pickle
+import pickle
 import subprocess
 import traceback
 from optparse import OptionParser
@@ -611,12 +610,8 @@ hr { clear: both; }
 				return
 
 		try:
-			if six.PY2:
-				with io.open(fileName, 'rb') as fp:
-					race = pickle.load( fp, encoding='latin1', errors='replace' )
-			else:
-				with io.open(fileName, 'rb') as fp:
-					race = pickle.load( fp, fix_imports=True, encoding='latin1', errors='replace')
+			with io.open(fileName, 'rb') as fp:
+				race = pickle.load( fp, fix_imports=True, encoding='latin1', errors='replace')
 			# Check a few fields to confirm we have the right file.
 			a = race.sprintEvery
 			a = race.courseLengthUnit

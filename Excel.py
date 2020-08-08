@@ -2,7 +2,6 @@ import xlrd
 import xml.etree.ElementTree
 import os
 import io
-import six
 import math
 import itertools
 import unicodedata
@@ -31,7 +30,7 @@ class ReadExcelXls( object ):
 		
 	def is_nonempty_row(self, sheet, i):
 		values = sheet.row_values(i)
-		if isinstance(values[0], six.string_types) and values[0].startswith('#'):
+		if isinstance(values[0], str) and values[0].startswith('#'):
 			return False # ignorable comment row
 		return any( bool(v) for v in values )
 	
